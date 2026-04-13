@@ -17,10 +17,17 @@ import java.util.List;
 @Table(
         name = "products",
         indexes = {
-                @Index(name = "idx_products_status",     columnList = "status"),
-                @Index(name = "idx_products_seller_id",  columnList = "seller_id"),
-                @Index(name = "idx_products_sale_price", columnList = "sale_price"),
-                @Index(name = "idx_products_created_at", columnList = "created_at")
+                // 상품 목록 조회: status 필터 + created_at 정렬이 항상 함께 사용
+                @Index(name = "idx_products_status_created",
+                        columnList = "status, created_at"),
+
+                // 상품 목록 조회: status 필터 + 가격 정렬
+                @Index(name = "idx_products_status_price",
+                        columnList = "status, sale_price"),
+
+                // 판매자 본인 상품 조회: seller_id + status 조합
+                @Index(name = "idx_products_seller_status",
+                        columnList = "seller_id, status"),
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
