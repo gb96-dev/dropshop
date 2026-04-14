@@ -3,6 +3,9 @@ package com.example.dropshop.common.exception;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+/**
+ * 서비스 예외.
+ */
 @Getter
 public class ServiceException extends RuntimeException {
 
