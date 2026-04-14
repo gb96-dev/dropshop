@@ -15,9 +15,11 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 
+/**
+ * 알람 Entity.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -28,7 +30,7 @@ import org.springframework.data.annotation.CreatedDate;
         @Index(name = "idx_user_status_created", columnList = "user_id, status, created_at DESC")
     }
 )
-class Notification {
+public class Notification {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,6 +54,13 @@ class Notification {
 
   private LocalDateTime readAt;
 
+  /**
+   * 알림 생성자.
+   * @param userId 유저 아이디.
+   * @param type 알림 타입.
+   * @param message 알림 메시지 내용.
+   * @param productId 상품 아이디.
+   */
   public Notification(Long userId, String type, String message, Long productId) {
     this.userId = userId;
     this.type = NotificationType.from(type);

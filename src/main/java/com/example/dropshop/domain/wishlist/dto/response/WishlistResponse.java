@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+/**
+ * 찜 응답 DTO.
+ */
 @Getter
 @AllArgsConstructor
 @Builder

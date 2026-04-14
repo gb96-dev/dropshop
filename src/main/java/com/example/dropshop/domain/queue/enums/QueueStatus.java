@@ -2,6 +2,9 @@ package com.example.dropshop.domain.queue.enums;
 
 import lombok.Getter;
 
+/**
+ * 대기열 상태.
+ */
 @Getter
 public enum QueueStatus {
   WAITING("대기 중"),

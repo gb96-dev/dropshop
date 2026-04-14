@@ -15,9 +15,11 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 
+/**
+ * 대기열 Entity.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -51,6 +53,11 @@ public class Queue {
 
   private LocalDateTime expiredAt;
 
+  /**
+   * 대기열 생성자.
+   * @param userId 유저 아이디.
+   * @param dropId 드랍 아이디.
+   */
   public Queue(Long userId, Long dropId) {
     this.userId = userId;
     this.dropId = dropId;

@@ -13,6 +13,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * 알림 설정 Entity.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -39,6 +42,15 @@ public class NotificationSetting extends BaseEntity {
   @Column(nullable = false)
   private Boolean isReviewEnabled;
 
+  /**
+   * 알림 설정 생성자.
+   * @param userId 유저 아이디.
+   * @param sellerId 판매자 아이디.
+   * @param isDropEnabled 드랍 알림 on/off.
+   * @param isOrderEnabled 주문 알림 on/off.
+   * @param isStockEnabled 재고 알림 on/off.
+   * @param isReviewEnabled 리뷰 알림 on/off.
+   */
   public NotificationSetting(Long userId, Long sellerId, Boolean isDropEnabled,
       Boolean isOrderEnabled, Boolean isStockEnabled, Boolean isReviewEnabled) {
     this.userId = userId;
