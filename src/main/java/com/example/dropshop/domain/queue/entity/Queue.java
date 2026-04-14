@@ -19,7 +19,6 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
@@ -52,7 +51,7 @@ public class Queue {
 
   private LocalDateTime expiredAt;
 
-  public Queue(Long userId, Long dropId){
+  public Queue(Long userId, Long dropId) {
     this.userId = userId;
     this.dropId = dropId;
     this.status = QueueStatus.WAITING;

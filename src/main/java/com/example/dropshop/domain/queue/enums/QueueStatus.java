@@ -10,7 +10,7 @@ public enum QueueStatus {
 
   private final String description;
 
-  QueueStatus(String description){
+  QueueStatus(String description) {
     this.description = description;
   }
 }

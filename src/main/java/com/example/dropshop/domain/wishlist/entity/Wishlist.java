@@ -17,7 +17,6 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
@@ -43,7 +42,7 @@ public class Wishlist {
   @Column(updatable = false)
   private LocalDateTime createdAt;
 
-  public Wishlist(Long userId, Long dropId){
+  public Wishlist(Long userId, Long dropId) {
     this.userId = userId;
     this.dropId = dropId;
   }

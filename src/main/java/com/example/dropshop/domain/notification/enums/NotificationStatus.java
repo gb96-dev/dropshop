@@ -6,7 +6,7 @@ public enum NotificationStatus {
 
   private final String description;
 
-  NotificationStatus(String description){
+  NotificationStatus(String description) {
     this.description = description;
   }
 }

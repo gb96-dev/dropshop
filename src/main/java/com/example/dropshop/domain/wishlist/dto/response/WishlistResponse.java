@@ -9,6 +9,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Builder
 public class WishlistResponse {
+
   private Long dropId;
   private LocalDateTime createdAt;
 }

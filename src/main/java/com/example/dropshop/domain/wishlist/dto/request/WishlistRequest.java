@@ -9,5 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class WishlistRequest {
+
   private Long dropId;
 }

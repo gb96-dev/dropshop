@@ -19,7 +19,6 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
@@ -53,7 +52,7 @@ class Notification {
 
   private LocalDateTime readAt;
 
-  public Notification(Long userId, String type, String message, Long productId){
+  public Notification(Long userId, String type, String message, Long productId) {
     this.userId = userId;
     this.type = NotificationType.from(type);
     this.message = message;

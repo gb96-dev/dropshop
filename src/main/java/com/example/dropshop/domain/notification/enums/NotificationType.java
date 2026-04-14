@@ -13,7 +13,7 @@ public enum NotificationType {
 
   private final String description;
 
-  NotificationType(String description){
+  NotificationType(String description) {
     this.description = description;
   }
 
