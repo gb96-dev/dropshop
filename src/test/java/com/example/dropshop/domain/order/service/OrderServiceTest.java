@@ -9,10 +9,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.example.dropshop.common.exception.OrderException;
+
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
+import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
 import java.math.BigDecimal;
 import java.util.List;
