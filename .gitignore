@@ -37,3 +37,5 @@ out/
 .vscode/
 
 git rm --cached application.properties
+secret.yml
+**/src/main/generated
