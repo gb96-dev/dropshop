@@ -4,12 +4,17 @@ import com.example.dropshop.common.dto.ApiResponse;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.product.dto.ProductCreateRequest;
 import com.example.dropshop.domain.product.dto.ProductCreateResponse;
+import com.example.dropshop.domain.product.dto.ProductStatusUpdateRequest;
+import com.example.dropshop.domain.product.dto.ProductUpdateRequest;
 import com.example.dropshop.domain.product.exception.ProductException;
 import com.example.dropshop.domain.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -37,9 +42,7 @@ public class ProductController {
       @RequestHeader(value = "X-SELLER-VERIFIED", defaultValue = "false") boolean sellerVerified,
       @Valid @RequestBody ProductCreateRequest request
   ) {
-    if (role != null && !"SELLER".equalsIgnoreCase(role)) {
-      throw new ProductException(ErrorCode.SELLER_ROLE_REQUIRED);
-    }
+    validateSellerRole(role);
 
     ProductCreateResponse response = productService.createSellerProduct(
         sellerId,
@@ -48,7 +51,56 @@ public class ProductController {
         request
     );
 
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.created(response));
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
+  }
+
+  /**
+   * 판매자가 본인 상품 정보를 수정한다.
+   */
+  @PatchMapping("/{id}")
+  public ResponseEntity<ApiResponse<ProductCreateResponse>> updateProduct(
+      @PathVariable Long id,
+      @RequestHeader("X-SELLER-ID") Long sellerId,
+      @RequestHeader(value = "X-ROLE", required = false) String role,
+      @Valid @RequestBody ProductUpdateRequest request
+  ) {
+    validateSellerRole(role);
+    ProductCreateResponse response = productService.updateSellerProduct(id, sellerId, request);
+    return ResponseEntity.ok(ApiResponse.ok(response));
+  }
+
+  /**
+   * 판매자가 본인 상품 상태를 변경한다.
+   */
+  @PatchMapping("/{id}/status")
+  public ResponseEntity<ApiResponse<ProductCreateResponse>> updateProductStatus(
+      @PathVariable Long id,
+      @RequestHeader("X-SELLER-ID") Long sellerId,
+      @RequestHeader(value = "X-ROLE", required = false) String role,
+      @Valid @RequestBody ProductStatusUpdateRequest request
+  ) {
+    validateSellerRole(role);
+    ProductCreateResponse response = productService.changeSellerProductStatus(id, sellerId, request);
+    return ResponseEntity.ok(ApiResponse.ok(response));
+  }
+
+  /**
+   * 판매자가 본인 상품을 삭제한다.
+   */
+  @DeleteMapping("/{id}")
+  public ResponseEntity<ApiResponse<Void>> deleteProduct(
+      @PathVariable Long id,
+      @RequestHeader("X-SELLER-ID") Long sellerId,
+      @RequestHeader(value = "X-ROLE", required = false) String role
+  ) {
+    validateSellerRole(role);
+    productService.deleteSellerProduct(id, sellerId);
+    return ResponseEntity.ok(ApiResponse.ok());
+  }
+
+  private void validateSellerRole(String role) {
+    if (role != null && !"SELLER".equalsIgnoreCase(role)) {
+      throw new ProductException(ErrorCode.SELLER_ROLE_REQUIRED);
+    }
   }
 }
