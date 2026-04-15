@@ -1,12 +1,21 @@
 package com.example.dropshop.domain.product.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.drops.enums.DropsStatus;
+import com.example.dropshop.domain.drops.repository.DropsRepository;
+import com.example.dropshop.domain.order.repository.OrderItemRepository;
 import com.example.dropshop.domain.product.dto.ProductCreateRequest;
 import com.example.dropshop.domain.product.dto.ProductCreateResponse;
+import com.example.dropshop.domain.product.dto.ProductStatusUpdateRequest;
+import com.example.dropshop.domain.product.dto.ProductUpdateRequest;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.entity.ProductImage;
+import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.exception.ProductException;
 import com.example.dropshop.domain.product.repository.ProductRepository;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,8 +29,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
   private static final int MAX_IMAGE_COUNT = 5;
+  private static final Collection<DropsStatus> NON_DELETABLE_DROP_STATUSES = Arrays.asList(
+      DropsStatus.SCHEDULED,
+      DropsStatus.ACTIVE,
+      DropsStatus.FINISHED
+  );
 
   private final ProductRepository productRepository;
+  private final DropsRepository dropsRepository;
+  private final OrderItemRepository orderItemRepository;
   private final ProductPolicyProperties policyProperties;
 
   /**
@@ -37,19 +53,19 @@ public class ProductService {
     validateSellerState(sellerApproved, sellerVerified);
     validateBusinessRules(request);
 
-    Product product = Product.builder()
-        .sellerId(sellerId)
-        .name(request.getName())
-        .price(request.getPrice())
-        .discountRate(request.getDiscountRate())
-        .stock(request.getStock())
-        .category(request.getCategory())
-        .description(request.getDescription())
-        .specification(request.getSpecification())
-        .deliveryInfo(policyProperties.getDeliveryInfo())
-        .refundPolicy(policyProperties.getRefundPolicy())
-        .thumbnailUrl(extractThumbnailUrl(request))
-        .build();
+    Product product = Product.create(
+        sellerId,
+        request.getName(),
+        request.getCategory(),
+        request.getPrice(),
+        request.getDiscountRate(),
+        request.getStock(),
+        extractThumbnailUrl(request),
+        request.getDescription(),
+        request.getSpecification(),
+        policyProperties.getDeliveryInfo(),
+        policyProperties.getRefundPolicy()
+    );
 
     request.getImages().stream()
         .sorted(Comparator.comparingInt(ProductCreateRequest.ImageRequest::getSortOrder))
@@ -64,6 +80,94 @@ public class ProductService {
 
     Product saved = productRepository.save(product);
     return ProductCreateResponse.from(saved);
+  }
+
+  /**
+   * 판매자 상품 정보를 수정한다.
+   */
+  @Transactional
+  public ProductCreateResponse updateSellerProduct(
+      Long productId,
+      Long sellerId,
+      ProductUpdateRequest request
+  ) {
+    Product product = findOwnedProduct(productId, sellerId);
+
+    if (isCoreFieldUpdateRequested(request) && isCoreUpdateLocked(product)) {
+      throw new ProductException(ErrorCode.PRODUCT_CORE_UPDATE_LOCKED);
+    }
+
+    if (request.getName() != null) {
+      product.updateName(request.getName());
+    }
+
+    if (request.getPrice() != null || request.getDiscountRate() != null) {
+      BigDecimal updatedPrice = request.getPrice() == null
+          ? product.getPrice()
+          : request.getPrice();
+      int updatedDiscountRate = request.getDiscountRate() == null
+          ? product.getDiscountRate()
+          : request.getDiscountRate();
+      product.updatePrice(updatedPrice, updatedDiscountRate);
+    }
+
+    if (request.getStock() != null) {
+      product.updateStock(request.getStock());
+    }
+
+    if (request.getCategory() != null) {
+      product.updateCategory(request.getCategory());
+    }
+
+    if (request.getDescription() != null) {
+      product.updateDescription(request.getDescription());
+    }
+
+    if (request.getSpecification() != null) {
+      product.updateSpecification(request.getSpecification());
+    }
+
+    Product saved = productRepository.save(product);
+    return ProductCreateResponse.from(saved);
+  }
+
+  /**
+   * 판매자 상품 상태를 수동 변경한다.
+   */
+  @Transactional
+  public ProductCreateResponse changeSellerProductStatus(
+      Long productId,
+      Long sellerId,
+      ProductStatusUpdateRequest request
+  ) {
+    Product product = findOwnedProduct(productId, sellerId);
+
+    if (request.getStatus() != ProductStatus.HIDDEN) {
+      throw new ProductException(ErrorCode.INVALID_PRODUCT_STATUS_CHANGE);
+    }
+
+    product.hide();
+    Product saved = productRepository.save(product);
+    return ProductCreateResponse.from(saved);
+  }
+
+  /**
+   * 판매자 상품을 삭제한다.
+   */
+  @Transactional
+  public void deleteSellerProduct(Long productId, Long sellerId) {
+    Product product = findOwnedProduct(productId, sellerId);
+
+    boolean hasDropHistory = dropsRepository.existsByProductIdAndStatusIn(
+        productId,
+        NON_DELETABLE_DROP_STATUSES
+    );
+    boolean hasOrderHistory = orderItemRepository.existsByProductId(productId);
+    if (hasDropHistory || hasOrderHistory) {
+      throw new ProductException(ErrorCode.PRODUCT_DELETE_NOT_ALLOWED);
+    }
+
+    productRepository.delete(product);
   }
 
   private void validateSellerState(boolean sellerApproved, boolean sellerVerified) {
@@ -107,5 +211,25 @@ public class ProductService {
         .findFirst()
         .orElseThrow(() -> new ProductException(ErrorCode.THUMBNAIL_REQUIRED))
         .getImageUrl();
+  }
+
+  private Product findOwnedProduct(Long productId, Long sellerId) {
+    Product product = productRepository.findById(productId)
+        .orElseThrow(() -> new ProductException(ErrorCode.PRODUCT_NOT_FOUND));
+    if (!product.isOwnedBy(sellerId)) {
+      throw new ProductException(ErrorCode.PRODUCT_ACCESS_DENIED);
+    }
+    return product;
+  }
+
+  private boolean isCoreFieldUpdateRequested(ProductUpdateRequest request) {
+    return request.getName() != null
+        || request.getPrice() != null
+        || request.getDiscountRate() != null;
+  }
+
+  private boolean isCoreUpdateLocked(Product product) {
+    return product.getStatus() == ProductStatus.READY
+        || product.getStatus() == ProductStatus.ON_SALE;
   }
 }

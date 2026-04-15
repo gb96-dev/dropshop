@@ -2,6 +2,7 @@ package com.example.dropshop.domain.product.entity;
 
 import com.example.dropshop.common.entity.BaseEntity;
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.exception.ProductException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -135,13 +136,14 @@ public class Product extends BaseEntity {
    * discountAmount / salePrice 는 price 와 discountRate 로부터 자동 계산된다.
    * 도메인 규칙 5번: 최종 금액은 원가보다 높을 수 없으며, 0 미만이 될 수 없다.
    */
-  @Builder
+  @Builder(access = AccessLevel.PRIVATE)
   private Product(Long sellerId, String name, String category,
       BigDecimal price, int discountRate,
       int stock, String thumbnailUrl, String description,
       String specification, String deliveryInfo, String refundPolicy) {
     validatePrice(price);
     validateDiscountRate(discountRate);
+    validateStock(stock);
 
     this.sellerId = sellerId;
     this.name = name;
@@ -158,6 +160,73 @@ public class Product extends BaseEntity {
 
     // discountAmount / salePrice 자동 계산
     recalculatePrices(price, discountRate);
+  }
+
+  /**
+   * 판매자 상품을 생성한다.
+   */
+  public static Product create(
+      Long sellerId,
+      String name,
+      String category,
+      BigDecimal price,
+      int discountRate,
+      int stock,
+      String thumbnailUrl,
+      String description,
+      String specification,
+      String deliveryInfo,
+      String refundPolicy
+  ) {
+    return Product.builder()
+        .sellerId(sellerId)
+        .name(name)
+        .category(category)
+        .price(price)
+        .discountRate(discountRate)
+        .stock(stock)
+        .thumbnailUrl(thumbnailUrl)
+        .description(description)
+        .specification(specification)
+        .deliveryInfo(deliveryInfo)
+        .refundPolicy(refundPolicy)
+        .build();
+  }
+
+  /**
+   * 상품명을 수정한다.
+   */
+  public void updateName(String newName) {
+    this.name = newName;
+  }
+
+  /**
+   * 카테고리를 수정한다.
+   */
+  public void updateCategory(String newCategory) {
+    this.category = newCategory;
+  }
+
+  /**
+   * 재고를 수정한다.
+   */
+  public void updateStock(int newStock) {
+    validateStock(newStock);
+    this.stock = newStock;
+  }
+
+  /**
+   * 상품 설명을 수정한다.
+   */
+  public void updateDescription(String newDescription) {
+    this.description = newDescription;
+  }
+
+  /**
+   * 상품 상세 정보를 수정한다.
+   */
+  public void updateSpecification(String newSpecification) {
+    this.specification = newSpecification;
   }
 
   // -------------------------------------------------------------------------
@@ -281,6 +350,12 @@ public class Product extends BaseEntity {
   private static void validateDiscountRate(int rate) {
     if (rate < 0 || rate >= 100) {
       throw new ProductException(ErrorCode.INVALID_DISCOUNT_RATE);
+    }
+  }
+
+  private static void validateStock(int stock) {
+    if (stock <= 0) {
+      throw new ProductException(ErrorCode.INVALID_STOCK);
     }
   }
 }

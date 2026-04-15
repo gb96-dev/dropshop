@@ -38,6 +38,15 @@ public enum ErrorCode {
   SELLER_NOT_VERIFIED(HttpStatus.FORBIDDEN, "정산 계좌 인증이 완료되지 않았습니다."),
   SELLER_NOT_APPROVED(HttpStatus.FORBIDDEN, "판매자 승인 대기 상태입니다."),
   SELLER_ROLE_REQUIRED(HttpStatus.FORBIDDEN, "판매자 권한이 필요합니다."),
+  PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
+  PRODUCT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "본인 상품만 수정 또는 삭제할 수 있습니다."),
+  PRODUCT_CORE_UPDATE_LOCKED(HttpStatus.BAD_REQUEST,
+      "READY 또는 ON_SALE 상태에서는 상품명/가격/할인율을 수정할 수 없습니다."),
+  INVALID_PRODUCT_STATUS_CHANGE(HttpStatus.BAD_REQUEST,
+      "판매자 수동 상태 변경은 HIDDEN만 가능합니다."),
+  PRODUCT_DELETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST,
+      "드랍 또는 주문 이력이 존재하는 상품은 삭제할 수 없습니다."),
+  INVALID_STOCK(HttpStatus.BAD_REQUEST, "상품 재고는 0보다 커야 합니다."),
   VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "요청값 검증에 실패했습니다."),
 
   /**
