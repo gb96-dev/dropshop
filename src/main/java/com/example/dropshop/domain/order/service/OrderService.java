@@ -59,6 +59,7 @@ public class OrderService {
 
   /**
    * 만료 주문 취소 처리.
+   * 스케줄러가 30초마다 호출
    */
   @Transactional
   public void cancelExpiredOrders() {
@@ -68,7 +69,9 @@ public class OrderService {
     expiredOrders.forEach(order -> {
       order.cancel();
       order.getOrderItems().forEach(item ->
-          eventPublisher.publishEvent(new StockRestoreEvent(item.getProductId()))
+          eventPublisher.publishEvent(
+              new StockRestoreEvent(item.getProductId(), item.getQuantity())
+          )
       );
     });
   }
