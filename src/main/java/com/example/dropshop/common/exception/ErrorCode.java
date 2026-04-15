@@ -11,14 +11,18 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ErrorCode {
 
-  // USER
+  /**
+   * User
+   */
   DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
   INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호는 영문, 숫자, 특수문자를 포함한 8~16자여야 합니다."),
   PASSWORD_MISMATCH(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 일치하지 않습니다."),
   ALREADY_WITHDRAWN(HttpStatus.BAD_REQUEST, "이미 탈퇴 처리된 사용자입니다."),
 
-  // SELLER
+  /**
+   * Seller
+   */
   SELLER_NOT_FOUND(HttpStatus.NOT_FOUND, "판매자 정보를 찾을 수 없습니다."),
   DUPLICATE_BUSINESS_NO(HttpStatus.CONFLICT, "이미 등록된 사업자 번호입니다."),
   DUPLICATE_BRAND_NAME(HttpStatus.CONFLICT, "이미 존재하는 브랜드 이름입니다."),

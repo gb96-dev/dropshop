@@ -27,19 +27,23 @@ public class UserService {
      */
     @Transactional
     public void signup(SignupRequest request) {
+        // 1. 이메일 중복 체크
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ServiceException(ErrorCode.DUPLICATE_EMAIL); // ErrorCode에 추가한 상수 사용
+            throw new ServiceException(ErrorCode.DUPLICATE_EMAIL);
         }
 
+        // 2. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
+        // 3. 유저 객체 생성 (Builder 사용)
         User user = User.builder()
                 .email(request.getEmail())
                 .password(encodedPassword)
                 .nickname(request.getNickname())
-                .role(UserRole.USER) // 기본 역할은 USER
+                .role(UserRole.USER) // 기본 권한 설정
                 .build();
 
+        // 4. 저장 (이 부분이 빠지면 안 됩니다!)
         userRepository.save(user);
     }
 
