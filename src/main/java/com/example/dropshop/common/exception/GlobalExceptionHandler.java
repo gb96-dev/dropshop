@@ -40,6 +40,18 @@ public class GlobalExceptionHandler {
   }
 
   /**
+   * Order 도메인 예외를 공통 응답으로 변환한다.
+   */
+  @ExceptionHandler(com.example.dropshop.domain.order.exception.OrderException.class)
+  public ResponseEntity<ApiResponse<ErrorResponse>> handleOrderException(
+      com.example.dropshop.domain.order.exception.OrderException ex) {
+    ErrorCode errorCode = ex.getErrorCode();
+    ErrorResponse body = new ErrorResponse(errorCode.name(), errorCode.getMessage());
+    return ResponseEntity.status(errorCode.getStatus())
+        .body(ApiResponse.fail(errorCode.getStatus(), body));
+  }
+
+  /**
    * Validation이 유효한지 감지하여 올바른 형식이 아닐경우 예외처리.
    */
   @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -1,6 +1,10 @@
 package com.example.dropshop.domain.order.entity;
 
 import com.example.dropshop.common.entity.BaseEntity;
+import com.example.dropshop.common.exception.ErrorCode;
+
+import com.example.dropshop.domain.order.enums.OrderStatus;
+import com.example.dropshop.domain.order.exception.OrderException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -99,4 +103,35 @@ public class Order extends BaseEntity {
   public boolean isHoldExpired() {
     return LocalDateTime.now().isAfter(holdExpiredAt);
   }
+
+  /**
+   * 결제 완료 처리.
+   */
+  public void pay() {
+    if (this.status != OrderStatus.PENDING) {
+      throw new OrderException(ErrorCode.ORDER_INVALID_STATUS);
+    }
+    this.status = OrderStatus.PAID;
+  }
+
+  /**
+   * 주문 취소 처리.
+   */
+  public void cancel() {
+    if (this.status != OrderStatus.PENDING) {
+      throw new OrderException(ErrorCode.ORDER_INVALID_STATUS);
+    }
+    this.status = OrderStatus.CANCELLED;
+  }
+
+  /**
+   * 환불 처리.
+   */
+  public void refund() {
+    if (this.status != OrderStatus.PAID) {
+      throw new OrderException(ErrorCode.ORDER_INVALID_STATUS);
+    }
+    this.status = OrderStatus.REFUNDED;
+  }
+
 }
