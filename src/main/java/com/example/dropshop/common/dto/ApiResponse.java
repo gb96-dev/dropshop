@@ -1,10 +1,13 @@
 package com.example.dropshop.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import java.util.List;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -37,5 +40,51 @@ public class ApiResponse<T> {
 
   public static <T> ApiResponse<T> fail(HttpStatus status, T data) {
     return new ApiResponse<>(false, status.value(), data);
+  }
+
+  public static <T> ApiResponse<PageResponse<T>> ok(Page<T> page) {
+    return new ApiResponse<>(true, 200, PageResponse.of(page));
+  }
+
+  @Getter
+  @AllArgsConstructor(access = AccessLevel.PRIVATE)
+  public static class PageResponse<T> {
+
+    private final List<T> content;
+    private final PageInfo pageInfo;
+
+    public static <T> PageResponse<T> of(Page<T> page) {
+      return new PageResponse<>(
+          page.getContent(),
+          PageInfo.of(page)
+      );
+    }
+  }
+
+  @Getter
+  @AllArgsConstructor(access = AccessLevel.PRIVATE)
+  public static class PageInfo {
+
+    private final int page;
+    private final int size;
+    private final long totalElements;
+    private final int totalPages;
+
+    @JsonProperty("isFirst")
+    private final boolean isFirst;
+
+    @JsonProperty("isLast")
+    private final boolean isLast;
+
+    public static PageInfo of(Page<?> page) {
+      return new PageInfo(
+          page.getNumber(),
+          page.getSize(),
+          page.getTotalElements(),
+          page.getTotalPages(),
+          page.isFirst(),
+          page.isLast()
+      );
+    }
   }
 }
