@@ -1,17 +1,19 @@
 package com.example.dropshop.domain.order.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
-import com.example.dropshop.common.exception.OrderException;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
+import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +57,32 @@ public class OrderService {
   public Order findOrderById(Long orderId, Long userId) {
     return orderRepository.findByIdAndUserId(orderId, userId)
         .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
+  }
+
+  /**
+   * 목록 조회.
+   */
+  @Transactional(readOnly = true)
+  public Page<Order> findOrdersByUserId(Long userId, Pageable pageable) {
+    return orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable);
+  }
+
+  /**
+   * 수동 주문 취소.
+   */
+  @Transactional
+  public Order cancelOrder(Long orderId, Long userId) {
+    Order order = orderRepository.findByIdAndUserId(orderId, userId)
+        .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
+
+    order.cancel();
+
+    order.getOrderItems().forEach(item ->
+        eventPublisher.publishEvent(
+            new StockRestoreEvent(item.getProductId(), item.getQuantity())
+        )
+    );
+    return order;
   }
 
   /**

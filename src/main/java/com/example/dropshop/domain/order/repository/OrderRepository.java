@@ -5,6 +5,8 @@ import com.example.dropshop.domain.order.enums.OrderStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -30,4 +32,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
    * 만료된 주문 목록 조회.
    */
   List<Order> findAllByStatusAndHoldExpiredAtBefore(OrderStatus status, LocalDateTime now);
+
+  /**
+   * 사용자 주문 목록 페이지 조회.
+   */
+  Page<Order> findAllByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
 }
