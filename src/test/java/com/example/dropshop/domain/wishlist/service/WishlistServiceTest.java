@@ -142,7 +142,7 @@ class WishlistServiceTest {
     given(wishlistRepository.existsByUserIdAndDropId(USER_ID, DROP_ID2))
         .willReturn(false);
 
-    Wishlist saved = new Wishlist(USER_ID, DROP_ID2); // ⭐ 추가
+    Wishlist saved = new Wishlist(USER_ID, DROP_ID2);
     given(wishlistRepository.save(any(Wishlist.class)))
         .willReturn(saved);
 
