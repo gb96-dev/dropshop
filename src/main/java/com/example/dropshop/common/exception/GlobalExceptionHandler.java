@@ -37,17 +37,17 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(errorCode.getStatus(), body));
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<ErrorResponse>> handleValidationException(MethodArgumentNotValidException ex) {
-        FieldError fieldError = ex.getBindingResult().getFieldErrors().stream().findFirst().orElse(null);
-        String message = fieldError == null
-                ? ProductErrorCode.VALIDATION_ERROR.getMessage()
-                : fieldError.getDefaultMessage();
-
-        ErrorResponse body = new ErrorResponse(ProductErrorCode.VALIDATION_ERROR.getCode(), message);
-        return ResponseEntity.status(ProductErrorCode.VALIDATION_ERROR.getStatus())
-                .body(ApiResponse.fail(ProductErrorCode.VALIDATION_ERROR.getStatus(), body));
-    }
+//    @ExceptionHandler(MethodArgumentNotValidException.class)
+//    public ResponseEntity<ApiResponse<ErrorResponse>> handleValidationException(MethodArgumentNotValidException ex) {
+//        FieldError fieldError = ex.getBindingResult().getFieldErrors().stream().findFirst().orElse(null);
+//        String message = fieldError == null
+//                ? ProductErrorCode.VALIDATION_ERROR.getMessage()
+//                : fieldError.getDefaultMessage();
+//
+//        ErrorResponse body = new ErrorResponse(ProductErrorCode.VALIDATION_ERROR.getCode(), message);
+//        return ResponseEntity.status(ProductErrorCode.VALIDATION_ERROR.getStatus())
+//                .body(ApiResponse.fail(ProductErrorCode.VALIDATION_ERROR.getStatus(), body));
+//    }
   /**
    * Validation이 유효한지 감지하여 올바른 형식이 아닐경우 예외처리.
    */
