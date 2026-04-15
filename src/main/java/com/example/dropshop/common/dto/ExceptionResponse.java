@@ -1,10 +1,12 @@
 package com.example.dropshop.common.dto;
 
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
-
+/**
+ * 예외 응답.
+ */
 @Getter
 @Builder
 public class ExceptionResponse {

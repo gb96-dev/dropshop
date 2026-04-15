@@ -2,13 +2,16 @@ package com.example.dropshop.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import java.util.List;
 
+/**
+ * 공통 API 응답.
+ */
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -46,6 +49,9 @@ public class ApiResponse<T> {
     return new ApiResponse<>(true, 200, PageResponse.of(page));
   }
 
+  /**
+   * 페이지 응답.
+   */
   @Getter
   @AllArgsConstructor(access = AccessLevel.PRIVATE)
   public static class PageResponse<T> {
@@ -61,6 +67,9 @@ public class ApiResponse<T> {
     }
   }
 
+  /**
+   * 페이지 정보.
+   */
   @Getter
   @AllArgsConstructor(access = AccessLevel.PRIVATE)
   public static class PageInfo {
