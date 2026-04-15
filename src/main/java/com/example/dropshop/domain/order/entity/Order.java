@@ -2,8 +2,9 @@ package com.example.dropshop.domain.order.entity;
 
 import com.example.dropshop.common.entity.BaseEntity;
 import com.example.dropshop.common.exception.ErrorCode;
-import com.example.dropshop.common.exception.OrderException;
+
 import com.example.dropshop.domain.order.enums.OrderStatus;
+import com.example.dropshop.domain.order.exception.OrderException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

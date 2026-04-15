@@ -74,9 +74,9 @@ public class GlobalExceptionHandler {
   /**
    * Service 공통 예외처리.
    */
-  @ExceptionHandler(OrderException.class)
+  @ExceptionHandler(ServiceException.class)
   public ResponseEntity<ExceptionResponse> handleServiceException(
-      OrderException e, HttpServletRequest request) {
+      ServiceException e, HttpServletRequest request) {
     return ResponseEntity.status(e.getStatus())
         .body(ExceptionResponse.from(
             e.getStatus().value(),

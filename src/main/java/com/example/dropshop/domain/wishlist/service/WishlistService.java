@@ -1,7 +1,7 @@
 package com.example.dropshop.domain.wishlist.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
-import com.example.dropshop.common.exception.OrderException;
+import com.example.dropshop.common.exception.ServiceException;
 import com.example.dropshop.domain.wishlist.dto.request.WishlistRequest;
 import com.example.dropshop.domain.wishlist.dto.response.WishlistResponse;
 import com.example.dropshop.domain.wishlist.entity.Wishlist;
@@ -44,7 +44,7 @@ public class WishlistService {
     Long dropId = request.getDropId();
 
     if (wishlistRepository.existsByUserIdAndDropId(1L, dropId)){
-      throw new OrderException(ErrorCode.EXISTS_BY_USER_AND_DROP);
+      throw new ServiceException(ErrorCode.EXISTS_BY_USER_AND_DROP);
     }
 
     Wishlist saved = wishlistRepository.save(new Wishlist(1L, dropId));
@@ -65,7 +65,7 @@ public class WishlistService {
     Long dropId = request.getDropId();
 
     if (!wishlistRepository.existsByDropId(dropId)) {
-      throw new OrderException(ErrorCode.DROP_NOT_FOUND);
+      throw new ServiceException(ErrorCode.DROP_NOT_FOUND);
     }
 
     wishlistRepository.deleteByUserIdAndDropId(1L, dropId);
