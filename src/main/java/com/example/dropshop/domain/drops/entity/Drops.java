@@ -1,6 +1,8 @@
 package com.example.dropshop.domain.drops.entity;
 
 import com.example.dropshop.common.entity.BaseEntity;
+import com.example.dropshop.domain.drops.exception.DropsErrorCode;
+import com.example.dropshop.domain.drops.exception.DropsException;
 import com.example.dropshop.domain.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -22,7 +24,7 @@ import java.time.LocalDateTime;
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Drop extends BaseEntity {
+public class Drops extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,8 +56,8 @@ public class Drop extends BaseEntity {
     @Column(name = "use_queue", nullable = false)
     private boolean useQueue;
 
-    @Builder
-    private Drop(
+    @Builder(access = AccessLevel.PRIVATE)
+    private Drops(
             Product product,
             LocalDateTime startAt,
             LocalDateTime endAt,
@@ -78,6 +80,25 @@ public class Drop extends BaseEntity {
         validatePurchaseLimit(purchaseLimit);
     }
 
+    public static Drops create(
+            Product product,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            Long totalStock,
+            Long purchaseLimit,
+            boolean useQueue
+    ) {
+        return Drops.builder()
+                .product(product)
+                .startAt(startAt)
+                .endAt(endAt)
+                .totalStock(totalStock)
+                .remainStock(totalStock)
+                .purchaseLimit(purchaseLimit)
+                .useQueue(useQueue)
+                .build();
+    }
+
     public void activate() {
         this.status = DropStatus.ACTIVE;
     }
@@ -88,23 +109,25 @@ public class Drop extends BaseEntity {
 
     private void validateDateRange(LocalDateTime startAt, LocalDateTime endAt) {
         if (startAt == null || endAt == null || !endAt.isAfter(startAt)) {
-            throw new IllegalArgumentException("드랍 종료 시간은 시작 시간보다 뒤여야 합니다.");
+            throw new DropsException(DropsErrorCode.INVALID_DATE_RANGE);
         }
     }
 
     private void validateStock(Long totalStock, Long remainStock) {
         if (totalStock == null || totalStock <= 0) {
-            throw new IllegalArgumentException("드랍 총 판매 수량은 0보다 커야 합니다.");
+            throw new DropsException(DropsErrorCode.INVALID_TOTAL_STOCK);
         }
         if (remainStock == null || remainStock < 0 || remainStock > totalStock) {
-            throw new IllegalArgumentException("잔여 수량은 0 이상이며 총 판매 수량 이하여야 합니다.");
+            throw new DropsException(DropsErrorCode.INVALID_REMAIN_STOCK);
         }
     }
 
     private void validatePurchaseLimit(Long purchaseLimit) {
         if (purchaseLimit == null || purchaseLimit <= 0) {
-            throw new IllegalArgumentException("1인당 구매 제한 수량은 1 이상이어야 합니다.");
+            throw new DropsException(DropsErrorCode.INVALID_PURCHASE_LIMIT);
         }
     }
 }
+
+
 

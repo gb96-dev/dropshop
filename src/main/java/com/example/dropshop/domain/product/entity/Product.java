@@ -1,6 +1,8 @@
 package com.example.dropshop.domain.product.entity;
 
 import com.example.dropshop.common.entity.BaseEntity;
+import com.example.dropshop.domain.product.exception.ProductErrorCode;
+import com.example.dropshop.domain.product.exception.ProductException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -170,7 +172,7 @@ public class Product extends BaseEntity {
      */
     public void hide() {
         if (this.status == ProductStatus.ON_SALE || this.status == ProductStatus.OUT_OF_STOCK) {
-            throw new IllegalStateException("판매 중이거나 품절 상태의 상품은 비공개로 변경할 수 없습니다.");
+            throw new ProductException(ProductErrorCode.PRODUCT_HIDE_NOT_ALLOWED);
         }
         this.status = ProductStatus.HIDDEN;
     }
@@ -193,8 +195,7 @@ public class Product extends BaseEntity {
      */
     public void addImage(ProductImage image) {
         if (this.images.size() >= MAX_IMAGE_COUNT) {
-            throw new IllegalStateException(
-                    "상품 이미지는 최대 " + MAX_IMAGE_COUNT + "개까지 등록 가능합니다.");
+            throw new ProductException(ProductErrorCode.IMAGE_LIMIT_EXCEEDED);
         }
         this.images.add(image);
         if (image.isThumbnail()) {
@@ -253,13 +254,13 @@ public class Product extends BaseEntity {
 
     private static void validatePrice(BigDecimal price) {
         if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("상품 가격은 0원보다 커야 합니다.");
+            throw new ProductException(ProductErrorCode.INVALID_PRICE);
         }
     }
 
     private static void validateDiscountRate(int rate) {
         if (rate < 0 || rate >= 100) {
-            throw new IllegalArgumentException("할인율은 0 이상 100 미만이어야 합니다.");
+            throw new ProductException(ProductErrorCode.INVALID_DISCOUNT_RATE);
         }
     }
 }
