@@ -6,12 +6,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
-/**
- * 사용자 엔티티.
- */
 @Entity
 @Table(name = "users")
 @Getter
@@ -26,6 +22,7 @@ public class User extends BaseEntity {
     private String email;
 
     @Column(nullable = false)
+
     private String password;
 
     @Column(nullable = false)
@@ -33,48 +30,51 @@ public class User extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserStatus status; // 'user.entity.'를 제거합니다.
+    private UserStatus status;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role; // 같은 패키지이므로 직접 참조합니다.
+    private UserRole role;
 
     private LocalDateTime deletedAt;
 
     /**
-     * 사용자 생성 빌더.
+     * 빌더의 접근 레벨을 PRIVATE으로 설정하여 외부에서 직접 호출을 막습니다.
      */
-    @Builder
-    public User(String email, String password, String nickname, UserRole role) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private User(String email, String password, String nickname, UserRole role) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.status = UserStatus.ACTIVE; //
-        this.role = (role != null) ? role : UserRole.USER; //
+        this.status = UserStatus.ACTIVE;
+        this.role = (role != null) ? role : UserRole.USER;
     }
 
     /**
-     * 비밀번호 변경.
+     * 정적 팩토리 메서드: 회원가입 시 필요한 최소한의 정보로 객체를 생성합니다.
      */
+    public static User signup(String email, String password, String nickname) {
+        return User.builder()
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .role(UserRole.USER)
+                .build();
+    }
+
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
 
-    /**
-     * 회원 탈퇴 (Soft Delete).
-     */
     public void withdraw() {
-        if (this.status == UserStatus.DELETED) { //
+        if (this.status == UserStatus.DELETED) {
             throw new IllegalStateException("이미 탈퇴된 사용자입니다.");
         }
-        this.status = UserStatus.DELETED; //
+        this.status = UserStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
     }
 
-    /**
-     * 활성 사용자 여부 확인.
-     */
     public boolean isActive() {
-        return this.status == UserStatus.ACTIVE; //
+        return this.status == UserStatus.ACTIVE;
     }
 }
