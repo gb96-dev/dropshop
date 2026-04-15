@@ -2,6 +2,7 @@ package com.example.dropshop.domain.drops.entity;
 
 import com.example.dropshop.common.entity.BaseEntity;
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.exception.DropsException;
 import com.example.dropshop.domain.product.entity.Product;
 import jakarta.persistence.Column;
@@ -49,7 +50,7 @@ public class Drops extends BaseEntity {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)
-  private DropStatus status;
+  private DropsStatus status;
 
   @Column(name = "start_at", nullable = false)
   private LocalDateTime startAt;
@@ -86,7 +87,7 @@ public class Drops extends BaseEntity {
     this.remainStock = remainStock;
     this.purchaseLimit = purchaseLimit;
     this.useQueue = useQueue;
-    this.status = DropStatus.SCHEDULED;
+    this.status = DropsStatus.SCHEDULED;
 
     validateDateRange(startAt, endAt);
     validateStock(totalStock, remainStock);
@@ -119,14 +120,14 @@ public class Drops extends BaseEntity {
    * 드랍 상태를 진행 중으로 변경한다.
    */
   public void activate() {
-    this.status = DropStatus.ACTIVE;
+    this.status = DropsStatus.ACTIVE;
   }
 
   /**
    * 드랍 상태를 종료로 변경한다.
    */
   public void finish() {
-    this.status = DropStatus.FINISHED;
+    this.status = DropsStatus.FINISHED;
   }
 
   private void validateDateRange(LocalDateTime startAt, LocalDateTime endAt) {
