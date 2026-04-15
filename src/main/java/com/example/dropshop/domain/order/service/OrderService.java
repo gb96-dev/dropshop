@@ -1,10 +1,10 @@
 package com.example.dropshop.domain.order.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
-import com.example.dropshop.common.exception.ServiceException;
+import com.example.dropshop.common.exception.OrderException;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
-import com.example.dropshop.domain.order.entity.OrderStatus;
+import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.order.repository.OrderRepository;
 import java.math.BigDecimal;
@@ -37,7 +37,7 @@ public class OrderService {
         userId,
         dropId,
         List.of(OrderStatus.PENDING, OrderStatus.PAID))) {
-      throw new ServiceException(ErrorCode.ORDER_DUPLICATE);
+      throw new OrderException(ErrorCode.ORDER_DUPLICATE);
     }
 
     Order order = Order.create(userId, dropId);
@@ -54,7 +54,7 @@ public class OrderService {
   @Transactional(readOnly = true)
   public Order findOrderById(Long orderId, Long userId) {
     return orderRepository.findByIdAndUserId(orderId, userId)
-        .orElseThrow(() -> new ServiceException(ErrorCode.ORDER_NOT_FOUND));
+        .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
   }
 
   /**

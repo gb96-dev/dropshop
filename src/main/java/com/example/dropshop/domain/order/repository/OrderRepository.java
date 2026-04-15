@@ -1,7 +1,7 @@
 package com.example.dropshop.domain.order.repository;
 
 import com.example.dropshop.domain.order.entity.Order;
-import com.example.dropshop.domain.order.entity.OrderStatus;
+import com.example.dropshop.domain.order.enums.OrderStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
