@@ -2,9 +2,9 @@ package com.example.dropshop.common.exception;
 
 import com.example.dropshop.common.dto.ApiResponse;
 import com.example.dropshop.common.dto.ExceptionResponse;
-import com.example.dropshop.domain.drops.exception.DropsException;
-import com.example.dropshop.domain.product.exception.ProductException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,42 +14,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /**
  * 전역 예외 처리를 하기 위한 GlobalExceptionHandler.
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-  /**
-   * Product 도메인 예외를 공통 응답으로 변환한다.
-   */
-  @ExceptionHandler(ProductException.class)
-  public ResponseEntity<ApiResponse<ErrorResponse>> handleProductException(ProductException ex) {
-    ErrorCode errorCode = ex.getErrorCode();
-    ErrorResponse body = new ErrorResponse(errorCode.name(), errorCode.getMessage());
-    return ResponseEntity.status(errorCode.getStatus())
-        .body(ApiResponse.fail(errorCode.getStatus(), body));
-  }
-
-  /**
-   * Drops 도메인 예외를 공통 응답으로 변환한다.
-   */
-  @ExceptionHandler(DropsException.class)
-  public ResponseEntity<ApiResponse<ErrorResponse>> handleDropsException(DropsException ex) {
-    ErrorCode errorCode = ex.getErrorCode();
-    ErrorResponse body = new ErrorResponse(errorCode.name(), errorCode.getMessage());
-    return ResponseEntity.status(errorCode.getStatus())
-        .body(ApiResponse.fail(errorCode.getStatus(), body));
-  }
-
-  /**
-   * Order 도메인 예외를 공통 응답으로 변환한다.
-   */
-  @ExceptionHandler(com.example.dropshop.domain.order.exception.OrderException.class)
-  public ResponseEntity<ApiResponse<ErrorResponse>> handleOrderException(
-      com.example.dropshop.domain.order.exception.OrderException ex) {
-    ErrorCode errorCode = ex.getErrorCode();
-    ErrorResponse body = new ErrorResponse(errorCode.name(), errorCode.getMessage());
-    return ResponseEntity.status(errorCode.getStatus())
-        .body(ApiResponse.fail(errorCode.getStatus(), body));
-  }
 
   /**
    * Validation이 유효한지 감지하여 올바른 형식이 아닐경우 예외처리.
@@ -84,4 +51,23 @@ public class GlobalExceptionHandler {
             request.getRequestURI()
         ));
   }
+
+  /**
+   * 처리되지 않은 예외 공통 처리.
+   */
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ExceptionResponse> handleException(
+      Exception e, HttpServletRequest request) {
+
+    log.error("Unhandled Exception - uri: {}, message: {}",
+        request.getRequestURI(), e.getMessage(), e);
+
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ExceptionResponse.from(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            "에러가 발생했습니다. 다시 시도해주세요.",
+            request.getRequestURI()
+        ));
+  }
 }
+

@@ -1,13 +1,14 @@
 package com.example.dropshop.domain.drops.exception;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.common.exception.ServiceException;
 import lombok.Getter;
 
 /**
  * 드랍 도메인 전용 예외.
  */
 @Getter
-public class DropsException extends RuntimeException {
+public class DropsException extends ServiceException {
 
   private final ErrorCode errorCode;
 
@@ -17,7 +18,11 @@ public class DropsException extends RuntimeException {
    * @param errorCode 공통 에러 코드
    */
   public DropsException(ErrorCode errorCode) {
-    super(errorCode.getMessage());
+    super(errorCode);
+    this.errorCode = errorCode;
+  }
+  public DropsException(ErrorCode errorCode, String message) {
+    super(errorCode, message);
     this.errorCode = errorCode;
   }
 }

@@ -3,10 +3,14 @@ package com.example.dropshop.domain.order.service;
 import com.example.dropshop.domain.order.dto.request.OrderCreateRequest;
 import com.example.dropshop.domain.order.dto.response.OrderCreateResponse;
 import com.example.dropshop.domain.order.dto.response.OrderGetoneResponse;
+import com.example.dropshop.domain.order.dto.response.OrderListItemResponse;
 import com.example.dropshop.domain.order.entity.Order;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 주문 파사드 서비스.
@@ -42,5 +46,21 @@ public class OrderFacadeService {
    */
   public OrderGetoneResponse findOrderById(Long orderId, Long userId) {
     return OrderGetoneResponse.from(orderService.findOrderById(orderId, userId));
+  }
+
+  /**
+   * 주문 목록 조회.
+   */
+  @Transactional(readOnly = true)
+  public Page<OrderListItemResponse> findOrdersByUserId(Long userId, Pageable pageable) {
+    return orderService.findOrdersByUserId(userId, pageable)
+        .map(OrderListItemResponse::from);
+  }
+
+  /**
+   * 주문 수동 취소.
+   */
+  public OrderGetoneResponse cancelOrder(Long orderId, Long userId) {
+    return OrderGetoneResponse.from(orderService.cancelOrder(orderId, userId));
   }
 }
