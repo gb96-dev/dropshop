@@ -2,10 +2,12 @@ package com.example.dropshop.domain.notification.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.Arrays;
+import lombok.Getter;
 
 /**
  * 알림 타입 enum.
  */
+@Getter
 public enum NotificationType {
   DROP_IMPENDING("드랍 임박"),
   PURCHASE_SUCCESS("구매 성공"),
