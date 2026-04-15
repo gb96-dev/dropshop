@@ -1,0 +1,76 @@
+package com.example.dropshop.domain.order.service;
+
+import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.common.exception.ServiceException;
+import com.example.dropshop.domain.order.entity.Order;
+import com.example.dropshop.domain.order.entity.OrderItem;
+import com.example.dropshop.domain.order.entity.OrderStatus;
+import com.example.dropshop.domain.order.event.StockRestoreEvent;
+import com.example.dropshop.domain.order.repository.OrderRepository;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 주문 서비스.
+ */
+@Service
+@RequiredArgsConstructor
+public class OrderService {
+
+  private final OrderRepository orderRepository;
+  private final ApplicationEventPublisher eventPublisher;
+
+  /**
+   * 주문 생성.
+   */
+  @Transactional
+  public Order createOrder(Long userId, Long dropId, Long productId,
+      BigDecimal priceSnapshot, BigDecimal salePriceSnapshot,
+      BigDecimal discountAmountSnapshot, String thumbnailUrlSnapshot) {
+
+    if (orderRepository.existsByUserIdAndDropIdAndStatusIn(
+        userId,
+        dropId,
+        List.of(OrderStatus.PENDING, OrderStatus.PAID))) {
+      throw new ServiceException(ErrorCode.ORDER_DUPLICATE);
+    }
+
+    Order order = Order.create(userId, dropId);
+    OrderItem orderItem = OrderItem.create(order, productId,
+        priceSnapshot, salePriceSnapshot, discountAmountSnapshot, thumbnailUrlSnapshot);
+    order.addOrderItem(orderItem);
+
+    return orderRepository.save(order);
+  }
+
+  /**
+   * 단건 조회.
+   */
+  @Transactional(readOnly = true)
+  public Order findOrderById(Long orderId, Long userId) {
+    return orderRepository.findByIdAndUserId(orderId, userId)
+        .orElseThrow(() -> new ServiceException(ErrorCode.ORDER_NOT_FOUND));
+  }
+
+  /**
+   * 만료 주문 취소 처리.
+   */
+  @Transactional
+  public void cancelExpiredOrders() {
+    List<Order> expiredOrders = orderRepository
+        .findAllByStatusAndHoldExpiredAtBefore(OrderStatus.PENDING, LocalDateTime.now());
+
+    expiredOrders.forEach(order -> {
+      order.cancel();
+      order.getOrderItems().forEach(item ->
+          eventPublisher.publishEvent(new StockRestoreEvent(item.getProductId()))
+      );
+    });
+  }
+
+}
