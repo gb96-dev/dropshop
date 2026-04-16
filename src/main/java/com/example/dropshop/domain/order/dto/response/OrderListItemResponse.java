@@ -14,7 +14,7 @@ public class OrderListItemResponse {
 
   private final Long orderId;
   private final Long dropId;
-  private final BigDecimal totalPrice;
+  private final BigDecimal totalAmount;
   private final OrderStatus status;
   private final LocalDateTime holdExpiredAt;
   private final LocalDateTime createdAt;
@@ -23,7 +23,7 @@ public class OrderListItemResponse {
   private OrderListItemResponse(Order order) {
     this.orderId = order.getId();
     this.dropId = order.getDropId();
-    this.totalPrice = order.getTotalAmount();
+    this.totalAmount = order.getTotalAmount();
     this.status = order.getStatus();
     this.holdExpiredAt = order.getHoldExpiredAt();
     this.createdAt = order.getCreatedAt();
