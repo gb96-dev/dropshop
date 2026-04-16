@@ -13,7 +13,7 @@ import lombok.Getter;
  * 주문 단건 조회 응답.
  */
 @Getter
-public class OrderGetoneResponse {
+public class OrderDetailResponse {
 
   private final Long orderId;
   private final String orderNumber;
@@ -22,7 +22,7 @@ public class OrderGetoneResponse {
   private final LocalDateTime holdExpiredAt;
   private final List<OrderItemResponse> orderItems;
 
-  private OrderGetoneResponse(Order order) {
+  private OrderDetailResponse(Order order) {
     this.orderId = order.getId();
     this.orderNumber = order.getOrderNumber();
     this.status = order.getStatus();
@@ -36,7 +36,7 @@ public class OrderGetoneResponse {
   /**
    * Order로부터 응답 생성.
    */
-  public static OrderGetoneResponse from(Order order) {
-    return new OrderGetoneResponse(order);
+  public static OrderDetailResponse from(Order order) {
+    return new OrderDetailResponse(order);
   }
 }

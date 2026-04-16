@@ -3,9 +3,9 @@ package com.example.dropshop.domain.order.controller;
 import com.example.dropshop.common.dto.ApiResponse;
 import com.example.dropshop.domain.order.dto.request.OrderCreateRequest;
 import com.example.dropshop.domain.order.dto.response.OrderCreateResponse;
-import com.example.dropshop.domain.order.dto.response.OrderGetoneResponse;
+import com.example.dropshop.domain.order.dto.response.OrderDetailResponse;
 import com.example.dropshop.domain.order.dto.response.OrderListItemResponse;
-import com.example.dropshop.domain.order.service.OrderFacadeService;
+import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -47,7 +47,7 @@ public class OrderController {
    * 주문 단건 조회.
    */
   @GetMapping("/{orderId}")
-  public ResponseEntity<ApiResponse<OrderGetoneResponse>> findOrderById(
+  public ResponseEntity<ApiResponse<OrderDetailResponse>> findOrderById(
       @PathVariable Long orderId) {
     // TODO: @AuthenticationPrincipal로 userId 주입
     Long userId = 1L;
@@ -75,7 +75,7 @@ public class OrderController {
    * 주문 수동 취소.
    */
   @PatchMapping("/{orderId}/cancel")
-  public ResponseEntity<ApiResponse<OrderGetoneResponse>> cancelOrder(
+  public ResponseEntity<ApiResponse<OrderDetailResponse>> cancelOrder(
       @PathVariable Long orderId) {
     Long userId = 1L;
     return ResponseEntity.ok(ApiResponse.ok(orderFacadeService.cancelOrder(orderId, userId)));
