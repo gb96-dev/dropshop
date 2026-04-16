@@ -1,4 +1,4 @@
-package com.example.dropshop.domain.product.dto;
+package com.example.dropshop.domain.product.dto.request;
 
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import jakarta.validation.constraints.NotNull;

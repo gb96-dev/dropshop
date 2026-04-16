@@ -64,7 +64,7 @@ public class OrderService {
    * 목록 조회.
    */
   @Transactional(readOnly = true)
-  public Page<Order> findOrdersByUserId(Long userId, Pageable pageable) {
+  public Page<Order> findAllOrdersByUserId(Long userId, Pageable pageable) {
     return orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable);
   }
 

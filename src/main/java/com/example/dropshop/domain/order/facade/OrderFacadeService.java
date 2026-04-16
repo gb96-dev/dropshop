@@ -1,10 +1,11 @@
-package com.example.dropshop.domain.order.service;
+package com.example.dropshop.domain.order.facade;
 
 import com.example.dropshop.domain.order.dto.request.OrderCreateRequest;
 import com.example.dropshop.domain.order.dto.response.OrderCreateResponse;
-import com.example.dropshop.domain.order.dto.response.OrderGetoneResponse;
+import com.example.dropshop.domain.order.dto.response.OrderDetailResponse;
 import com.example.dropshop.domain.order.dto.response.OrderListItemResponse;
 import com.example.dropshop.domain.order.entity.Order;
+import com.example.dropshop.domain.order.service.OrderService;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,8 +45,8 @@ public class OrderFacadeService {
   /**
    * 주문 단건 조회.
    */
-  public OrderGetoneResponse findOrderById(Long orderId, Long userId) {
-    return OrderGetoneResponse.from(orderService.findOrderById(orderId, userId));
+  public OrderDetailResponse findOrderById(Long orderId, Long userId) {
+    return OrderDetailResponse.from(orderService.findOrderById(orderId, userId));
   }
 
   /**
@@ -53,14 +54,14 @@ public class OrderFacadeService {
    */
   @Transactional(readOnly = true)
   public Page<OrderListItemResponse> findOrdersByUserId(Long userId, Pageable pageable) {
-    return orderService.findOrdersByUserId(userId, pageable)
+    return orderService.findAllOrdersByUserId(userId, pageable)
         .map(OrderListItemResponse::from);
   }
 
   /**
    * 주문 수동 취소.
    */
-  public OrderGetoneResponse cancelOrder(Long orderId, Long userId) {
-    return OrderGetoneResponse.from(orderService.cancelOrder(orderId, userId));
+  public OrderDetailResponse cancelOrder(Long orderId, Long userId) {
+    return OrderDetailResponse.from(orderService.cancelOrder(orderId, userId));
   }
 }

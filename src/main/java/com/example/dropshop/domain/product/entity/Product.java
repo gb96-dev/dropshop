@@ -285,8 +285,11 @@ public class Product extends BaseEntity {
     }
     this.images.add(image);
     if (image.isThumbnail()) {
-      syncThumbnailUrl(image.getImageUrl());
+      setThumbnail(image);
+      return;
     }
+
+    validateSingleThumbnail();
   }
 
   /**
@@ -301,6 +304,15 @@ public class Product extends BaseEntity {
     });
     newThumbnail.markAsThumbnail();
     syncThumbnailUrl(newThumbnail.getImageUrl());
+    validateSingleThumbnail();
+  }
+
+  /**
+   * 상품에서 이미지를 삭제한다.
+   */
+  public void removeImage(ProductImage image) {
+    this.images.remove(image);
+    validateSingleThumbnail();
   }
 
   // -------------------------------------------------------------------------
@@ -339,6 +351,15 @@ public class Product extends BaseEntity {
 
   private void syncThumbnailUrl(String url) {
     this.thumbnailUrl = url;
+  }
+
+  private void validateSingleThumbnail() {
+    long thumbnailCount = this.images.stream()
+        .filter(ProductImage::isThumbnail)
+        .count();
+    if (thumbnailCount != 1L) {
+      throw new ProductException(ErrorCode.THUMBNAIL_REQUIRED);
+    }
   }
 
   private static void validatePrice(BigDecimal price) {

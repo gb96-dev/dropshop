@@ -216,4 +216,132 @@ class OrderServiceTest {
     StockRestoreEvent event = eventCaptor.getValue();
     assertThat(event.getProductId()).isEqualTo(productId);
   }
+
+  @Test
+  @DisplayName("주문 목록 조회 성공")
+  void findOrdersByUserId_success() {
+    // given
+    Order order1 = Order.create(userId, dropId);
+    ReflectionTestUtils.setField(order1, "id", 1L);
+
+    Order order2 = Order.create(userId, 20L);
+    ReflectionTestUtils.setField(order2, "id", 2L);
+
+    org.springframework.data.domain.Page<Order> page =
+        new org.springframework.data.domain.PageImpl<>(List.of(order1, order2));
+
+    given(orderRepository.findAllByUserIdOrderByCreatedAtDesc(
+        eq(userId),
+        any(org.springframework.data.domain.Pageable.class)
+    )).willReturn(page);
+
+    // when
+    org.springframework.data.domain.Page<Order> result = orderService.findAllOrdersByUserId(
+        userId,
+        org.springframework.data.domain.PageRequest.of(0, 20)
+    );
+
+    // then
+    assertThat(result.getContent()).hasSize(2);
+    assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
+    assertThat(result.getContent().get(1).getId()).isEqualTo(2L);
+
+    verify(orderRepository, times(1))
+        .findAllByUserIdOrderByCreatedAtDesc(eq(userId), any(org.springframework.data.domain.Pageable.class));
+  }
+
+  @Test
+  @DisplayName("수동 주문 취소 성공 - 상태가 CANCELLED로 변경되고 재고 복원 이벤트가 발행된다")
+  void cancelOrder_success() {
+    // given
+    Order order = Order.create(userId, dropId);
+    ReflectionTestUtils.setField(order, "id", 1L);
+
+    order.addOrderItem(
+        com.example.dropshop.domain.order.entity.OrderItem.create(
+            order,
+            productId,
+            priceSnapshot,
+            salePriceSnapshot,
+            discountAmountSnapshot,
+            thumbnailUrlSnapshot
+        )
+    );
+
+    given(orderRepository.findByIdAndUserId(1L, userId)).willReturn(Optional.of(order));
+
+    // when
+    Order result = orderService.cancelOrder(1L, userId);
+
+    // then
+    assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+
+    ArgumentCaptor<StockRestoreEvent> eventCaptor =
+        ArgumentCaptor.forClass(StockRestoreEvent.class);
+
+    verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
+
+    StockRestoreEvent event = eventCaptor.getValue();
+    assertThat(event.getProductId()).isEqualTo(productId);
+    assertThat(event.getQuantity()).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("수동 주문 취소 실패 - 주문이 없으면 예외 발생")
+  void cancelOrder_notFound_throwsException() {
+    // given
+    given(orderRepository.findByIdAndUserId(999L, userId)).willReturn(Optional.empty());
+
+    // when & then
+    assertThatThrownBy(() -> orderService.cancelOrder(999L, userId))
+        .isInstanceOf(OrderException.class);
+
+    verify(orderRepository, times(1)).findByIdAndUserId(999L, userId);
+    verify(eventPublisher, never()).publishEvent(any());
+  }
+
+  @Test
+  @DisplayName("수동 주문 취소 실패 - 이미 결제 완료된 주문이면 예외 발생")
+  void cancelOrder_invalidStatus_paid_throwsException() {
+    // given
+    Order order = Order.create(userId, dropId);
+    ReflectionTestUtils.setField(order, "id", 1L);
+
+    order.addOrderItem(
+        com.example.dropshop.domain.order.entity.OrderItem.create(
+            order,
+            productId,
+            priceSnapshot,
+            salePriceSnapshot,
+            discountAmountSnapshot,
+            thumbnailUrlSnapshot
+        )
+    );
+    order.pay();
+
+    given(orderRepository.findByIdAndUserId(1L, userId)).willReturn(Optional.of(order));
+
+    // when & then
+    assertThatThrownBy(() -> orderService.cancelOrder(1L, userId))
+        .isInstanceOf(OrderException.class);
+
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+    verify(eventPublisher, never()).publishEvent(any());
+  }
+
+  @Test
+  @DisplayName("만료된 주문이 없으면 아무 일도 일어나지 않는다")
+  void cancelExpiredOrders_noExpiredOrders() {
+    // given
+    given(orderRepository.findAllByStatusAndHoldExpiredAtBefore(
+        eq(OrderStatus.PENDING),
+        any(java.time.LocalDateTime.class)
+    )).willReturn(List.of());
+
+    // when
+    orderService.cancelExpiredOrders();
+
+    // then
+    verify(eventPublisher, never()).publishEvent(any());
+  }
 }
