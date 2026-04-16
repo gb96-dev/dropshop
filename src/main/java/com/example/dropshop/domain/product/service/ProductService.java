@@ -1,10 +1,13 @@
 package com.example.dropshop.domain.product.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
-import com.example.dropshop.domain.product.dto.ProductCreateRequest;
-import com.example.dropshop.domain.product.dto.ProductCreateResponse;
-import com.example.dropshop.domain.product.dto.ProductStatusUpdateRequest;
-import com.example.dropshop.domain.product.dto.ProductUpdateRequest;
+import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
+import com.example.dropshop.domain.product.dto.response.ProductCreateResponse;
+import com.example.dropshop.domain.product.dto.request.ProductImageCreateRequest;
+import com.example.dropshop.domain.product.dto.response.ProductImageResponse;
+import com.example.dropshop.domain.product.dto.request.ProductImageUpdateRequest;
+import com.example.dropshop.domain.product.dto.request.ProductStatusUpdateRequest;
+import com.example.dropshop.domain.product.dto.request.ProductUpdateRequest;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.entity.ProductImage;
 import com.example.dropshop.domain.product.enums.ProductStatus;
@@ -167,6 +170,97 @@ public class ProductService {
     productRepository.delete(product);
   }
 
+  /**
+   * 판매자 상품 이미지를 추가한다.
+   */
+  @Transactional
+  public ProductImageResponse createSellerProductImage(
+      Long productId,
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified,
+      ProductImageCreateRequest request
+  ) {
+    validateSellerState(sellerApproved, sellerVerified);
+    Product product = findOwnedProduct(productId, sellerId);
+
+    ProductImage image = ProductImage.builder()
+        .product(product)
+        .imageUrl(request.getImageUrl())
+        .sortOrder(request.getSortOrder())
+        .isThumbnail(request.getIsThumbnail())
+        .build();
+
+    product.addImage(image);
+    Product saved = productRepository.save(product);
+    ProductImage savedImage = findImageByUrlAndSortOrder(
+        saved,
+        request.getImageUrl(),
+        request.getSortOrder()
+    );
+    return ProductImageResponse.from(savedImage);
+  }
+
+  /**
+   * 판매자 상품 이미지를 수정한다.
+   */
+  @Transactional
+  public ProductImageResponse updateSellerProductImage(
+      Long productId,
+      Long imageId,
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified,
+      ProductImageUpdateRequest request
+  ) {
+    validateSellerState(sellerApproved, sellerVerified);
+    Product product = findOwnedProduct(productId, sellerId);
+    ProductImage targetImage = findOwnedImage(product, imageId);
+
+    if (request.getSortOrder() != null) {
+      targetImage.updateSortOrder(request.getSortOrder());
+    }
+
+    if (request.getIsThumbnail() != null) {
+      if (Boolean.TRUE.equals(request.getIsThumbnail())) {
+        product.setThumbnail(targetImage);
+      } else if (targetImage.isThumbnail()) {
+        throw new ProductException(ErrorCode.THUMBNAIL_REQUIRED);
+      }
+    }
+
+    Product saved = productRepository.save(product);
+    ProductImage savedImage = findOwnedImage(saved, imageId);
+    return ProductImageResponse.from(savedImage);
+  }
+
+  /**
+   * 판매자 상품 이미지를 삭제한다.
+   */
+  @Transactional
+  public void deleteSellerProductImage(
+      Long productId,
+      Long imageId,
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified
+  ) {
+    validateSellerState(sellerApproved, sellerVerified);
+    Product product = findOwnedProduct(productId, sellerId);
+    ProductImage targetImage = findOwnedImage(product, imageId);
+
+    if (targetImage.isThumbnail()) {
+      throw new ProductException(ErrorCode.THUMBNAIL_DELETE_NOT_ALLOWED);
+    }
+
+    if (product.getImages().size() <= 1) {
+      throw new ProductException(ErrorCode.IMAGE_MIN_REQUIRED);
+    }
+
+    product.removeImage(targetImage);
+    productRepository.save(product);
+  }
+
   private void validateSellerState(boolean sellerApproved, boolean sellerVerified) {
     if (!sellerApproved) {
       throw new ProductException(ErrorCode.SELLER_NOT_APPROVED);
@@ -217,6 +311,21 @@ public class ProductService {
       throw new ProductException(ErrorCode.PRODUCT_ACCESS_DENIED);
     }
     return product;
+  }
+
+  private ProductImage findOwnedImage(Product product, Long imageId) {
+    return product.getImages().stream()
+        .filter(image -> image.getId().equals(imageId))
+        .findFirst()
+        .orElseThrow(() -> new ProductException(ErrorCode.PRODUCT_IMAGE_NOT_FOUND));
+  }
+
+  private ProductImage findImageByUrlAndSortOrder(Product product, String imageUrl, Integer sortOrder) {
+    return product.getImages().stream()
+        .filter(image -> image.getImageUrl().equals(imageUrl)
+            && image.getSortOrder() == sortOrder)
+        .max(Comparator.comparing(ProductImage::getId))
+        .orElseThrow(() -> new ProductException(ErrorCode.PRODUCT_IMAGE_NOT_FOUND));
   }
 
   private boolean isCoreFieldUpdateRequested(ProductUpdateRequest request) {

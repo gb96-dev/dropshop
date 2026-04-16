@@ -2,10 +2,13 @@ package com.example.dropshop.domain.product.service;
 
 import com.example.dropshop.domain.drops.service.DropsFacadeService;
 import com.example.dropshop.domain.order.service.OrderItemFacadeService;
-import com.example.dropshop.domain.product.dto.ProductCreateRequest;
-import com.example.dropshop.domain.product.dto.ProductCreateResponse;
-import com.example.dropshop.domain.product.dto.ProductStatusUpdateRequest;
-import com.example.dropshop.domain.product.dto.ProductUpdateRequest;
+import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
+import com.example.dropshop.domain.product.dto.response.ProductCreateResponse;
+import com.example.dropshop.domain.product.dto.request.ProductImageCreateRequest;
+import com.example.dropshop.domain.product.dto.response.ProductImageResponse;
+import com.example.dropshop.domain.product.dto.request.ProductImageUpdateRequest;
+import com.example.dropshop.domain.product.dto.request.ProductStatusUpdateRequest;
+import com.example.dropshop.domain.product.dto.request.ProductUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,6 +102,68 @@ public class ProductFacadeService {
         sellerVerified,
         hasDropHistory,
         hasOrderHistory
+    );
+  }
+
+  /**
+   * 판매자 상품 이미지를 추가한다.
+   */
+  @Transactional
+  public ProductImageResponse createSellerProductImage(
+      Long productId,
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified,
+      ProductImageCreateRequest request
+  ) {
+    return productService.createSellerProductImage(
+        productId,
+        sellerId,
+        sellerApproved,
+        sellerVerified,
+        request
+    );
+  }
+
+  /**
+   * 판매자 상품 이미지를 수정한다.
+   */
+  @Transactional
+  public ProductImageResponse updateSellerProductImage(
+      Long productId,
+      Long imageId,
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified,
+      ProductImageUpdateRequest request
+  ) {
+    return productService.updateSellerProductImage(
+        productId,
+        imageId,
+        sellerId,
+        sellerApproved,
+        sellerVerified,
+        request
+    );
+  }
+
+  /**
+   * 판매자 상품 이미지를 삭제한다.
+   */
+  @Transactional
+  public void deleteSellerProductImage(
+      Long productId,
+      Long imageId,
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified
+  ) {
+    productService.deleteSellerProductImage(
+        productId,
+        imageId,
+        sellerId,
+        sellerApproved,
+        sellerVerified
     );
   }
 }

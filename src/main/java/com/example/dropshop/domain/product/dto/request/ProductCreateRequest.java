@@ -1,4 +1,4 @@
-package com.example.dropshop.domain.product.dto;
+package com.example.dropshop.domain.product.dto.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;

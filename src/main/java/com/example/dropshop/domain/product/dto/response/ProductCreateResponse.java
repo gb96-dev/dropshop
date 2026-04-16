@@ -1,4 +1,4 @@
-package com.example.dropshop.domain.product.dto;
+package com.example.dropshop.domain.product.dto.response;
 
 import com.example.dropshop.domain.product.entity.Product;
 import java.math.BigDecimal;
