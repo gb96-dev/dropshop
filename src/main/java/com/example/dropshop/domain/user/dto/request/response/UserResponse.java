@@ -1,8 +1,8 @@
-package com.example.dropshop.domain.user.dto.response;
+package com.example.dropshop.domain.user.dto.request.response;
 
 import com.example.dropshop.domain.user.entity.User;
-import com.example.dropshop.domain.user.entity.UserRole;
-import com.example.dropshop.domain.user.entity.UserStatus;
+import com.example.dropshop.domain.enums.UserRole;
+import com.example.dropshop.domain.enums.UserStatus;
 import lombok.Builder;
 import lombok.Getter;
 

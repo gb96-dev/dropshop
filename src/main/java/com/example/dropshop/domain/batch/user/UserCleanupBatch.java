@@ -1,7 +1,7 @@
 package com.example.dropshop.domain.batch.user;
 
 import com.example.dropshop.domain.user.entity.User;
-import com.example.dropshop.domain.user.entity.UserStatus;
+import com.example.dropshop.domain.enums.UserStatus;
 import com.example.dropshop.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

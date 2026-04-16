@@ -1,4 +1,21 @@
 spring:
-  config:
-    import:
-      optional:file:./secret.yml
+  # DataSource 설정
+  datasource:
+    url: jdbc:mysql://localhost:3306/dropshop?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA / Hibernate 설정
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  # 아까 발생한 Bean 중복 등록 에러 해결을 위한 설정 (필요 시 추가)
+  main:
+    allow-bean-definition-overriding: true
