@@ -2,10 +2,10 @@ package com.example.dropshop.domain.product.controller;
 
 import com.example.dropshop.common.dto.ApiResponse;
 import com.example.dropshop.common.exception.ErrorCode;
-import com.example.dropshop.domain.product.dto.ProductCreateRequest;
-import com.example.dropshop.domain.product.dto.ProductCreateResponse;
-import com.example.dropshop.domain.product.dto.ProductStatusUpdateRequest;
-import com.example.dropshop.domain.product.dto.ProductUpdateRequest;
+import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
+import com.example.dropshop.domain.product.dto.response.ProductCreateResponse;
+import com.example.dropshop.domain.product.dto.request.ProductStatusUpdateRequest;
+import com.example.dropshop.domain.product.dto.request.ProductUpdateRequest;
 import com.example.dropshop.domain.product.exception.ProductException;
 import com.example.dropshop.domain.product.service.ProductService;
 import jakarta.validation.Valid;
