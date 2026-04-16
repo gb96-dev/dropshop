@@ -16,6 +16,7 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
 
-  # 아까 발생한 Bean 중복 등록 에러 해결을 위한 설정 (필요 시 추가)
-  main:
-    allow-bean-definition-overriding: true
+jwt:
+  secret: vms6020-very-secret-key-for-dropshop-project-2026 # 32자 이상의 안전한 키
+  access-token-expiration: 3600000 # 1시간 (ms 단위)
+  refresh-token-expiration: 604800000 # 7일 (ms 단위)
