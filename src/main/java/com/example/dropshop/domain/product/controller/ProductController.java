@@ -7,7 +7,7 @@ import com.example.dropshop.domain.product.dto.ProductCreateResponse;
 import com.example.dropshop.domain.product.dto.ProductStatusUpdateRequest;
 import com.example.dropshop.domain.product.dto.ProductUpdateRequest;
 import com.example.dropshop.domain.product.exception.ProductException;
-import com.example.dropshop.domain.product.service.ProductService;
+import com.example.dropshop.domain.product.service.ProductFacadeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/sellers/products")
 public class ProductController {
 
-  private final ProductService productService;
+  private final ProductFacadeService productFacadeService;
 
   /**
    * 판매자가 새로운 상품을 등록한다.
@@ -44,7 +44,7 @@ public class ProductController {
   ) {
     validateSellerRole(role);
 
-    ProductCreateResponse response = productService.createSellerProduct(
+    ProductCreateResponse response = productFacadeService.createSellerProduct(
         sellerId,
         sellerApproved,
         sellerVerified,
@@ -62,10 +62,18 @@ public class ProductController {
       @PathVariable Long id,
       @RequestHeader("X-SELLER-ID") Long sellerId,
       @RequestHeader(value = "X-ROLE", required = false) String role,
+      @RequestHeader(value = "X-SELLER-APPROVED", defaultValue = "false") boolean sellerApproved,
+      @RequestHeader(value = "X-SELLER-VERIFIED", defaultValue = "false") boolean sellerVerified,
       @Valid @RequestBody ProductUpdateRequest request
   ) {
     validateSellerRole(role);
-    ProductCreateResponse response = productService.updateSellerProduct(id, sellerId, request);
+    ProductCreateResponse response = productFacadeService.updateSellerProduct(
+        id,
+        sellerId,
+        sellerApproved,
+        sellerVerified,
+        request
+    );
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 
@@ -77,10 +85,18 @@ public class ProductController {
       @PathVariable Long id,
       @RequestHeader("X-SELLER-ID") Long sellerId,
       @RequestHeader(value = "X-ROLE", required = false) String role,
+      @RequestHeader(value = "X-SELLER-APPROVED", defaultValue = "false") boolean sellerApproved,
+      @RequestHeader(value = "X-SELLER-VERIFIED", defaultValue = "false") boolean sellerVerified,
       @Valid @RequestBody ProductStatusUpdateRequest request
   ) {
     validateSellerRole(role);
-    ProductCreateResponse response = productService.changeSellerProductStatus(id, sellerId, request);
+    ProductCreateResponse response = productFacadeService.changeSellerProductStatus(
+        id,
+        sellerId,
+        sellerApproved,
+        sellerVerified,
+        request
+    );
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 
@@ -91,10 +107,12 @@ public class ProductController {
   public ResponseEntity<ApiResponse<Void>> deleteProduct(
       @PathVariable Long id,
       @RequestHeader("X-SELLER-ID") Long sellerId,
-      @RequestHeader(value = "X-ROLE", required = false) String role
+      @RequestHeader(value = "X-ROLE", required = false) String role,
+      @RequestHeader(value = "X-SELLER-APPROVED", defaultValue = "false") boolean sellerApproved,
+      @RequestHeader(value = "X-SELLER-VERIFIED", defaultValue = "false") boolean sellerVerified
   ) {
     validateSellerRole(role);
-    productService.deleteSellerProduct(id, sellerId);
+    productFacadeService.deleteSellerProduct(id, sellerId, sellerApproved, sellerVerified);
     return ResponseEntity.ok(ApiResponse.ok());
   }
 

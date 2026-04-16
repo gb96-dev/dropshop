@@ -1,9 +1,6 @@
 package com.example.dropshop.domain.product.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
-import com.example.dropshop.domain.drops.enums.DropsStatus;
-import com.example.dropshop.domain.drops.repository.DropsRepository;
-import com.example.dropshop.domain.order.repository.OrderItemRepository;
 import com.example.dropshop.domain.product.dto.ProductCreateRequest;
 import com.example.dropshop.domain.product.dto.ProductCreateResponse;
 import com.example.dropshop.domain.product.dto.ProductStatusUpdateRequest;
@@ -14,8 +11,6 @@ import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.exception.ProductException;
 import com.example.dropshop.domain.product.repository.ProductRepository;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,15 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
   private static final int MAX_IMAGE_COUNT = 5;
-  private static final Collection<DropsStatus> NON_DELETABLE_DROP_STATUSES = Arrays.asList(
-      DropsStatus.SCHEDULED,
-      DropsStatus.ACTIVE,
-      DropsStatus.FINISHED
-  );
 
   private final ProductRepository productRepository;
-  private final DropsRepository dropsRepository;
-  private final OrderItemRepository orderItemRepository;
   private final ProductPolicyProperties policyProperties;
 
   /**
@@ -89,8 +77,11 @@ public class ProductService {
   public ProductCreateResponse updateSellerProduct(
       Long productId,
       Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified,
       ProductUpdateRequest request
   ) {
+    validateSellerState(sellerApproved, sellerVerified);
     Product product = findOwnedProduct(productId, sellerId);
 
     if (isCoreFieldUpdateRequested(request) && isCoreUpdateLocked(product)) {
@@ -138,8 +129,11 @@ public class ProductService {
   public ProductCreateResponse changeSellerProductStatus(
       Long productId,
       Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified,
       ProductStatusUpdateRequest request
   ) {
+    validateSellerState(sellerApproved, sellerVerified);
     Product product = findOwnedProduct(productId, sellerId);
 
     if (request.getStatus() != ProductStatus.HIDDEN) {
@@ -155,14 +149,17 @@ public class ProductService {
    * 판매자 상품을 삭제한다.
    */
   @Transactional
-  public void deleteSellerProduct(Long productId, Long sellerId) {
+  public void deleteSellerProduct(
+      Long productId,
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified,
+      boolean hasDropHistory,
+      boolean hasOrderHistory
+  ) {
+    validateSellerState(sellerApproved, sellerVerified);
     Product product = findOwnedProduct(productId, sellerId);
 
-    boolean hasDropHistory = dropsRepository.existsByProductIdAndStatusIn(
-        productId,
-        NON_DELETABLE_DROP_STATUSES
-    );
-    boolean hasOrderHistory = orderItemRepository.existsByProductId(productId);
     if (hasDropHistory || hasOrderHistory) {
       throw new ProductException(ErrorCode.PRODUCT_DELETE_NOT_ALLOWED);
     }
