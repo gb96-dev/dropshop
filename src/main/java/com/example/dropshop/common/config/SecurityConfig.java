@@ -33,10 +33,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/users/signup",
-                                "/api/auth/**"   //  로그인/리프레시 허용
-                        ).permitAll()
+                        .requestMatchers("/api/users/signup").permitAll()
+                        .requestMatchers("/api/sellers/**").permitAll() // TODO: JWT 구현 후 제거
                         .anyRequest().authenticated()
                 )
 
