@@ -1,4 +1,4 @@
-package com.example.dropshop.global.jwt;
+package com.example.dropshop.common.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
