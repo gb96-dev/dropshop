@@ -1,8 +1,8 @@
 package com.example.dropshop.domain.user.entity;
 
 import com.example.dropshop.common.entity.BaseEntity;
-import com.example.dropshop.domain.enums.UserRole;
-import com.example.dropshop.domain.enums.UserStatus;
+import com.example.dropshop.domain.user.enums.UserRole;
+import com.example.dropshop.domain.user.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

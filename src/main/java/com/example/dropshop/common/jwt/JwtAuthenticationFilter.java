@@ -27,23 +27,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
             String token = authHeader.substring(7);
 
             if (jwtUtil.validateToken(token)) {
-
                 String email = jwtUtil.getEmail(token);
                 String role = jwtUtil.getRole(token);
 
-                SimpleGrantedAuthority authority =
-                        new SimpleGrantedAuthority("ROLE_" + role);
+                // 권한 앞에 ROLE_ 접두사 추가 (Spring Security 표준)
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
 
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                email,
-                                null,
-                                List.of(authority)
-                        );
+                        new UsernamePasswordAuthenticationToken(email, null, List.of(authority));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }

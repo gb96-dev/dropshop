@@ -4,9 +4,10 @@ import com.example.dropshop.common.dto.ApiResponse;
 import com.example.dropshop.domain.auth.dto.request.LoginRequest;
 import com.example.dropshop.domain.auth.dto.response.TokenResponse;
 import com.example.dropshop.domain.auth.service.AuthService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,33 +19,40 @@ public class AuthController {
 
     @PostMapping("/login")
     public ApiResponse<String> login(@RequestBody LoginRequest request, HttpServletResponse response) {
-
         TokenResponse token = authService.login(request);
 
-        Cookie cookie = new Cookie("refreshToken", token.getRefreshToken());
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(7 * 24 * 60 * 60);
-
-        response.addCookie(cookie);
+        // RefreshToken 쿠키 설정
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
+                .httpOnly(true)
+                .path("/")
+                .maxAge(7 * 24 * 60 * 60)
+                .sameSite("Lax") // CSRF 방지
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ApiResponse.ok(token.getAccessToken());
     }
 
     @PostMapping("/refresh")
-    public ApiResponse<String> refresh(@CookieValue("refreshToken") String refreshToken) {
+    public ApiResponse<String> refresh(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken // required = false 추가
+    ) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            throw new RuntimeException("리프레시 토큰이 쿠키에 없습니다.");
+        }
         String newAccessToken = authService.refresh(refreshToken);
         return ApiResponse.ok(newAccessToken);
     }
 
     @PostMapping("/logout")
     public ApiResponse<Void> logout(HttpServletResponse response) {
-
-        Cookie cookie = new Cookie("refreshToken", null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-
-        response.addCookie(cookie);
+        // 쿠키 삭제 처리
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ApiResponse.ok();
     }
