@@ -27,6 +27,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/signup").permitAll()
+                        .requestMatchers("/api/sellers/**").permitAll() // TODO: JWT 구현 후 제거
                         .anyRequest().authenticated()
                 );
 
