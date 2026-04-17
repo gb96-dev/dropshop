@@ -3,13 +3,18 @@ package com.example.dropshop.domain.product.service;
 import com.example.dropshop.domain.drops.service.DropsFacadeService;
 import com.example.dropshop.domain.order.service.OrderItemFacadeService;
 import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
-import com.example.dropshop.domain.product.dto.response.ProductCreateResponse;
 import com.example.dropshop.domain.product.dto.request.ProductImageCreateRequest;
-import com.example.dropshop.domain.product.dto.response.ProductImageResponse;
 import com.example.dropshop.domain.product.dto.request.ProductImageUpdateRequest;
 import com.example.dropshop.domain.product.dto.request.ProductStatusUpdateRequest;
 import com.example.dropshop.domain.product.dto.request.ProductUpdateRequest;
+import com.example.dropshop.domain.product.dto.response.ProductCreateResponse;
+import com.example.dropshop.domain.product.dto.response.ProductDetailResponse;
+import com.example.dropshop.domain.product.dto.response.ProductImageResponse;
+import com.example.dropshop.domain.product.dto.response.ProductListItemResponse;
+import com.example.dropshop.domain.product.dto.response.SellerProductListItemResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProductFacadeService {
 
-  private final ProductService productService;
+  private final ProductCommandService productCommandService;
+  private final ProductQueryService productQueryService;
   private final DropsFacadeService dropsFacadeService;
   private final OrderItemFacadeService orderItemFacadeService;
 
@@ -34,7 +40,7 @@ public class ProductFacadeService {
       boolean sellerVerified,
       ProductCreateRequest request
   ) {
-    return productService.createSellerProduct(
+    return productCommandService.createSellerProduct(
         sellerId,
         sellerApproved,
         sellerVerified,
@@ -53,7 +59,7 @@ public class ProductFacadeService {
       boolean sellerVerified,
       ProductUpdateRequest request
   ) {
-    return productService.updateSellerProduct(
+    return productCommandService.updateSellerProduct(
         productId,
         sellerId,
         sellerApproved,
@@ -73,7 +79,7 @@ public class ProductFacadeService {
       boolean sellerVerified,
       ProductStatusUpdateRequest request
   ) {
-    return productService.changeSellerProductStatus(
+    return productCommandService.changeSellerProductStatus(
         productId,
         sellerId,
         sellerApproved,
@@ -95,7 +101,7 @@ public class ProductFacadeService {
     boolean hasDropHistory = dropsFacadeService.existsDropHistoryForProduct(productId);
     boolean hasOrderHistory = orderItemFacadeService.existsOrderHistoryForProduct(productId);
 
-    productService.deleteSellerProduct(
+    productCommandService.deleteSellerProduct(
         productId,
         sellerId,
         sellerApproved,
@@ -116,7 +122,7 @@ public class ProductFacadeService {
       boolean sellerVerified,
       ProductImageCreateRequest request
   ) {
-    return productService.createSellerProductImage(
+    return productCommandService.createSellerProductImage(
         productId,
         sellerId,
         sellerApproved,
@@ -137,7 +143,7 @@ public class ProductFacadeService {
       boolean sellerVerified,
       ProductImageUpdateRequest request
   ) {
-    return productService.updateSellerProductImage(
+    return productCommandService.updateSellerProductImage(
         productId,
         imageId,
         sellerId,
@@ -158,12 +164,40 @@ public class ProductFacadeService {
       boolean sellerApproved,
       boolean sellerVerified
   ) {
-    productService.deleteSellerProductImage(
+    productCommandService.deleteSellerProductImage(
         productId,
         imageId,
         sellerId,
         sellerApproved,
         sellerVerified
     );
+  }
+
+  /**
+   * 공개 상품 목록을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public Page<ProductListItemResponse> findPublicProducts(
+      String status,
+      String sort,
+      Pageable pageable
+  ) {
+    return productQueryService.findPublicProducts(status, sort, pageable);
+  }
+
+  /**
+   * 공개 상품 상세를 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public ProductDetailResponse findPublicProductDetail(Long productId) {
+    return productQueryService.findPublicProductDetail(productId);
+  }
+
+  /**
+   * 판매자 본인 상품 목록을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public Page<SellerProductListItemResponse> findSellerProducts(Long sellerId, Pageable pageable) {
+    return productQueryService.findSellerProducts(sellerId, pageable);
   }
 }

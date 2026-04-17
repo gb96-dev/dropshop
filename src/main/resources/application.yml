@@ -2,3 +2,8 @@ spring:
   config:
     import:
       optional:file:./secret.yml
+
+dropshop:
+  product:
+    max-image-count: 5
+    purchasable-block-hours: 24

@@ -2,22 +2,18 @@ package com.example.dropshop.domain.product.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
-import com.example.dropshop.domain.product.dto.response.ProductCreateResponse;
 import com.example.dropshop.domain.product.dto.request.ProductImageCreateRequest;
-import com.example.dropshop.domain.product.dto.response.ProductImageResponse;
 import com.example.dropshop.domain.product.dto.request.ProductImageUpdateRequest;
-import com.example.dropshop.domain.drops.enums.DropsStatus;
-import com.example.dropshop.domain.drops.repository.DropsRepository;
-import com.example.dropshop.domain.order.repository.OrderItemRepository;
-import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
-import com.example.dropshop.domain.product.dto.response.ProductCreateResponse;
 import com.example.dropshop.domain.product.dto.request.ProductStatusUpdateRequest;
 import com.example.dropshop.domain.product.dto.request.ProductUpdateRequest;
+import com.example.dropshop.domain.product.dto.response.ProductCreateResponse;
+import com.example.dropshop.domain.product.dto.response.ProductImageResponse;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.entity.ProductImage;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.exception.ProductException;
 import com.example.dropshop.domain.product.repository.ProductRepository;
+import com.example.dropshop.domain.product.validator.ProductValidator;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import lombok.RequiredArgsConstructor;
@@ -25,16 +21,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 상품 생성 관련 도메인 서비스를 제공한다.
+ * 상품 쓰기 도메인 서비스.
  */
 @Service
 @RequiredArgsConstructor
-public class ProductService {
-
-  private static final int MAX_IMAGE_COUNT = 5;
+public class ProductCommandService {
 
   private final ProductRepository productRepository;
   private final ProductPolicyProperties policyProperties;
+  private final ProductValidator productValidator;
 
   /**
    * 판매자 상품을 생성한다.
@@ -46,8 +41,8 @@ public class ProductService {
       boolean sellerVerified,
       ProductCreateRequest request
   ) {
-    validateSellerState(sellerApproved, sellerVerified);
-    validateBusinessRules(request);
+    productValidator.validateSellerState(sellerApproved, sellerVerified);
+    productValidator.validateProductCreateRequest(request);
 
     Product product = Product.create(
         sellerId,
@@ -89,7 +84,7 @@ public class ProductService {
       boolean sellerVerified,
       ProductUpdateRequest request
   ) {
-    validateSellerState(sellerApproved, sellerVerified);
+    productValidator.validateSellerState(sellerApproved, sellerVerified);
     Product product = findOwnedProduct(productId, sellerId);
 
     if (isCoreFieldUpdateRequested(request) && isCoreUpdateLocked(product)) {
@@ -141,7 +136,7 @@ public class ProductService {
       boolean sellerVerified,
       ProductStatusUpdateRequest request
   ) {
-    validateSellerState(sellerApproved, sellerVerified);
+    productValidator.validateSellerState(sellerApproved, sellerVerified);
     Product product = findOwnedProduct(productId, sellerId);
 
     if (request.getStatus() != ProductStatus.HIDDEN) {
@@ -165,7 +160,7 @@ public class ProductService {
       boolean hasDropHistory,
       boolean hasOrderHistory
   ) {
-    validateSellerState(sellerApproved, sellerVerified);
+    productValidator.validateSellerState(sellerApproved, sellerVerified);
     Product product = findOwnedProduct(productId, sellerId);
 
     if (hasDropHistory || hasOrderHistory) {
@@ -186,7 +181,7 @@ public class ProductService {
       boolean sellerVerified,
       ProductImageCreateRequest request
   ) {
-    validateSellerState(sellerApproved, sellerVerified);
+    productValidator.validateSellerState(sellerApproved, sellerVerified);
     Product product = findOwnedProduct(productId, sellerId);
 
     ProductImage image = ProductImage.builder()
@@ -218,7 +213,7 @@ public class ProductService {
       boolean sellerVerified,
       ProductImageUpdateRequest request
   ) {
-    validateSellerState(sellerApproved, sellerVerified);
+    productValidator.validateSellerState(sellerApproved, sellerVerified);
     Product product = findOwnedProduct(productId, sellerId);
     ProductImage targetImage = findOwnedImage(product, imageId);
 
@@ -227,7 +222,7 @@ public class ProductService {
     }
 
     if (request.getIsThumbnail() != null) {
-      if (Boolean.TRUE.equals(request.getIsThumbnail())) {
+      if (request.getIsThumbnail()) {
         product.setThumbnail(targetImage);
       } else if (targetImage.isThumbnail()) {
         throw new ProductException(ErrorCode.THUMBNAIL_REQUIRED);
@@ -250,7 +245,7 @@ public class ProductService {
       boolean sellerApproved,
       boolean sellerVerified
   ) {
-    validateSellerState(sellerApproved, sellerVerified);
+    productValidator.validateSellerState(sellerApproved, sellerVerified);
     Product product = findOwnedProduct(productId, sellerId);
     ProductImage targetImage = findOwnedImage(product, imageId);
 
@@ -264,49 +259,6 @@ public class ProductService {
 
     product.removeImage(targetImage);
     productRepository.save(product);
-  }
-
-  private void validateSellerState(boolean sellerApproved, boolean sellerVerified) {
-    if (!sellerApproved) {
-      throw new ProductException(ErrorCode.SELLER_NOT_APPROVED);
-    }
-    if (!sellerVerified) {
-      throw new ProductException(ErrorCode.SELLER_NOT_VERIFIED);
-    }
-  }
-
-  private void validateBusinessRules(ProductCreateRequest request) {
-    if (request.getPrice().signum() <= 0) {
-      throw new ProductException(ErrorCode.INVALID_PRICE);
-    }
-
-    if (request.getDiscountRate() < 0 || request.getDiscountRate() >= 100) {
-      throw new ProductException(ErrorCode.INVALID_DISCOUNT_RATE);
-    }
-
-    if (request.getImages() == null || request.getImages().isEmpty()) {
-      throw new ProductException(ErrorCode.IMAGE_REQUIRED);
-    }
-
-    if (request.getImages().size() > MAX_IMAGE_COUNT) {
-      throw new ProductException(ErrorCode.IMAGE_LIMIT_EXCEEDED);
-    }
-
-    long thumbnailCount = request.getImages().stream()
-        .filter(img -> Boolean.TRUE.equals(img.getIsThumbnail()))
-        .count();
-
-    if (thumbnailCount != 1) {
-      throw new ProductException(ErrorCode.THUMBNAIL_REQUIRED);
-    }
-  }
-
-  private String extractThumbnailUrl(ProductCreateRequest request) {
-    return request.getImages().stream()
-        .filter(img -> Boolean.TRUE.equals(img.getIsThumbnail()))
-        .findFirst()
-        .orElseThrow(() -> new ProductException(ErrorCode.THUMBNAIL_REQUIRED))
-        .getImageUrl();
   }
 
   private Product findOwnedProduct(Long productId, Long sellerId) {
@@ -343,4 +295,13 @@ public class ProductService {
     return product.getStatus() == ProductStatus.READY
         || product.getStatus() == ProductStatus.ON_SALE;
   }
+
+  private String extractThumbnailUrl(ProductCreateRequest request) {
+    return request.getImages().stream()
+        .filter(img -> Boolean.TRUE.equals(img.getIsThumbnail()))
+        .findFirst()
+        .orElseThrow(() -> new ProductException(ErrorCode.THUMBNAIL_REQUIRED))
+        .getImageUrl();
+  }
 }
+

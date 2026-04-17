@@ -28,6 +28,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/signup").permitAll()
                         .requestMatchers("/api/sellers/**").permitAll() // TODO: JWT 구현 후 제거
+                        .requestMatchers("/api/products/**").permitAll() // TODO: JWT 구현 후 제거
                         .anyRequest().authenticated()
                 );
 
