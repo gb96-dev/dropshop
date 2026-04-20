@@ -59,10 +59,23 @@ public enum ErrorCode {
   /**
    * Drop.
    */
+  INVALID_DROP_START_AT(HttpStatus.BAD_REQUEST, "드랍 시작 시간은 현재 시간보다 이후여야 합니다."),
   INVALID_DROP_DATE_RANGE(HttpStatus.BAD_REQUEST, "드랍 종료 시간은 시작 시간보다 뒤여야 합니다."),
   INVALID_DROP_TOTAL_STOCK(HttpStatus.BAD_REQUEST, "드랍 총 판매 수량은 0보다 커야 합니다."),
   INVALID_DROP_REMAIN_STOCK(HttpStatus.BAD_REQUEST, "잔여 수량은 0 이상이며 총 판매 수량 이하여야 합니다."),
   INVALID_DROP_PURCHASE_LIMIT(HttpStatus.BAD_REQUEST, "1인당 구매 제한 수량은 1 이상이어야 합니다."),
+  DROP_TOTAL_STOCK_EXCEEDS_PRODUCT_STOCK(HttpStatus.BAD_REQUEST,
+      "드랍 총 판매 수량은 상품 재고를 초과할 수 없습니다."),
+  DROP_ACCESS_DENIED(HttpStatus.FORBIDDEN, "본인 상품의 드랍만 관리할 수 있습니다."),
+  DROP_ALREADY_EXISTS(HttpStatus.BAD_REQUEST,
+      "해당 상품에는 진행 중이거나 예정된 드랍이 이미 존재합니다."),
+  DROP_ACTIVE_UPDATE_LOCKED(HttpStatus.BAD_REQUEST,
+      "ACTIVE 상태에서는 드랍 시작 시간과 총 판매 수량을 수정할 수 없습니다."),
+  DROP_UPDATE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "종료된 드랍은 수정할 수 없습니다."),
+  DROP_DELETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST,
+      "주문 이력이 있거나 예정 상태가 아닌 드랍은 삭제할 수 없습니다."),
+  DROP_STOP_NOT_ALLOWED(HttpStatus.BAD_REQUEST,
+      "이미 종료된 드랍은 강제 종료할 수 없습니다."),
 
   /**
    * Order (세미 콜론 부분 변경 금지).
