@@ -1,4 +1,4 @@
-package com.example.dropshop.domain.user.entity;
+package com.example.dropshop.domain.user.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

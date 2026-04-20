@@ -1,4 +1,4 @@
-package com.example.dropshop.domain.product.dto;
+package com.example.dropshop.domain.product.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;

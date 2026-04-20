@@ -1,4 +1,43 @@
 spring:
+  main:
+    allow-bean-definition-overriding: true
+  # DataSource 설정
+  datasource:
+    url: jdbc:mysql://localhost:3306/dropshop?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA / Hibernate 설정
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+jwt:
+  secret: vms6020-very-secret-key-for-dropshop-project-2026 # 32자 이상의 안전한 키
+  access-token-expiration: 3600000 # 1시간 (ms 단위)
+  refresh-token-expiration: 604800000 # 7일 (ms 단위)
+aws:
+  credentials:
+    access-key: dummy-key-1234
+    secret-key: dummy-secret-5678
+
+cloud:
+  aws:
+    credentials:
+      access-key: dummy-key
+      secret-key: dummy-secret
+    s3:
+      bucket: dummy-bucket
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
   profiles:
     default: local
   config:
