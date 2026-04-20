@@ -29,6 +29,16 @@ public interface DropsRepository extends JpaRepository<Drops, Long> {
   Optional<Drops> findByProductIdAndStatus(Long productId, DropsStatus status);
 
   /**
+   * 특정 상품의 최신 드랍 1건을 시작 시간 기준 내림차순으로 조회한다.
+   */
+  Optional<Drops> findTopByProductIdOrderByStartAtDesc(Long productId);
+
+  /**
+   * 여러 상품의 드랍을 상품별 시작 시간 내림차순으로 조회한다.
+   */
+  List<Drops> findAllByProductIdInOrderByProductIdAscStartAtDesc(Collection<Long> productIds);
+
+  /**
    * 특정 상품에 지정 상태의 드랍이 존재하는지 확인한다.
    */
   boolean existsByProductIdAndStatusIn(Long productId, Collection<DropsStatus> statuses);
