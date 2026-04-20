@@ -39,3 +39,6 @@ out/
 application.yml
 secret.yml
 **/src/main/generated
+
+# application.yml
+application.yml
