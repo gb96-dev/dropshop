@@ -1,11 +1,13 @@
 package com.example.dropshop.domain.product.enums;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 상품 노출/판매 상태.
  */
 @Getter
+@RequiredArgsConstructor
 public enum ProductStatus {
   READY("판매 준비"),
   ON_SALE("판매 중"),
@@ -13,8 +15,4 @@ public enum ProductStatus {
   HIDDEN("숨김");
 
   private final String description;
-
-  ProductStatus(String description) {
-    this.description = description;
-  }
 }
