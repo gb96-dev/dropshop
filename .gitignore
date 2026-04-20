@@ -39,3 +39,12 @@ out/
 application.yml
 secret.yml
 **/src/main/generated
+
+# local test data initializer
+src/main/java/com/example/dropshop/config/TestDataInitializer.java
+src/main/java/com/example/dropshop/common/config/TestDataInitializer.java
+
+# PortOne local payment test pages
+src/main/java/com/example/dropshop/domain/payment/controller/PaymentTestPageController.java
+src/main/resources/static/payments/test.html
+src/main/resources/static/payments/redirect.html

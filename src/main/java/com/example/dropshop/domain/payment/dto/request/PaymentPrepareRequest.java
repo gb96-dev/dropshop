@@ -1,0 +1,28 @@
+package com.example.dropshop.domain.payment.dto.request;
+
+import com.example.dropshop.domain.payment.enums.PaymentMethod;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
+import lombok.Getter;
+
+/**
+ * 결제 준비 요청.
+ */
+@Getter
+public class PaymentPrepareRequest {
+
+  @NotNull
+  private Long orderId;
+
+  @NotNull
+  private BigDecimal amount;
+
+  @NotBlank
+  @Size(max = 40, message = "idempotencyKey는 40자 이하여야 합니다.")
+  private String idempotencyKey;
+
+  @NotNull
+  private PaymentMethod paymentMethod;
+}

@@ -66,6 +66,22 @@ public enum ErrorCode {
   ORDER_INVALID_STATUS(HttpStatus.BAD_REQUEST, "유효하지 않은 주문 상태 전이입니다."),
   ORDER_HOLD_EXPIRED(HttpStatus.BAD_REQUEST, "주문 홀드 시간이 만료되었습니다."),
 
+  /**
+   * Payment.
+   */
+  PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "결제를 찾을 수 없습니다."),
+  PAYMENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "해당 주문에 대한 결제가 이미 존재합니다."),
+  PAYMENT_INVALID_STATUS(HttpStatus.BAD_REQUEST, "결제 상태가 올바르지 않습니다."),
+  PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "결제 금액이 주문 금액과 일치하지 않습니다."),
+  PAYMENT_IDEMPOTENCY_KEY_CONFLICT(HttpStatus.CONFLICT, "이미 사용된 결제 요청 키입니다."),
+  PAYMENT_TRANSACTION_ID_REQUIRED(HttpStatus.BAD_REQUEST, "거래 식별번호가 필요합니다."),
+  PAYMENT_COMPLETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "결제를 완료 처리할 수 없습니다."),
+  PAYMENT_FAIL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "결제를 실패 처리할 수 없습니다."),
+  PAYMENT_CONFIRM_FORBIDDEN(HttpStatus.BAD_REQUEST, "결제 확정을 진행할 수 없습니다."),
+  PAYMENT_PORTONE_NOT_PAID(HttpStatus.BAD_REQUEST, "포트원 결제가 완료되지 않았습니다."),
+  PAYMENT_PORTONE_MISMATCH(HttpStatus.BAD_REQUEST, "포트원 결제 정보가 내부 결제 정보와 일치하지 않습니다."),
+  PAYMENT_PORTONE_API_ERROR(HttpStatus.BAD_GATEWAY, "포트원 결제 검증 중 오류가 발생했습니다."),
+
 
   // Wishlist
   EXISTS_BY_USER_AND_DROP(HttpStatus.CONFLICT, "이미 찜한 상품입니다."),

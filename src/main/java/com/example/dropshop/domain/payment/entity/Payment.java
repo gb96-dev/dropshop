@@ -1,6 +1,10 @@
 package com.example.dropshop.domain.payment.entity;
 
 import com.example.dropshop.common.entity.BaseEntity;
+import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.payment.enums.PaymentMethod;
+import com.example.dropshop.domain.payment.enums.PaymentStatus;
+import com.example.dropshop.domain.payment.exception.PaymentException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -28,17 +32,18 @@ public class Payment extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false)
+  @Column(nullable = false, unique = true)
   private Long orderId;
 
-  @Column(unique = true, nullable = false)
+  @Column(nullable = false, unique = true, length = 100)
   private String idempotencyKey;
 
   @Column
   private String transactionId;
 
-  @Column(nullable = false)
-  private String paymentMethod;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 50)
+  private PaymentMethod paymentMethod;
 
   @Column(nullable = false)
   private BigDecimal amount;
@@ -51,30 +56,43 @@ public class Payment extends BaseEntity {
   private LocalDateTime paidAt;
 
   /**
-   * 결제 생성.
+   * 결제 준비.
    */
-  public static Payment create(Long orderId, String idempotencyKey,
-      String paymentMethod, BigDecimal amount) {
+  public static Payment prepare(
+      Long orderId,
+      String idempotencyKey,
+      PaymentMethod paymentMethod,
+      BigDecimal amount
+  ) {
     Payment payment = new Payment();
     payment.orderId = orderId;
     payment.idempotencyKey = idempotencyKey;
     payment.paymentMethod = paymentMethod;
     payment.amount = amount;
-    payment.status = PaymentStatus.READY;
+    payment.status = PaymentStatus.PENDING;
     return payment;
   }
 
   /**
-   * 결제 상태 변경.
+   * 결제 실패.
    */
-  public void updateStatus(PaymentStatus status) {
-    this.status = status;
+  public void fail() {
+    if (this.status != PaymentStatus.PENDING) {
+      throw new PaymentException(ErrorCode.PAYMENT_FAIL_NOT_ALLOWED);
+    }
+    this.status = PaymentStatus.FAILED;
   }
 
   /**
    * 결제 완료.
    */
   public void complete(String transactionId) {
+    if (this.status != PaymentStatus.PENDING) {
+      throw new PaymentException(ErrorCode.PAYMENT_COMPLETE_NOT_ALLOWED);
+    }
+    if (transactionId == null || transactionId.isBlank()) {
+      throw new PaymentException(ErrorCode.PAYMENT_TRANSACTION_ID_REQUIRED);
+    }
     this.transactionId = transactionId;
     this.paidAt = LocalDateTime.now();
     this.status = PaymentStatus.COMPLETED;

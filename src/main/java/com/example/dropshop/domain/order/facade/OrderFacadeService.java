@@ -34,7 +34,7 @@ public class OrderFacadeService {
         request.getDropId(),
         request.getProductId(),
         new BigDecimal("100000"), // priceSnapshot — ProductService 연동 후 교체
-        new BigDecimal("79000"), // salePriceSnapshot — ProductService 연동 후 교체
+        new BigDecimal("1000"), // salePriceSnapshot — ProductService 연동 후 교체
         new BigDecimal("21000"), // discountAmountSnapshot — ProductService 연동 후 교체
         "https://dummy-image"// thumbnailUrlSnapshot — ProductService 연동 후 교체
     );
