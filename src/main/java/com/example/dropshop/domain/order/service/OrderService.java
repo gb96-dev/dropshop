@@ -68,6 +68,14 @@ public class OrderService {
   }
 
   /**
+   * 드랍의 주문 이력 존재 여부를 확인한다.
+   */
+  @Transactional(readOnly = true)
+  public boolean existsOrderHistoryForDrop(Long dropId) {
+    return orderRepository.existsByDropId(dropId);
+  }
+
+  /**
    * 수동 주문 취소.
    */
   @Transactional

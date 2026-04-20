@@ -17,6 +17,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -69,6 +70,9 @@ public class Drops extends BaseEntity {
 
   @Column(name = "use_queue", nullable = false)
   private boolean useQueue;
+
+  @Version
+  private Long version;
 
   @Builder(access = AccessLevel.PRIVATE)
   private Drops(
@@ -128,6 +132,70 @@ public class Drops extends BaseEntity {
    */
   public void finish() {
     this.status = DropsStatus.FINISHED;
+  }
+
+  /**
+   * 드랍 정보를 수정한다.
+   */
+  public void update(
+      LocalDateTime startAt,
+      LocalDateTime endAt,
+      Long totalStock,
+      Long remainStock,
+      Long purchaseLimit,
+      boolean useQueue
+  ) {
+    validateDateRange(startAt, endAt);
+    validateStock(totalStock, remainStock);
+    validatePurchaseLimit(purchaseLimit);
+
+    this.startAt = startAt;
+    this.endAt = endAt;
+    this.totalStock = totalStock;
+    this.remainStock = remainStock;
+    this.purchaseLimit = purchaseLimit;
+    this.useQueue = useQueue;
+  }
+
+  /**
+   * 예정 상태 여부를 반환한다.
+   */
+  public boolean isScheduled() {
+    return this.status == DropsStatus.SCHEDULED;
+  }
+
+  /**
+   * 진행 상태 여부를 반환한다.
+   */
+  public boolean isActive() {
+    return this.status == DropsStatus.ACTIVE;
+  }
+
+  /**
+   * 종료 상태 여부를 반환한다.
+   */
+  public boolean isFinished() {
+    return this.status == DropsStatus.FINISHED;
+  }
+
+  /**
+   * 잔여 재고를 차감한다.
+   */
+  public void decrementRemainStock(long quantity) {
+    if (this.remainStock < quantity) {
+      throw new DropsException(ErrorCode.INVALID_DROP_REMAIN_STOCK);
+    }
+    this.remainStock -= quantity;
+  }
+
+  /**
+   * 잔여 재고를 복구한다.
+   */
+  public void restoreRemainStock(long quantity) {
+    this.remainStock += quantity;
+    if (this.remainStock > this.totalStock) {
+      throw new DropsException(ErrorCode.INVALID_DROP_REMAIN_STOCK);
+    }
   }
 
   private void validateDateRange(LocalDateTime startAt, LocalDateTime endAt) {

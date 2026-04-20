@@ -59,6 +59,14 @@ public class OrderFacadeService {
   }
 
   /**
+   * 드랍의 주문 이력 존재 여부를 확인한다.
+   */
+  @Transactional(readOnly = true)
+  public boolean existsOrderHistoryForDrop(Long dropId) {
+    return orderService.existsOrderHistoryForDrop(dropId);
+  }
+
+  /**
    * 주문 수동 취소.
    */
   public OrderDetailResponse cancelOrder(Long orderId, Long userId) {
