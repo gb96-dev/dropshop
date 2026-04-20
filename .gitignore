@@ -39,7 +39,6 @@ out/
 application.yml
 secret.yml
 src/main/resources/application.yml
-src/main/resources/application-local.yml
 **/src/main/generated
 
 # local test data initializer
