@@ -34,6 +34,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/signup").permitAll()
                         .requestMatchers("/api/sellers/**").permitAll() // TODO: JWT 구현 후 제거
                         .requestMatchers("/api/products/**").permitAll() // TODO: JWT 구현 후 제거
+                        .requestMatchers("/api/sellers/**").permitAll()
+                        .requestMatchers("/payments/**").permitAll()
+                        .requestMatchers("/api/payments/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치

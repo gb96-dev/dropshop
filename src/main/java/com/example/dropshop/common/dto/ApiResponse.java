@@ -1,7 +1,7 @@
 package com.example.dropshop.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -70,7 +70,14 @@ public class ApiResponse<T> {
   /**
    * 페이지 정보.
    */
-  @Getter
+  @JsonPropertyOrder({
+      "page",
+      "size",
+      "totalElements",
+      "totalPages",
+      "isFirst",
+      "isLast"
+  })
   @AllArgsConstructor(access = AccessLevel.PRIVATE)
   public static class PageInfo {
 
@@ -78,12 +85,8 @@ public class ApiResponse<T> {
     private final int size;
     private final long totalElements;
     private final int totalPages;
-
-    @JsonProperty("isFirst")
-    private final boolean isFirst;
-
-    @JsonProperty("isLast")
-    private final boolean isLast;
+    private final boolean first;
+    private final boolean last;
 
     public static PageInfo of(Page<?> page) {
       return new PageInfo(
@@ -94,6 +97,30 @@ public class ApiResponse<T> {
           page.isFirst(),
           page.isLast()
       );
+    }
+
+    public int getPage() {
+      return page;
+    }
+
+    public int getSize() {
+      return size;
+    }
+
+    public long getTotalElements() {
+      return totalElements;
+    }
+
+    public int getTotalPages() {
+      return totalPages;
+    }
+
+    public boolean getIsFirst() {
+      return first;
+    }
+
+    public boolean getIsLast() {
+      return last;
     }
   }
 }

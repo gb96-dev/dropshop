@@ -18,7 +18,6 @@ import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
-import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,8 +29,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(OrderController.class)
 class OrderControllerTest {
@@ -50,6 +51,7 @@ class OrderControllerTest {
 
   @Test
   @DisplayName("주문 생성 성공")
+  @WithMockUser(username = "test@test.com")
   void createOrder_success() throws Exception {
     // given
     OrderCreateRequest request = new OrderCreateRequest();
@@ -60,7 +62,7 @@ class OrderControllerTest {
     Order order = createOrderEntity(1L, 1L, 100L);
     OrderCreateResponse response = OrderCreateResponse.from(order);
 
-    given(orderFacadeService.createOrder(eq(1L), any(OrderCreateRequest.class)))
+    given(orderFacadeService.createOrder(eq("test@test.com"), any(OrderCreateRequest.class)))
         .willReturn(response);
 
     // when & then
@@ -79,12 +81,13 @@ class OrderControllerTest {
 
   @Test
   @DisplayName("주문 단건 조회 성공")
+  @WithMockUser(username = "test@test.com")
   void findOrderById_success() throws Exception {
     // given
     Order order = createOrderEntity(1L, 10L, 100L);
     OrderDetailResponse response = OrderDetailResponse.from(order);
 
-    given(orderFacadeService.findOrderById(1L, 1L)).willReturn(response);
+    given(orderFacadeService.findOrderById(1L, "test@test.com")).willReturn(response);
 
     // when & then
     mockMvc.perform(get("/api/orders/{orderId}", 1L))
@@ -100,6 +103,7 @@ class OrderControllerTest {
 
   @Test
   @DisplayName("주문 목록 조회 성공")
+  @WithMockUser(username = "test@test.com")
   void findOrders_success() throws Exception {
     // given
     Order order = createOrderEntity(1L, 10L, 100L);
@@ -111,7 +115,7 @@ class OrderControllerTest {
         1
     );
 
-    given(orderFacadeService.findOrdersByUserId(eq(1L), any()))
+    given(orderFacadeService.findOrdersByUserId(eq("test@test.com"), any()))
         .willReturn(page);
 
     // when & then
@@ -134,13 +138,14 @@ class OrderControllerTest {
 
   @Test
   @DisplayName("주문 수동 취소 성공")
+  @WithMockUser(username = "test@test.com")
   void cancelOrder_success() throws Exception {
     // given
     Order order = createOrderEntity(1L, 10L, 100L);
     order.cancel();
     OrderDetailResponse response = OrderDetailResponse.from(order);
 
-    given(orderFacadeService.cancelOrder(1L, 1L)).willReturn(response);
+    given(orderFacadeService.cancelOrder(1L, "test@test.com")).willReturn(response);
 
     // when & then
     mockMvc.perform(patch("/api/orders/{orderId}/cancel", 1L))
