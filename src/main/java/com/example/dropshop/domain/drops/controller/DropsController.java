@@ -7,11 +7,18 @@ import com.example.dropshop.domain.drops.dto.request.DropUpdateRequest;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.exception.DropsException;
 import com.example.dropshop.domain.drops.service.DropsFacadeService;
+import com.example.dropshop.domain.drops.service.DropsQueryService;
+import com.example.dropshop.domain.drops.dto.response.DropListItemResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DropsController {
 
   private final DropsFacadeService dropsFacadeService;
+  private final DropsQueryService dropsQueryService;
 
   /**
    * 판매자가 새로운 드랍을 생성한다.
@@ -115,6 +123,24 @@ public class DropsController {
     if (role != null && !"SELLER".equalsIgnoreCase(role)) {
       throw new DropsException(ErrorCode.SELLER_ROLE_REQUIRED);
     }
+  }
+
+  /**
+   * 판매자 본인 드롭 목록 조회.
+   */
+  @GetMapping("/mine")
+  public ResponseEntity<ApiResponse<ApiResponse.PageResponse<DropListItemResponse>>> getMyDrops(
+      @RequestHeader("X-SELLER-ID") Long sellerId,
+      @RequestHeader(value = "X-ROLE", required = false) String role,
+      @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+      Pageable pageable
+  ) {
+    validateSellerRole(role);
+    Page<DropListItemResponse> response = dropsQueryService.findSellerDrops(
+        sellerId,
+        pageable
+    );
+    return ResponseEntity.ok(ApiResponse.ok(response));
   }
 }
 
