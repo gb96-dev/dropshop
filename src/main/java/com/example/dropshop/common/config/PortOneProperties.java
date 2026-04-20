@@ -17,7 +17,7 @@ public record PortOneProperties(
   /**
    * PortOne API 기본 URL을 반환한다.
    *
-   * @return 설정값이 비어 있으면 기본 API URL, 아니면 설정된 API URL
+   * @return 기본 API URL
    */
   public String resolvedApiBaseUrl() {
     if (apiBaseUrl == null || apiBaseUrl.isBlank()) {

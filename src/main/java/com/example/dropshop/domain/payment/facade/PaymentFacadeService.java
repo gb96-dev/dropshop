@@ -26,8 +26,9 @@ public class PaymentFacadeService {
    * @param request 결제 준비 요청
    * @return 결제 준비 응답
    */
-  public PaymentPrepareResponse preparePayment(PaymentPrepareRequest request) {
+  public PaymentPrepareResponse preparePayment(String email, PaymentPrepareRequest request) {
     Payment payment = paymentService.preparePayment(
+        email,
         request.getOrderId(),
         request.getAmount(),
         request.getIdempotencyKey(),
@@ -42,9 +43,9 @@ public class PaymentFacadeService {
    * @param paymentId 결제 ID
    * @return PortOne 요청 정보 응답
    */
-  public PaymentPortOneRequestResponse getPortOneRequest(Long paymentId) {
-    Payment payment = paymentService.getPayment(paymentId);
-    Order order = paymentService.getOrder(payment.getOrderId());
+  public PaymentPortOneRequestResponse getPortOneRequest(Long paymentId, String email) {
+    Payment payment = paymentService.getPayment(paymentId, email);
+    Order order = paymentService.getOrder(payment.getOrderId(), email);
 
     return PaymentPortOneRequestResponse.of(
         payment,
@@ -62,9 +63,13 @@ public class PaymentFacadeService {
    * @param request 결제 확정 요청
    * @return 결제 확정 응답
    */
-  public PaymentConfirmResponse confirmPayment(Long paymentId, PaymentConfirmRequest request) {
-    Payment payment = paymentService.confirmPayment(paymentId, request.getPortOnePaymentId());
-    Order order = paymentService.getOrder(payment.getOrderId());
+  public PaymentConfirmResponse confirmPayment(
+      Long paymentId,
+      String email,
+      PaymentConfirmRequest request
+  ) {
+    Payment payment = paymentService.confirmPayment(paymentId, email, request.getPortOnePaymentId());
+    Order order = paymentService.getOrder(payment.getOrderId(), email);
     return PaymentConfirmResponse.of(payment, order.getStatus());
   }
 }

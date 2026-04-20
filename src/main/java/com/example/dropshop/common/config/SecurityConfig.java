@@ -33,6 +33,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/api/users/signup").permitAll()
                         .requestMatchers("/api/sellers/**").permitAll()
+                        .requestMatchers("/payments/**").permitAll()
+                        .requestMatchers("/api/payments/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치

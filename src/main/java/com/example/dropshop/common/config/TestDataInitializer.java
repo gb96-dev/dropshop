@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 @Configuration
@@ -25,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TestDataInitializer {
 
   @Bean
-  @Profile({"local", "dev"})
+  @Profile({"default", "local", "dev"})
   CommandLineRunner initTestData(
       UserRepository userRepository,
       ProductRepository productRepository,
@@ -33,7 +34,8 @@ public class TestDataInitializer {
       OrderRepository orderRepository,
       OrderItemRepository orderItemRepository,
       PaymentRepository paymentRepository,
-      JdbcTemplate jdbcTemplate
+      JdbcTemplate jdbcTemplate,
+      PasswordEncoder passwordEncoder
   ) {
     return args -> initialize(
         userRepository,
@@ -42,7 +44,8 @@ public class TestDataInitializer {
         orderRepository,
         orderItemRepository,
         paymentRepository,
-        jdbcTemplate
+        jdbcTemplate,
+        passwordEncoder
     );
   }
 
@@ -54,7 +57,8 @@ public class TestDataInitializer {
       OrderRepository orderRepository,
       OrderItemRepository orderItemRepository,
       PaymentRepository paymentRepository,
-      JdbcTemplate jdbcTemplate
+      JdbcTemplate jdbcTemplate,
+      PasswordEncoder passwordEncoder
   ) {
     resetOrderAndPaymentData(orderRepository, orderItemRepository, paymentRepository, jdbcTemplate);
 
@@ -65,7 +69,7 @@ public class TestDataInitializer {
     // 1. 테스트 유저 생성
     User user = User.signup(
         "test-user@dropshop.com",
-        "encoded-password",
+        passwordEncoder.encode("Password123!"),
         "테스트유저"
     );
     userRepository.save(user);

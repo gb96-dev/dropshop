@@ -10,6 +10,7 @@ import com.example.dropshop.domain.payment.facade.PaymentFacadeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +38,7 @@ public class PaymentController {
   public ResponseEntity<ApiResponse<PaymentPrepareResponse>> preparePayment(
       @RequestBody @Valid PaymentPrepareRequest request) {
     return ResponseEntity.status(201)
-        .body(ApiResponse.created(paymentFacadeService.preparePayment(request)));
+        .body(ApiResponse.created(paymentFacadeService.preparePayment(getAuthenticatedEmail(), request)));
   }
 
   /**
@@ -49,7 +50,9 @@ public class PaymentController {
   @GetMapping("/{paymentId}/portone-request")
   public ResponseEntity<ApiResponse<PaymentPortOneRequestResponse>> getPortOneRequest(
       @PathVariable Long paymentId) {
-    return ResponseEntity.ok(ApiResponse.ok(paymentFacadeService.getPortOneRequest(paymentId)));
+    return ResponseEntity.ok(ApiResponse.ok(
+        paymentFacadeService.getPortOneRequest(paymentId, getAuthenticatedEmail())
+    ));
   }
 
   /**
@@ -65,7 +68,11 @@ public class PaymentController {
       @RequestBody @Valid PaymentConfirmRequest request
   ) {
     return ResponseEntity.ok(ApiResponse.ok(
-        paymentFacadeService.confirmPayment(paymentId, request)
+        paymentFacadeService.confirmPayment(paymentId, getAuthenticatedEmail(), request)
     ));
+  }
+
+  private String getAuthenticatedEmail() {
+    return SecurityContextHolder.getContext().getAuthentication().getName();
   }
 }

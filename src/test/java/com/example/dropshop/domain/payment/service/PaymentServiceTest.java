@@ -21,6 +21,8 @@ import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.exception.PaymentException;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
+import com.example.dropshop.domain.user.entity.User;
+import com.example.dropshop.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -53,11 +55,15 @@ class PaymentServiceTest {
   @Mock
   private PortOneProperties portOneProperties;
 
+  @Mock
+  private UserRepository userRepository;
+
   @InjectMocks
   private PaymentService paymentService;
 
   private Order order;
   private Payment payment;
+  private User user;
 
   @BeforeEach
   void setUp() {
@@ -82,17 +88,22 @@ class PaymentServiceTest {
         new BigDecimal("79000")
     );
     ReflectionTestUtils.setField(payment, "id", 1L);
+
+    user = User.signup("test@test.com", "encoded-password", "tester");
+    ReflectionTestUtils.setField(user, "id", 1L);
   }
 
   @Test
   @DisplayName("결제 준비 성공")
   void preparePayment_success() {
-    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
+    given(orderRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(order));
     given(paymentRepository.existsByOrderId(1L)).willReturn(false);
     given(paymentRepository.existsByIdempotencyKey("payment-test-123")).willReturn(false);
     given(paymentRepository.save(any(Payment.class))).willAnswer(invocation -> invocation.getArgument(0));
 
     Payment result = paymentService.preparePayment(
+        "test@test.com",
         1L,
         new BigDecimal("79000"),
         "payment-test-123",
@@ -107,8 +118,9 @@ class PaymentServiceTest {
   @Test
   @DisplayName("결제 확정 성공 - PortOne 결제 완료면 Payment와 Order가 완료 상태가 된다")
   void confirmPayment_success() {
+    given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
     given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
-    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(orderRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(order));
     given(portOneClient.getPayment("payment-test-123"))
         .willReturn(new PortOnePaymentResponse(
             "payment-test-123",
@@ -117,7 +129,7 @@ class PaymentServiceTest {
             new PortOnePaymentResponse.Amount(new BigDecimal("79000"))
         ));
 
-    Payment result = paymentService.confirmPayment(1L, "payment-test-123");
+    Payment result = paymentService.confirmPayment(1L, "test@test.com", "payment-test-123");
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     assertThat(result.getTransactionId()).isEqualTo("tx-123");
@@ -128,8 +140,9 @@ class PaymentServiceTest {
   @Test
   @DisplayName("결제 확정 실패 - PortOne 결제가 완료되지 않으면 주문 취소와 재고 복원 이벤트가 발생한다")
   void confirmPayment_failed() {
+    given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
     given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
-    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(orderRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(order));
     given(portOneClient.getPayment("payment-test-123"))
         .willReturn(new PortOnePaymentResponse(
             "payment-test-123",
@@ -138,7 +151,7 @@ class PaymentServiceTest {
             new PortOnePaymentResponse.Amount(new BigDecimal("79000"))
         ));
 
-    Payment result = paymentService.confirmPayment(1L, "payment-test-123");
+    Payment result = paymentService.confirmPayment(1L, "test@test.com", "payment-test-123");
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
@@ -155,10 +168,11 @@ class PaymentServiceTest {
   @Test
   @DisplayName("결제 확정 실패 - PortOne paymentId가 내부 결제 요청 키와 다르면 예외가 발생한다")
   void confirmPayment_mismatch() {
+    given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
     given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
-    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(orderRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(order));
 
-    assertThatThrownBy(() -> paymentService.confirmPayment(1L, "payment-other"))
+    assertThatThrownBy(() -> paymentService.confirmPayment(1L, "test@test.com", "payment-other"))
         .isInstanceOf(PaymentException.class);
 
     verify(portOneClient, never()).getPayment(any());

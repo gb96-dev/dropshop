@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -45,6 +46,7 @@ class PaymentControllerTest {
 
   @Test
   @DisplayName("결제 준비 성공")
+  @WithMockUser(username = "test@test.com")
   void preparePayment_success() throws Exception {
     PaymentPrepareRequest request = new PaymentPrepareRequest();
     ReflectionTestUtils.setField(request, "orderId", 1L);
@@ -55,7 +57,8 @@ class PaymentControllerTest {
     Payment payment = createPayment();
     PaymentPrepareResponse response = PaymentPrepareResponse.from(payment);
 
-    given(paymentFacadeService.preparePayment(any(PaymentPrepareRequest.class))).willReturn(response);
+    given(paymentFacadeService.preparePayment(eq("test@test.com"), any(PaymentPrepareRequest.class)))
+        .willReturn(response);
 
     mockMvc.perform(post("/api/payments/prepare")
             .contentType(APPLICATION_JSON)
@@ -70,6 +73,7 @@ class PaymentControllerTest {
 
   @Test
   @DisplayName("PortOne 결제 요청 정보 조회 성공")
+  @WithMockUser(username = "test@test.com")
   void getPortOneRequest_success() throws Exception {
     Payment payment = createPayment();
     PaymentPortOneRequestResponse response = PaymentPortOneRequestResponse.of(
@@ -80,7 +84,7 @@ class PaymentControllerTest {
         "http://localhost:3000/payments/redirect"
     );
 
-    given(paymentFacadeService.getPortOneRequest(1L)).willReturn(response);
+    given(paymentFacadeService.getPortOneRequest(1L, "test@test.com")).willReturn(response);
 
     mockMvc.perform(get("/api/payments/{paymentId}/portone-request", 1L))
         .andExpect(status().isOk())
@@ -94,6 +98,7 @@ class PaymentControllerTest {
 
   @Test
   @DisplayName("결제 확정 성공")
+  @WithMockUser(username = "test@test.com")
   void confirmPayment_success() throws Exception {
     PaymentConfirmRequest request = new PaymentConfirmRequest();
     ReflectionTestUtils.setField(request, "portOnePaymentId", "payment-test-123");
@@ -102,7 +107,7 @@ class PaymentControllerTest {
     payment.complete("tx-123");
     PaymentConfirmResponse response = PaymentConfirmResponse.of(payment, OrderStatus.PAID);
 
-    given(paymentFacadeService.confirmPayment(eq(1L), any(PaymentConfirmRequest.class)))
+    given(paymentFacadeService.confirmPayment(eq(1L), eq("test@test.com"), any(PaymentConfirmRequest.class)))
         .willReturn(response);
 
     mockMvc.perform(post("/api/payments/{paymentId}/confirm", 1L)

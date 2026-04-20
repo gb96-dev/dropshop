@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,10 +38,8 @@ public class OrderController {
   @PostMapping
   public ResponseEntity<ApiResponse<OrderCreateResponse>> createOrder(
       @RequestBody @Valid OrderCreateRequest request) {
-    // TODO: @AuthenticationPrincipal로 userId 주입
-    Long userId = 1L;
     return ResponseEntity.status(201)
-        .body(ApiResponse.created(orderFacadeService.createOrder(userId, request)));
+        .body(ApiResponse.created(orderFacadeService.createOrder(getAuthenticatedEmail(), request)));
   }
 
   /**
@@ -49,9 +48,9 @@ public class OrderController {
   @GetMapping("/{orderId}")
   public ResponseEntity<ApiResponse<OrderDetailResponse>> findOrderById(
       @PathVariable Long orderId) {
-    // TODO: @AuthenticationPrincipal로 userId 주입
-    Long userId = 1L;
-    return ResponseEntity.ok(ApiResponse.ok(orderFacadeService.findOrderById(orderId, userId)));
+    return ResponseEntity.ok(ApiResponse.ok(
+        orderFacadeService.findOrderById(orderId, getAuthenticatedEmail())
+    ));
   }
 
   /**
@@ -62,11 +61,10 @@ public class OrderController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size
   ) {
-    Long userId = 1L;
     Pageable pageable = PageRequest.of(page, size);
 
     Page<OrderListItemResponse> response =
-        orderFacadeService.findOrdersByUserId(userId, pageable);
+        orderFacadeService.findOrdersByUserId(getAuthenticatedEmail(), pageable);
 
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
@@ -77,7 +75,12 @@ public class OrderController {
   @PatchMapping("/{orderId}/cancel")
   public ResponseEntity<ApiResponse<OrderDetailResponse>> cancelOrder(
       @PathVariable Long orderId) {
-    Long userId = 1L;
-    return ResponseEntity.ok(ApiResponse.ok(orderFacadeService.cancelOrder(orderId, userId)));
+    return ResponseEntity.ok(ApiResponse.ok(
+        orderFacadeService.cancelOrder(orderId, getAuthenticatedEmail())
+    ));
+  }
+
+  private String getAuthenticatedEmail() {
+    return SecurityContextHolder.getContext().getAuthentication().getName();
   }
 }

@@ -15,6 +15,8 @@ import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.exception.PaymentException;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
+import com.example.dropshop.domain.user.entity.User;
+import com.example.dropshop.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -33,6 +35,7 @@ public class PaymentService {
   private final ApplicationEventPublisher eventPublisher;
   private final PortOneClient portOneClient;
   private final PortOneProperties portOneProperties;
+  private final UserRepository userRepository;
 
   /**
    * 주문에 대한 결제를 준비한다.
@@ -47,12 +50,13 @@ public class PaymentService {
    */
   @Transactional
   public Payment preparePayment(
+      String email,
       Long orderId,
       BigDecimal amount,
       String idempotencyKey,
       PaymentMethod paymentMethod
   ) {
-    Order order = getOrder(orderId);
+    Order order = getOrder(orderId, email);
 
     validateOrderPending(order);
     validateOrderNotExpired(order);
@@ -72,9 +76,11 @@ public class PaymentService {
    * @throws PaymentException 결제를 찾을 수 없는 경우
    */
   @Transactional(readOnly = true)
-  public Payment getPayment(Long paymentId) {
-    return paymentRepository.findById(paymentId)
+  public Payment getPayment(Long paymentId, String email) {
+    Payment payment = paymentRepository.findById(paymentId)
         .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
+    validateOrderOwnership(payment.getOrderId(), email);
+    return payment;
   }
 
   /**
@@ -85,8 +91,9 @@ public class PaymentService {
    * @throws OrderException 주문을 찾을 수 없는 경우
    */
   @Transactional(readOnly = true)
-  public Order getOrder(Long orderId) {
-    return orderRepository.findById(orderId)
+  public Order getOrder(Long orderId, String email) {
+    Long userId = getUserIdByEmail(email);
+    return orderRepository.findByIdAndUserId(orderId, userId)
         .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
   }
 
@@ -100,9 +107,9 @@ public class PaymentService {
    * @throws OrderException 주문 상태가 결제 가능하지 않은 경우
    */
   @Transactional
-  public Payment confirmPayment(Long paymentId, String portOnePaymentId) {
-    Payment payment = getPayment(paymentId);
-    Order order = getOrder(payment.getOrderId());
+  public Payment confirmPayment(Long paymentId, String email, String portOnePaymentId) {
+    Payment payment = getPayment(paymentId, email);
+    Order order = getOrder(payment.getOrderId(), email);
 
     validatePaymentPending(payment);
     validateOrderPending(order);
@@ -224,5 +231,16 @@ public class PaymentService {
 
   private boolean isFailureStatus(String status) {
     return "FAILED".equals(status) || "CANCELLED".equals(status);
+  }
+
+  private Long getUserIdByEmail(String email) {
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new OrderException(ErrorCode.USER_NOT_FOUND));
+    return user.getId();
+  }
+
+  private void validateOrderOwnership(Long orderId, String email) {
+    orderRepository.findByIdAndUserId(orderId, getUserIdByEmail(email))
+        .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
   }
 }
