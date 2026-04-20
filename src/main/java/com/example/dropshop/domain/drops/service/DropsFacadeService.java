@@ -1,8 +1,14 @@
 package com.example.dropshop.domain.drops.service;
 
 import com.example.dropshop.domain.drops.enums.DropsStatus;
+import com.example.dropshop.domain.drops.entity.Drops;
 import com.example.dropshop.domain.drops.repository.DropsRepository;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,6 +35,28 @@ public class DropsFacadeService {
   @Transactional(readOnly = true)
   public boolean existsDropHistoryForProduct(Long productId) {
     return dropsRepository.existsByProductIdAndStatusIn(productId, NON_DELETABLE_DROP_STATUSES);
+  }
+
+  /**
+   * 특정 상품의 최신 드랍 1건을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public Optional<Drops> findLatestDropByProductId(Long productId) {
+    return dropsRepository.findTopByProductIdOrderByStartAtDesc(productId);
+  }
+
+  /**
+   * 상품별 최신 드랍 맵을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
+    List<Drops> dropsList = dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
+    Map<Long, Drops> latestDrops = new HashMap<>();
+    for (Drops drops : dropsList) {
+      Long productId = drops.getProduct().getId();
+      latestDrops.putIfAbsent(productId, drops);
+    }
+    return latestDrops;
   }
 }
 

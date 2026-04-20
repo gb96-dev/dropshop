@@ -32,7 +32,8 @@ public class SecurityConfig {
                         // 인증 없이 접근 가능한 경로
                         .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/api/users/signup").permitAll()
-                        .requestMatchers("/api/sellers/**").permitAll()
+                        .requestMatchers("/api/sellers/**").permitAll() // TODO: JWT 구현 후 제거
+                        .requestMatchers("/api/products/**").permitAll() // TODO: JWT 구현 후 제거
                         .anyRequest().authenticated()
                 )
                 // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치
