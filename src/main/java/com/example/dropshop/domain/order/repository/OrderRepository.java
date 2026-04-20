@@ -29,6 +29,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
   );
 
   /**
+   * 드랍 기준 주문 존재 여부 확인.
+   */
+  boolean existsByDropId(Long dropId);
+
+  /**
    * 만료된 주문 목록 조회.
    */
   List<Order> findAllByStatusAndHoldExpiredAtBefore(OrderStatus status, LocalDateTime now);
