@@ -135,7 +135,7 @@ public class OrderService {
     int restoreQuantity = order.getOrderItems().stream()
         .mapToInt(OrderItem::getQuantity)
         .sum();
-    dropsFacadeService.restoreStockForOrder(order.getDropId(), restoreQuantity);
+    eventPublisher.publishEvent(new StockRestoreEvent(order.getDropId(), restoreQuantity));
   }
 
 }
