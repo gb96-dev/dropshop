@@ -5,15 +5,12 @@ import com.example.dropshop.domain.drops.dto.request.DropCreateRequest;
 import com.example.dropshop.domain.drops.dto.request.DropUpdateRequest;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.entity.Drops;
-import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.exception.DropsException;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -94,7 +91,7 @@ public class DropsFacadeService {
 
     dropsService.delete(drops);
 
-     if (!dropsService.existsOngoingDropForProduct(product.getId())) {
+    if (!dropsService.existsOngoingDropForProduct(product.getId())) {
       productDomainFacadeService.updateStatusByDrop(product, ProductStatus.HIDDEN);
     }
   }
@@ -133,10 +130,25 @@ public class DropsFacadeService {
   }
 
   private void validateDuplicatedOngoingDrop(Long productId) {
-     if (dropsService.existsOngoingDropForProduct(productId)) {
+    if (dropsService.existsOngoingDropForProduct(productId)) {
       throw new DropsException(ErrorCode.DROP_ALREADY_EXISTS);
     }
   }
 
+  /**
+   * 특정 상품의 최신 드랍 1건을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public Optional<Drops> findLatestDropByProductId(Long productId) {
+    return dropsService.findLatestDropByProductId(productId);
+  }
+
+  /**
+   * 상품별 최신 드랍 맵을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
+    return dropsService.findLatestDropsByProductIds(productIds);
+  }
 }
 
