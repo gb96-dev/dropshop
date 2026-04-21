@@ -3,11 +3,9 @@ package com.example.dropshop.domain.payment.service;
 import com.example.dropshop.common.config.PortOneProperties;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.order.entity.Order;
-import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
-import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.order.exception.OrderException;
-import com.example.dropshop.domain.order.repository.OrderRepository;
+import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.payment.client.PortOneClient;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
@@ -15,11 +13,8 @@ import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.exception.PaymentException;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
-import com.example.dropshop.domain.user.entity.User;
-import com.example.dropshop.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,11 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
   private final PaymentRepository paymentRepository;
-  private final OrderRepository orderRepository;
-  private final ApplicationEventPublisher eventPublisher;
+  private final OrderFacadeService orderFacadeService;
   private final PortOneClient portOneClient;
   private final PortOneProperties portOneProperties;
-  private final UserRepository userRepository;
 
   /**
    * 주문에 대한 결제를 준비한다.
@@ -92,9 +85,7 @@ public class PaymentService {
    */
   @Transactional(readOnly = true)
   public Order getOrder(Long orderId, String email) {
-    Long userId = getUserIdByEmail(email);
-    return orderRepository.findByIdAndUserId(orderId, userId)
-        .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
+    return orderFacadeService.findOrderForPayment(orderId, email);
   }
 
   /**
@@ -126,13 +117,12 @@ public class PaymentService {
   @Transactional
   public Payment handleWebhook(String portOnePaymentId) {
     if (portOnePaymentId == null || portOnePaymentId.isBlank()) {
-      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_MISMATCH, "웹훅 결제 식별자가 비어 있습니다.");
+      throw new PaymentException(ErrorCode.PAYMENT_WEBHOOK_PAYMENT_ID_REQUIRED);
     }
 
     Payment payment = paymentRepository.findByIdempotencyKey(portOnePaymentId)
-        .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
-    Order order = orderRepository.findById(payment.getOrderId())
-        .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
+        .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_WEBHOOK_PAYMENT_NOT_FOUND));
+    Order order = orderFacadeService.findOrderForPaymentWebhook(payment.getOrderId());
 
     PortOnePaymentResponse portOnePayment = portOneClient.getPayment(portOnePaymentId);
     return applyPortOnePaymentResult(payment, order, portOnePayment, false);
@@ -241,7 +231,7 @@ public class PaymentService {
       validateOrderPending(order);
       validateOrderNotExpired(order);
       payment.complete(portOnePayment.transactionId());
-      order.pay();
+      orderFacadeService.payOrderByPayment(order);
       return payment;
     }
 
@@ -251,8 +241,7 @@ public class PaymentService {
           payment.fail();
         }
         if (order.getStatus() == OrderStatus.PENDING) {
-          order.cancel();
-          publishStockRestoreEvents(order);
+          orderFacadeService.cancelOrderByPaymentFailure(order);
         }
       }
       return payment;
@@ -261,24 +250,11 @@ public class PaymentService {
     throw new PaymentException(ErrorCode.PAYMENT_PORTONE_NOT_PAID);
   }
 
-  private void publishStockRestoreEvents(Order order) {
-    for (OrderItem item : order.getOrderItems()) {
-      eventPublisher.publishEvent(new StockRestoreEvent(item.getProductId(), item.getQuantity()));
-    }
-  }
-
   private boolean isFailureStatus(String status) {
     return "FAILED".equals(status) || "CANCELLED".equals(status);
   }
 
-  private Long getUserIdByEmail(String email) {
-    User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new OrderException(ErrorCode.USER_NOT_FOUND));
-    return user.getId();
-  }
-
   private void validateOrderOwnership(Long orderId, String email) {
-    orderRepository.findByIdAndUserId(orderId, getUserIdByEmail(email))
-        .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
+    orderFacadeService.findOrderForPayment(orderId, email);
   }
 }

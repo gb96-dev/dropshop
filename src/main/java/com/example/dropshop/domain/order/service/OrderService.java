@@ -61,6 +61,15 @@ public class OrderService {
   }
 
   /**
+   * 내부 도메인 연동용 주문 단건 조회.
+   */
+  @Transactional(readOnly = true)
+  public Order findOrderById(Long orderId) {
+    return orderRepository.findById(orderId)
+        .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
+  }
+
+  /**
    * 목록 조회.
    */
   @Transactional(readOnly = true)
@@ -84,13 +93,26 @@ public class OrderService {
     Order order = orderRepository.findByIdAndUserId(orderId, userId)
         .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
 
-    order.cancel();
+    cancelOrderAndRestoreStock(order);
+    return order;
+  }
 
-    order.getOrderItems().forEach(item ->
-        eventPublisher.publishEvent(
-            new StockRestoreEvent(item.getProductId(), item.getQuantity())
-        )
-    );
+  /**
+   * 주문 결제 완료 처리.
+   */
+  @Transactional
+  public Order payOrder(Order order) {
+    order.pay();
+    return order;
+  }
+
+  /**
+   * 주문 취소 후 재고 복원 이벤트를 발행한다.
+   */
+  @Transactional
+  public Order cancelOrderAndRestoreStock(Order order) {
+    order.cancel();
+    publishStockRestoreEvents(order);
     return order;
   }
 
@@ -104,13 +126,16 @@ public class OrderService {
         .findAllByStatusAndHoldExpiredAtBefore(OrderStatus.PENDING, LocalDateTime.now());
 
     expiredOrders.forEach(order -> {
-      order.cancel();
-      order.getOrderItems().forEach(item ->
-          eventPublisher.publishEvent(
-              new StockRestoreEvent(item.getProductId(), item.getQuantity())
-          )
-      );
+      cancelOrderAndRestoreStock(order);
     });
+  }
+
+  private void publishStockRestoreEvents(Order order) {
+    order.getOrderItems().forEach(item ->
+        eventPublisher.publishEvent(
+            new StockRestoreEvent(item.getProductId(), item.getQuantity())
+        )
+    );
   }
 
 }
