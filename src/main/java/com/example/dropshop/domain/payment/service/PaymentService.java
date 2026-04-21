@@ -2,7 +2,9 @@ package com.example.dropshop.domain.payment.service;
 
 import com.example.dropshop.common.config.PortOneProperties;
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.drops.service.DropsFacadeService;
 import com.example.dropshop.domain.order.entity.Order;
+import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
@@ -26,9 +28,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
   private final PaymentRepository paymentRepository;
-  private final OrderFacadeService orderFacadeService;
+  private final OrderRepository orderRepository;
+  private final DropsFacadeService dropsFacadeService;
   private final PortOneClient portOneClient;
   private final PortOneProperties portOneProperties;
+  private final UserRepository userRepository;
 
   /**
    * 주문에 대한 결제를 준비한다.
@@ -111,6 +115,11 @@ public class PaymentService {
     return applyPortOnePaymentResult(payment, order, portOnePayment, true);
   }
 
+    if (isFailureStatus(portOnePayment.status())) {
+      payment.fail();
+      order.cancel();
+      restoreDropStock(order);
+      return payment;
   /**
    * PortOne 웹훅을 수신해 내부 결제 상태를 동기화한다.
    */
@@ -215,6 +224,11 @@ public class PaymentService {
     }
   }
 
+  private void restoreDropStock(Order order) {
+    int restoreQuantity = order.getOrderItems().stream()
+        .mapToInt(OrderItem::getQuantity)
+        .sum();
+    dropsFacadeService.restoreStockForOrder(order.getDropId(), restoreQuantity);
   private Payment applyPortOnePaymentResult(
       Payment payment,
       Order order,

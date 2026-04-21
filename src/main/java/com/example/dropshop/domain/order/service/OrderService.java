@@ -112,7 +112,7 @@ public class OrderService {
   @Transactional
   public Order cancelOrderAndRestoreStock(Order order) {
     order.cancel();
-    publishStockRestoreEvents(order);
+    restoreDropStock(order);
     return order;
   }
 
@@ -126,16 +126,16 @@ public class OrderService {
         .findAllByStatusAndHoldExpiredAtBefore(OrderStatus.PENDING, LocalDateTime.now());
 
     expiredOrders.forEach(order -> {
-      cancelOrderAndRestoreStock(order);
+      order.cancel();
+      restoreDropStock(order);
     });
   }
 
-  private void publishStockRestoreEvents(Order order) {
-    order.getOrderItems().forEach(item ->
-        eventPublisher.publishEvent(
-            new StockRestoreEvent(item.getProductId(), item.getQuantity())
-        )
-    );
+  private void restoreDropStock(Order order) {
+    int restoreQuantity = order.getOrderItems().stream()
+        .mapToInt(OrderItem::getQuantity)
+        .sum();
+    dropsFacadeService.restoreStockForOrder(order.getDropId(), restoreQuantity);
   }
 
 }

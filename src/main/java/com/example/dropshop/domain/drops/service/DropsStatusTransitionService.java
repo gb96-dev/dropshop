@@ -6,6 +6,8 @@ import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 드랍 상태 자동 전이 서비스.
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class DropsStatusTransitionService {
 
@@ -27,12 +30,18 @@ public class DropsStatusTransitionService {
     List<Drops> scheduledDrops = dropsService.findScheduledDropsToActivate(baseTime);
     int transitionedCount = 0;
     for (Drops drops : scheduledDrops) {
-      if (!drops.isScheduled()) {
-        continue;
+      try {
+        if (!drops.isScheduled()) {
+          continue;
+        }
+        drops.activate();
+        productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.ON_SALE);
+        transitionedCount++;
+      } catch (OptimisticLockingFailureException e) {
+        log.warn("드랍 ID={} 상태 전이가 동시성 충돌로 스킵되었습니다.", drops.getId(), e);
+      } catch (Exception e) {
+        log.error("드랍 ID={} 상태 전이 중 예기치 않은 오류가 발생했습니다.", drops.getId(), e);
       }
-      drops.activate();
-      productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.ON_SALE);
-      transitionedCount++;
     }
     return transitionedCount;
   }
@@ -45,12 +54,18 @@ public class DropsStatusTransitionService {
     List<Drops> activeDrops = dropsService.findActiveDropsToFinish(baseTime);
     int transitionedCount = 0;
     for (Drops drops : activeDrops) {
-      if (!drops.isActive()) {
-        continue;
+      try {
+        if (!drops.isActive()) {
+          continue;
+        }
+        drops.finish();
+        productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
+        transitionedCount++;
+      } catch (OptimisticLockingFailureException e) {
+        log.warn("드랍 ID={} 종료 전이가 동시성 충돌로 스킵되었습니다.", drops.getId(), e);
+      } catch (Exception e) {
+        log.error("드랍 ID={} 종료 전이 중 예기치 않은 오류가 발생했습니다.", drops.getId(), e);
       }
-      drops.finish();
-      productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
-      transitionedCount++;
     }
     return transitionedCount;
   }

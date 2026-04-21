@@ -10,10 +10,13 @@ import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 드랍 도메인 파사드 서비스.
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class DropsFacadeService {
 
@@ -149,6 +153,51 @@ public class DropsFacadeService {
   @Transactional(readOnly = true)
   public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
     return dropsService.findLatestDropsByProductIds(productIds);
+  }
+
+  /**
+   * 주문 생성을 위해 드랍 재고를 차감한다.
+   */
+  @Transactional
+  public Drops reserveStockForOrder(Long dropId, Long productId, int quantity) {
+    Drops drops = dropsService.findById(dropId);
+    validateOrderableDrop(drops, productId);
+
+    drops.decrementRemainStock(quantity);
+    if (drops.getRemainStock() == 0L) {
+      drops.finish();
+      productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
+    }
+    return drops;
+  }
+
+  /**
+   * 주문 취소/결제 실패 시 드랍 재고를 복원한다.
+   */
+  @Transactional
+  public void restoreStockForOrder(Long dropId, int quantity) {
+    Drops drops = dropsService.findById(dropId);
+    drops.restoreRemainStock(quantity);
+
+    try {
+      if (drops.isFinished()
+          && drops.getRemainStock() > 0L
+          && LocalDateTime.now().isBefore(drops.getEndAt())) {
+        drops.activate();
+        productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.ON_SALE);
+      }
+    } catch (OptimisticLockingFailureException e) {
+      log.info("드랍 ID={} 재활성화가 동시성 충돌로 스킵되었습니다.", dropId, e);
+    }
+  }
+
+  private void validateOrderableDrop(Drops drops, Long productId) {
+    if (!drops.isActive()) {
+      throw new DropsException(ErrorCode.DROP_ORDER_NOT_ALLOWED);
+    }
+    if (!drops.getProduct().getId().equals(productId)) {
+      throw new DropsException(ErrorCode.DROP_PRODUCT_MISMATCH);
+    }
   }
 }
 

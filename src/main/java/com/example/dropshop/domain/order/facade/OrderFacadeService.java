@@ -1,5 +1,7 @@
 package com.example.dropshop.domain.order.facade;
 
+import com.example.dropshop.domain.drops.entity.Drops;
+import com.example.dropshop.domain.drops.service.DropsFacadeService;
 import com.example.dropshop.domain.order.dto.request.OrderCreateRequest;
 import com.example.dropshop.domain.order.dto.response.OrderCreateResponse;
 import com.example.dropshop.domain.order.dto.response.OrderDetailResponse;
@@ -8,7 +10,6 @@ import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.service.OrderService;
 import com.example.dropshop.domain.user.entity.User;
 import com.example.dropshop.domain.user.repository.UserRepository;
-import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,24 +24,30 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderFacadeService {
 
   private final OrderService orderService;
+  private final DropsFacadeService dropsFacadeService;
   private final UserRepository userRepository;
 
   /**
    * 주문 생성.
    */
+  @Transactional
   public OrderCreateResponse createOrder(String email, OrderCreateRequest request) {
     // TODO: QueueService 대기열 토큰 검증
-    // TODO: ProductService 상품 정보 조회 및 재고 차감
     Long userId = getUserIdByEmail(email);
+    Drops drops = dropsFacadeService.reserveStockForOrder(
+        request.getDropId(),
+        request.getProductId(),
+        1
+    );
 
     Order order = orderService.createOrder(
         userId,
         request.getDropId(),
         request.getProductId(),
-        new BigDecimal("100000"), // priceSnapshot — ProductService 연동 후 교체
-        new BigDecimal("1000"), // salePriceSnapshot — ProductService 연동 후 교체
-        new BigDecimal("21000"), // discountAmountSnapshot — ProductService 연동 후 교체
-        "https://dummy-image"// thumbnailUrlSnapshot — ProductService 연동 후 교체
+        drops.getProduct().getPrice(),
+        drops.getProduct().getSalePrice(),
+        drops.getProduct().getDiscountAmount(),
+        drops.getProduct().getThumbnailUrl()
     );
 
     return OrderCreateResponse.from(order);
