@@ -177,4 +177,108 @@ class PaymentServiceTest {
 
     verify(portOneClient, never()).getPayment(any());
   }
+
+  @Test
+  @DisplayName("웹훅 처리 성공 - PortOne 결제 완료면 Payment와 Order가 완료 상태가 된다")
+  void handleWebhook_success() {
+    given(paymentRepository.findByIdempotencyKey("payment-test-123")).willReturn(Optional.of(payment));
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(new PortOnePaymentResponse(
+            "payment-test-123",
+            "PAID",
+            "tx-webhook",
+            new PortOnePaymentResponse.Amount(new BigDecimal("79000"))
+        ));
+
+    Payment result = paymentService.handleWebhook("payment-test-123");
+
+    assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
+    assertThat(result.getTransactionId()).isEqualTo("tx-webhook");
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+  }
+
+  @Test
+  @DisplayName("웹훅 재수신 - 이미 완료된 결제면 그대로 유지된다")
+  void handleWebhook_idempotent() {
+    payment.complete("tx-123");
+    order.pay();
+
+    given(paymentRepository.findByIdempotencyKey("payment-test-123")).willReturn(Optional.of(payment));
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(new PortOnePaymentResponse(
+            "payment-test-123",
+            "PAID",
+            "tx-123",
+            new PortOnePaymentResponse.Amount(new BigDecimal("79000"))
+        ));
+
+    Payment result = paymentService.handleWebhook("payment-test-123");
+
+    assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
+    assertThat(result.getTransactionId()).isEqualTo("tx-123");
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+    verify(eventPublisher, never()).publishEvent(any());
+  }
+
+  @Test
+  @DisplayName("웹훅 실패 상태는 주문과 결제를 즉시 취소하지 않는다")
+  void handleWebhook_failedStatus_doesNotCancelOrder() {
+    given(paymentRepository.findByIdempotencyKey("payment-test-123")).willReturn(Optional.of(payment));
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(new PortOnePaymentResponse(
+            "payment-test-123",
+            "FAILED",
+            "tx-failed",
+            new PortOnePaymentResponse.Amount(new BigDecimal("79000"))
+        ));
+
+    Payment result = paymentService.handleWebhook("payment-test-123");
+
+    assertThat(result.getStatus()).isEqualTo(PaymentStatus.PENDING);
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+    verify(eventPublisher, never()).publishEvent(any());
+  }
+
+  @Test
+  @DisplayName("웹훅 결제 식별자가 비어 있으면 예외가 발생한다")
+  void handleWebhook_blankPaymentId_throwsException() {
+    assertThatThrownBy(() -> paymentService.handleWebhook(" "))
+        .isInstanceOf(PaymentException.class);
+
+    verify(portOneClient, never()).getPayment(any());
+  }
+
+  @Test
+  @DisplayName("웹훅 PAID 처리 시 주문 홀드가 만료되었으면 예외가 발생한다")
+  void handleWebhook_paidButOrderExpired_throwsException() {
+    ReflectionTestUtils.setField(order, "holdExpiredAt", LocalDateTime.now().minusMinutes(1));
+
+    given(paymentRepository.findByIdempotencyKey("payment-test-123")).willReturn(Optional.of(payment));
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(new PortOnePaymentResponse(
+            "payment-test-123",
+            "PAID",
+            "tx-expired",
+            new PortOnePaymentResponse.Amount(new BigDecimal("79000"))
+        ));
+
+    assertThatThrownBy(() -> paymentService.handleWebhook("payment-test-123"))
+        .isInstanceOf(OrderException.class);
+  }
+
+  @Test
+  @DisplayName("웹훅 PortOne 조회 실패는 예외가 전파된다")
+  void handleWebhook_portOneError_throwsException() {
+    given(paymentRepository.findByIdempotencyKey("payment-test-123")).willReturn(Optional.of(payment));
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(portOneClient.getPayment("payment-test-123"))
+        .willThrow(new PaymentException(com.example.dropshop.common.exception.ErrorCode.PAYMENT_PORTONE_API_ERROR));
+
+    assertThatThrownBy(() -> paymentService.handleWebhook("payment-test-123"))
+        .isInstanceOf(PaymentException.class);
+  }
 }

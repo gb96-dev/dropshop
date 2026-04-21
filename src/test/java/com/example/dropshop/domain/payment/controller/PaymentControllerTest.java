@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.payment.dto.request.PaymentConfirmRequest;
 import com.example.dropshop.domain.payment.dto.request.PaymentPrepareRequest;
+import com.example.dropshop.domain.payment.dto.request.PaymentWebhookRequest;
 import com.example.dropshop.domain.payment.dto.response.PaymentConfirmResponse;
 import com.example.dropshop.domain.payment.dto.response.PaymentPortOneRequestResponse;
 import com.example.dropshop.domain.payment.dto.response.PaymentPrepareResponse;
@@ -119,6 +120,19 @@ class PaymentControllerTest {
         .andExpect(jsonPath("$.data.transactionId").value("tx-123"))
         .andExpect(jsonPath("$.data.paymentStatus").value("COMPLETED"))
         .andExpect(jsonPath("$.data.orderStatus").value("PAID"));
+  }
+
+  @Test
+  @DisplayName("PortOne 웹훅 처리 성공")
+  void handleWebhook_success() throws Exception {
+    PaymentWebhookRequest request = new PaymentWebhookRequest();
+    ReflectionTestUtils.setField(request, "id", "payment-test-123");
+
+    mockMvc.perform(post("/api/payments/webhook")
+            .contentType(APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
   }
 
   private Payment createPayment() {

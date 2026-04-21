@@ -3,6 +3,7 @@ package com.example.dropshop.domain.drops.repository;
 import com.example.dropshop.domain.drops.entity.Drops;
 import com.example.dropshop.domain.drops.enums.DropsStatus;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -113,27 +113,29 @@ public class PaymentService {
 
     validatePaymentPending(payment);
     validateOrderPending(order);
+    validateOrderNotExpired(order);
     validatePortOnePaymentId(payment, portOnePaymentId);
 
     PortOnePaymentResponse portOnePayment = portOneClient.getPayment(portOnePaymentId);
+    return applyPortOnePaymentResult(payment, order, portOnePayment, true);
+  }
 
-
-    validatePortOneResponse(payment, portOnePayment);
-
-    if ("PAID".equals(portOnePayment.status())) {
-      payment.complete(portOnePayment.transactionId());
-      order.pay();
-      return payment;
+  /**
+   * PortOne 웹훅을 수신해 내부 결제 상태를 동기화한다.
+   */
+  @Transactional
+  public Payment handleWebhook(String portOnePaymentId) {
+    if (portOnePaymentId == null || portOnePaymentId.isBlank()) {
+      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_MISMATCH, "웹훅 결제 식별자가 비어 있습니다.");
     }
 
-    if (isFailureStatus(portOnePayment.status())) {
-      payment.fail();
-      order.cancel();
-      publishStockRestoreEvents(order);
-      return payment;
-    }
+    Payment payment = paymentRepository.findByIdempotencyKey(portOnePaymentId)
+        .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
+    Order order = orderRepository.findById(payment.getOrderId())
+        .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
 
-    throw new PaymentException(ErrorCode.PAYMENT_PORTONE_NOT_PAID);
+    PortOnePaymentResponse portOnePayment = portOneClient.getPayment(portOnePaymentId);
+    return applyPortOnePaymentResult(payment, order, portOnePayment, false);
   }
 
   /**
@@ -221,6 +223,42 @@ public class PaymentService {
     if (portOnePayment.status() == null || portOnePayment.status().isBlank()) {
       throw new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR);
     }
+  }
+
+  private Payment applyPortOnePaymentResult(
+      Payment payment,
+      Order order,
+      PortOnePaymentResponse portOnePayment,
+      boolean cancelOrderOnFailure
+  ) {
+    validatePortOneResponse(payment, portOnePayment);
+
+    if (payment.getStatus() != PaymentStatus.PENDING) {
+      return payment;
+    }
+
+    if ("PAID".equals(portOnePayment.status())) {
+      validateOrderPending(order);
+      validateOrderNotExpired(order);
+      payment.complete(portOnePayment.transactionId());
+      order.pay();
+      return payment;
+    }
+
+    if (isFailureStatus(portOnePayment.status())) {
+      if (cancelOrderOnFailure) {
+        if (payment.getStatus() == PaymentStatus.PENDING) {
+          payment.fail();
+        }
+        if (order.getStatus() == OrderStatus.PENDING) {
+          order.cancel();
+          publishStockRestoreEvents(order);
+        }
+      }
+      return payment;
+    }
+
+    throw new PaymentException(ErrorCode.PAYMENT_PORTONE_NOT_PAID);
   }
 
   private void publishStockRestoreEvents(Order order) {
