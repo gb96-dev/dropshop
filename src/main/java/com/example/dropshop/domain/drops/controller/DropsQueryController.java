@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/drops")
+@RequestMapping("/api/drops")
 public class DropsQueryController {
 
   private final DropsQueryService dropsQueryService;
