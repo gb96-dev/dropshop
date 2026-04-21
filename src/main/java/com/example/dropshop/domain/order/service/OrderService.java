@@ -1,14 +1,13 @@
 package com.example.dropshop.domain.order.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.drops.service.DropsFacadeService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
-import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,7 @@ import java.util.List;
 public class OrderService {
 
   private final OrderRepository orderRepository;
-  private final ApplicationEventPublisher eventPublisher;
+  private final DropsFacadeService dropsFacadeService;
 
   /**
    * 주문 생성.
@@ -85,12 +84,7 @@ public class OrderService {
         .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
 
     order.cancel();
-
-    order.getOrderItems().forEach(item ->
-        eventPublisher.publishEvent(
-            new StockRestoreEvent(item.getProductId(), item.getQuantity())
-        )
-    );
+    restoreDropStock(order);
     return order;
   }
 
@@ -105,12 +99,15 @@ public class OrderService {
 
     expiredOrders.forEach(order -> {
       order.cancel();
-      order.getOrderItems().forEach(item ->
-          eventPublisher.publishEvent(
-              new StockRestoreEvent(item.getProductId(), item.getQuantity())
-          )
-      );
+      restoreDropStock(order);
     });
+  }
+
+  private void restoreDropStock(Order order) {
+    int restoreQuantity = order.getOrderItems().stream()
+        .mapToInt(OrderItem::getQuantity)
+        .sum();
+    dropsFacadeService.restoreStockForOrder(order.getDropId(), restoreQuantity);
   }
 
 }
