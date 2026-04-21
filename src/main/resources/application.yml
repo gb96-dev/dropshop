@@ -2,21 +2,16 @@ spring:
   config:
     import:
       optional:file:./secret.yml
-
-dropshop:
-  product:
-    max-image-count: 5
-    purchasable-block-hours: 24
   main:
     allow-bean-definition-overriding: true
-  # DataSource 설정
+
+  # 이 부분을 spring: 바로 아래(한 칸 들여쓰기)로 옮겼습니다.
   datasource:
     url: jdbc:mysql://localhost:3306/dropshop?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-  # JPA / Hibernate 설정
   jpa:
     hibernate:
       ddl-auto: update
@@ -26,23 +21,31 @@ dropshop:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
 
+  # cloud 설정도 보통 spring 하위에 두거나 최상단에 둡니다.
+  cloud:
+    aws:
+      credentials:
+        access-key: dummy-key
+        secret-key: dummy-secret
+      s3:
+        bucket: dummy-bucket
+      region:
+        static: ap-northeast-2
+      stack:
+        auto: false
+
+# 프로젝트 전용 커스텀 설정만 dropshop 아래에 남겨둡니다.
+dropshop:
+  product:
+    max-image-count: 5
+    purchasable-block-hours: 24
+
 jwt:
-  secret: vms6020-very-secret-key-for-dropshop-project-2026 # 32자 이상의 안전한 키
-  access-token-expiration: 3600000 # 1시간 (ms 단위)
-  refresh-token-expiration: 604800000 # 7일 (ms 단위)
+  secret: vms6020-very-secret-key-for-dropshop-project-2026
+  access-token-expiration: 3600000
+  refresh-token-expiration: 604800000
+
 aws:
   credentials:
     access-key: dummy-key-1234
     secret-key: dummy-secret-5678
-
-cloud:
-  aws:
-    credentials:
-      access-key: dummy-key
-      secret-key: dummy-secret
-    s3:
-      bucket: dummy-bucket
-    region:
-      static: ap-northeast-2
-    stack:
-      auto: false
