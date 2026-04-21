@@ -13,6 +13,7 @@ import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
+import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
 import com.example.dropshop.domain.payment.client.PortOneClient;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
@@ -116,6 +117,60 @@ class PaymentServiceTest {
   }
 
   @Test
+  @DisplayName("결제 준비 실패 - 주문 금액과 결제 금액이 다르면 예외가 발생한다")
+  void preparePayment_amountMismatch_throwsException() {
+    given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
+    given(orderRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(order));
+
+    assertThatThrownBy(() -> paymentService.preparePayment(
+        "test@test.com",
+        1L,
+        new BigDecimal("80000"),
+        "payment-test-123",
+        PaymentMethod.CARD
+    )).isInstanceOf(PaymentException.class);
+
+    verify(paymentRepository, never()).save(any(Payment.class));
+  }
+
+  @Test
+  @DisplayName("결제 준비 실패 - 이미 결제가 존재하면 예외가 발생한다")
+  void preparePayment_alreadyExists_throwsException() {
+    given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
+    given(orderRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(order));
+    given(paymentRepository.existsByOrderId(1L)).willReturn(true);
+
+    assertThatThrownBy(() -> paymentService.preparePayment(
+        "test@test.com",
+        1L,
+        new BigDecimal("79000"),
+        "payment-test-123",
+        PaymentMethod.CARD
+    )).isInstanceOf(PaymentException.class);
+
+    verify(paymentRepository, never()).save(any(Payment.class));
+  }
+
+  @Test
+  @DisplayName("결제 준비 실패 - idempotencyKey가 중복이면 예외가 발생한다")
+  void preparePayment_idempotencyKeyConflict_throwsException() {
+    given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
+    given(orderRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(order));
+    given(paymentRepository.existsByOrderId(1L)).willReturn(false);
+    given(paymentRepository.existsByIdempotencyKey("payment-test-123")).willReturn(true);
+
+    assertThatThrownBy(() -> paymentService.preparePayment(
+        "test@test.com",
+        1L,
+        new BigDecimal("79000"),
+        "payment-test-123",
+        PaymentMethod.CARD
+    )).isInstanceOf(PaymentException.class);
+
+    verify(paymentRepository, never()).save(any(Payment.class));
+  }
+
+  @Test
   @DisplayName("결제 확정 성공 - PortOne 결제 완료면 Payment와 Order가 완료 상태가 된다")
   void confirmPayment_success() {
     given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
@@ -176,6 +231,48 @@ class PaymentServiceTest {
         .isInstanceOf(PaymentException.class);
 
     verify(portOneClient, never()).getPayment(any());
+  }
+
+  @Test
+  @DisplayName("결제 확정 실패 - PortOne 응답 금액이 내부 결제 금액과 다르면 예외가 발생한다")
+  void confirmPayment_portOneAmountMismatch_throwsException() {
+    given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
+    given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
+    given(orderRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(order));
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(new PortOnePaymentResponse(
+            "payment-test-123",
+            "PAID",
+            "tx-123",
+            new PortOnePaymentResponse.Amount(new BigDecimal("80000"))
+        ));
+
+    assertThatThrownBy(() -> paymentService.confirmPayment(1L, "test@test.com", "payment-test-123"))
+        .isInstanceOf(PaymentException.class);
+
+    assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PENDING);
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+  }
+
+  @Test
+  @DisplayName("결제 확정 실패 - PortOne 응답 상태가 완료/실패가 아니면 예외가 발생한다")
+  void confirmPayment_notFinalStatus_throwsException() {
+    given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
+    given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
+    given(orderRepository.findByIdAndUserId(1L, 1L)).willReturn(Optional.of(order));
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(new PortOnePaymentResponse(
+            "payment-test-123",
+            "READY",
+            null,
+            new PortOnePaymentResponse.Amount(new BigDecimal("79000"))
+        ));
+
+    assertThatThrownBy(() -> paymentService.confirmPayment(1L, "test@test.com", "payment-test-123"))
+        .isInstanceOf(PaymentException.class);
+
+    assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PENDING);
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
   }
 
   @Test
