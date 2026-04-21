@@ -5,21 +5,14 @@ import com.example.dropshop.domain.drops.dto.request.DropCreateRequest;
 import com.example.dropshop.domain.drops.dto.request.DropUpdateRequest;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.entity.Drops;
-import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.exception.DropsException;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
-import com.example.dropshop.domain.drops.entity.Drops;
-import com.example.dropshop.domain.drops.repository.DropsRepository;
 import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -98,7 +91,7 @@ public class DropsFacadeService {
 
     dropsService.delete(drops);
 
-     if (!dropsService.existsOngoingDropForProduct(product.getId())) {
+    if (!dropsService.existsOngoingDropForProduct(product.getId())) {
       productDomainFacadeService.updateStatusByDrop(product, ProductStatus.HIDDEN);
     }
   }
@@ -137,7 +130,7 @@ public class DropsFacadeService {
   }
 
   private void validateDuplicatedOngoingDrop(Long productId) {
-     if (dropsService.existsOngoingDropForProduct(productId)) {
+    if (dropsService.existsOngoingDropForProduct(productId)) {
       throw new DropsException(ErrorCode.DROP_ALREADY_EXISTS);
     }
   }
@@ -147,7 +140,7 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Optional<Drops> findLatestDropByProductId(Long productId) {
-    return dropsRepository.findTopByProductIdOrderByStartAtDesc(productId);
+    return dropsService.findLatestDropByProductId(productId);
   }
 
   /**
@@ -155,13 +148,7 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
-    List<Drops> dropsList = dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
-    Map<Long, Drops> latestDrops = new HashMap<>();
-    for (Drops drops : dropsList) {
-      Long productId = drops.getProduct().getId();
-      latestDrops.putIfAbsent(productId, drops);
-    }
-    return latestDrops;
+    return dropsService.findLatestDropsByProductIds(productIds);
   }
 }
 

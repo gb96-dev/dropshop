@@ -36,9 +36,16 @@ out/
 ### VS Code ###
 .vscode/
 
-application.yml
-secret.yml
 **/src/main/generated
 
-# application.yml
-application.yml
+# Local / secret yaml files
+/secret.yml
+/application-local.yml
+/src/main/resources/secret.yml
+/src/main/resources/application-local.yml
+
+# Keep shared sample/example files tracked
+!application.yml.sample
+!secret.yml.example
+!src/main/resources/application.yml
+!src/main/resources/*.sample.yml
