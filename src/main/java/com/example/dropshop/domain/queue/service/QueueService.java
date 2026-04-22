@@ -106,9 +106,9 @@ public class QueueService {
 
       Queue queue = new Queue(userId, dropId);
 
-      queue = queueRepository.save(queue);
-
       cnt = queueRepository.countByDropIdAndStatusIn(dropId, List.of(QueueStatus.WAITING, QueueStatus.READY));
+      
+      queue = queueRepository.save(queue);
 
       if (cnt < THRESHOLD) {
         // 3-3-1. 처리 허용 수 보다 작다면 토큰 발급, 큐 상태 READY 저장, 구매 상태로 반환
