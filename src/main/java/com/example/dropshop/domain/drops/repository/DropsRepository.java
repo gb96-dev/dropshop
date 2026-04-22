@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
@@ -41,7 +43,39 @@ public interface DropsRepository extends JpaRepository<Drops, Long> {
    * 판매자 본인 상품의 드롭을 페이징으로 조회한다 (Product 함께 로드).
    */
   @EntityGraph(attributePaths = "product")
-  Page<Drops> findAllByProduct_SellerIdOrderByCreatedAtDesc(Long sellerId, Pageable pageable);
+  @Query(
+      """
+      select d
+      from Drops d
+      where d.product.sellerId = :sellerId
+      order by d.createdAt desc
+      """
+  )
+  Page<Drops> findSellerDropsBySellerId(
+      @Param("sellerId") Long sellerId,
+      Pageable pageable
+  );
+
+  /**
+   * 시작 시간이 도달한 예정 드랍을 조회한다.
+   */
+  List<Drops> findAllByStatusAndStartAtLessThanEqual(DropsStatus status, LocalDateTime baseTime);
+
+  /**
+   * 종료 대상(종료 시간 도달 또는 재고 소진)인 진행 중 드랍을 조회한다.
+   */
+  @Query(
+      """
+      select d
+      from Drops d
+      where d.status = :status
+        and (d.endAt <= :baseTime or d.remainStock <= 0)
+      """
+  )
+  List<Drops> findAllActiveDropsToFinish(
+      @Param("status") DropsStatus status,
+      @Param("baseTime") LocalDateTime baseTime
+  );
 
   /**
    * 특정 상품의 최신 드랍 1건을 시작 시간 기준 내림차순으로 조회한다.
