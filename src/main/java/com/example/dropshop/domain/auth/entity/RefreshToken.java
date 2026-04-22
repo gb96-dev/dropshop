@@ -13,15 +13,12 @@ public class RefreshToken {
     private String email;
 
     @Column(nullable = false)
-    private String token;
+    private String hashedToken;
 
-    // 튜터님 피드백: 필요한 데이터만 받는 생성자를 직접 정의
-    public RefreshToken(String email, String token) {
+    public RefreshToken(String email, String hashedToken) {
         this.email = email;
-        this.token = token;
+        this.hashedToken = hashedToken;
     }
 
-    // JPA를 위한 최소한의 기본 생성자 (외부 접근 차단)
-    protected RefreshToken() {
-    }
+    protected RefreshToken() {}
 }
