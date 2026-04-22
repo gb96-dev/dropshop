@@ -146,9 +146,10 @@ class ProductQueryServiceTest {
   @DisplayName("공개 상품 상세 조회 시 구매 가능 여부를 계산한다")
   void findPublicProductDetail_calculatesPurchasable() {
     Product product = createProduct(31L, ProductStatus.READY);
+    // product 내부 sellerId = 1L 이므로 User.id도 1L로 맞춤
     Drops latestDrop = createDrop(product, LocalDateTime.now().plusHours(48));
     User seller = User.signup("seller@test.com", "encoded-password", "판매자");
-    ReflectionTestUtils.setField(seller, "id", 31L);
+    ReflectionTestUtils.setField(seller, "id", 1L); // 31L → 1L 수정
 
     given(productRepository.findDetailById(31L)).willReturn(Optional.of(product));
     given(dropsFacadeService.findLatestDropByProductId(31L)).willReturn(Optional.of(latestDrop));
@@ -157,7 +158,7 @@ class ProductQueryServiceTest {
     ProductDetailResponse response = productQueryService.findPublicProductDetail(31L);
 
     assertThat(response.isPurchasable()).isTrue();
-    assertThat(response.getSeller().getSellerId()).isEqualTo(31L);
+    assertThat(response.getSeller().getSellerId()).isEqualTo(1L); // 31L → 1L 수정
     assertThat(response.getLatestDrop().getDropId()).isEqualTo(latestDrop.getId());
   }
 

@@ -68,26 +68,34 @@ class ProductRepositoryIntegrationTest {
     Product product = saveProduct(2L, "detail", BigDecimal.valueOf(99000), 5, ProductStatus.READY);
 
     product.addImage(ProductImage.builder()
-        .product(product)
-        .imageUrl("https://cdn.example.com/detail-1.jpg")
-        .sortOrder(1)
-        .isThumbnail(true)
-        .build());
+      .product(product)
+      .imageUrl("https://cdn.example.com/detail-1.jpg")
+      .sortOrder(1)
+      .isThumbnail(true)
+      .build());
     product.addImage(ProductImage.builder()
-        .product(product)
-        .imageUrl("https://cdn.example.com/detail-2.jpg")
-        .sortOrder(2)
-        .isThumbnail(false)
-        .build());
+      .product(product)
+      .imageUrl("https://cdn.example.com/detail-2.jpg")
+      .sortOrder(2)
+      .isThumbnail(false)
+      .build());
     productRepository.saveAndFlush(product);
 
     entityManager.clear();
 
     Product loaded = productRepository.findDetailById(product.getId()).orElseThrow();
 
+    // @EntityGraph가 실제로 eager loading 했는지 검증
+    jakarta.persistence.PersistenceUnitUtil persistenceUnitUtil =
+      entityManager.getEntityManagerFactory().getPersistenceUnitUtil();
+    assertThat(persistenceUnitUtil.isLoaded(loaded, "images")).isTrue();
+
     assertThat(loaded.getImages()).hasSize(2);
     assertThat(loaded.getImages()).extracting(ProductImage::getImageUrl)
-        .containsExactly("https://cdn.example.com/detail-1.jpg", "https://cdn.example.com/detail-2.jpg");
+      .containsExactly(
+        "https://cdn.example.com/detail-1.jpg",
+        "https://cdn.example.com/detail-2.jpg"
+      );
   }
 
   @Test
