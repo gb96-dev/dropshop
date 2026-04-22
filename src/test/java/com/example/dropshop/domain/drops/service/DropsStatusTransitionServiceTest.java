@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.domain.drops.entity.Drops;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,7 +59,7 @@ class DropsStatusTransitionServiceTest {
     Drops first = createDrop(1L, 1L, LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusDays(1));
     Drops second = createDrop(2L, 1L, LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusDays(1));
 
-    given(dropsService.findScheduledDropsToActivate(any(LocalDateTime.class)))
+    given(dropsService.findScheduledDropsToActivate(eq(now)))
         .willReturn(List.of(first, second));
     doThrow(new org.springframework.dao.OptimisticLockingFailureException("conflict"))
         .when(productDomainFacadeService)
@@ -66,7 +68,15 @@ class DropsStatusTransitionServiceTest {
     int transitioned = dropsStatusTransitionService.transitionScheduledToActive(now);
 
     assertThat(transitioned).isEqualTo(1);
-    verify(productDomainFacadeService).updateStatusByDrop(second.getProduct(), ProductStatus.ON_SALE);
+    // baseTime 정확성 검증
+    verify(dropsService).findScheduledDropsToActivate(eq(now));
+
+    // 호출 순서 검증: 첫 드랍 예외 → 두 번째 드랍 성공 순서
+    var inOrder = inOrder(productDomainFacadeService);
+    inOrder.verify(productDomainFacadeService)
+        .updateStatusByDrop(first.getProduct(), ProductStatus.ON_SALE);
+    inOrder.verify(productDomainFacadeService)
+        .updateStatusByDrop(second.getProduct(), ProductStatus.ON_SALE);
   }
 
   @Test

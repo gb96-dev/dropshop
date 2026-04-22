@@ -3,7 +3,6 @@ package com.example.dropshop.domain.drops.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -15,7 +14,7 @@ import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.entity.Drops;
 import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.exception.DropsException;
-import com.example.dropshop.domain.order.facade.OrderFacadeService;
+import com.example.dropshop.domain.order.service.OrderHistoryQueryService;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
@@ -40,7 +39,7 @@ class DropsFacadeServiceTest {
   private ProductDomainFacadeService productDomainFacadeService;
 
   @Mock
-  private OrderFacadeService orderFacadeService;
+  private OrderHistoryQueryService orderHistoryQueryService;
 
   @InjectMocks
   private DropsFacadeService dropsFacadeService;
@@ -71,7 +70,7 @@ class DropsFacadeServiceTest {
     ReflectionTestUtils.setField(drops, "status", DropsStatus.SCHEDULED);
 
     given(dropsService.findById(10L)).willReturn(drops);
-    given(orderFacadeService.existsOrderHistoryForDrop(10L)).willReturn(true);
+    given(orderHistoryQueryService.existsOrderHistoryForDrop(10L)).willReturn(true);
 
     assertThatThrownBy(() -> dropsFacadeService.deleteSellerDrop(10L, 1L, true, true))
         .isInstanceOf(DropsException.class)
