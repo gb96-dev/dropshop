@@ -32,6 +32,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class DropsFacadeServiceTest {
 
+  private static final Long DEFAULT_DROP_ID = 10L;
+  private static final Long DEFAULT_PRODUCT_ID = 1L;
+
   @Mock
   private DropsService dropsService;
 
@@ -47,9 +50,10 @@ class DropsFacadeServiceTest {
   @Test
   @DisplayName("판매자 드랍 생성 성공 시 상품 상태를 READY로 변경한다")
   void createSellerDrop_success() {
+    LocalDateTime now = LocalDateTime.now();
     Product product = createProduct(1L);
-    Drops drops = createDrop(product);
-    DropCreateRequest request = createDropCreateRequest(product.getId());
+    Drops drops = createScheduledDrop(product, now);
+    DropCreateRequest request = createDropCreateRequest(product.getId(), now);
 
     given(productDomainFacadeService.findOwnedProduct(product.getId(), 1L)).willReturn(product);
     given(dropsService.existsOngoingDropForProduct(product.getId())).willReturn(false);
@@ -65,14 +69,14 @@ class DropsFacadeServiceTest {
   @Test
   @DisplayName("주문 이력이 있는 드랍은 삭제할 수 없다")
   void deleteSellerDrop_withOrderHistory_throwsException() {
+    LocalDateTime now = LocalDateTime.now();
     Product product = createProduct(1L);
-    Drops drops = createDrop(product);
-    ReflectionTestUtils.setField(drops, "status", DropsStatus.SCHEDULED);
+    Drops drops = createScheduledDrop(product, now);
 
-    given(dropsService.findById(10L)).willReturn(drops);
-    given(orderHistoryQueryService.existsOrderHistoryForDrop(10L)).willReturn(true);
+    given(dropsService.findById(DEFAULT_DROP_ID)).willReturn(drops);
+    given(orderHistoryQueryService.existsOrderHistoryForDrop(DEFAULT_DROP_ID)).willReturn(true);
 
-    assertThatThrownBy(() -> dropsFacadeService.deleteSellerDrop(10L, 1L, true, true))
+    assertThatThrownBy(() -> dropsFacadeService.deleteSellerDrop(DEFAULT_DROP_ID, 1L, true, true))
         .isInstanceOf(DropsException.class)
         .hasMessage(ErrorCode.DROP_DELETE_NOT_ALLOWED.getMessage());
 
@@ -83,13 +87,13 @@ class DropsFacadeServiceTest {
   @Test
   @DisplayName("판매자 드랍 강제 종료 성공 시 상품 상태를 OUT_OF_STOCK으로 변경한다")
   void stopSellerDrop_success() {
+    LocalDateTime now = LocalDateTime.now();
     Product product = createProduct(1L);
-    Drops drops = createDrop(product);
-    ReflectionTestUtils.setField(drops, "status", DropsStatus.ACTIVE);
+    Drops drops = createActiveDrop(product, now);
 
-    given(dropsService.findById(10L)).willReturn(drops);
+    given(dropsService.findById(DEFAULT_DROP_ID)).willReturn(drops);
 
-    DropResponse response = dropsFacadeService.stopSellerDrop(10L, 1L, true, true);
+    DropResponse response = dropsFacadeService.stopSellerDrop(DEFAULT_DROP_ID, 1L, true, true);
 
     assertThat(response.getStatus()).isEqualTo("FINISHED");
     verify(productDomainFacadeService).updateStatusByDrop(product, ProductStatus.OUT_OF_STOCK);
@@ -98,14 +102,14 @@ class DropsFacadeServiceTest {
   @Test
   @DisplayName("주문 생성 시 ACTIVE 드랍 재고가 차감된다")
   void reserveStockForOrder_success() {
+    LocalDateTime now = LocalDateTime.now();
     Product product = createProduct(1L);
-    Drops drops = createDrop(product);
-    ReflectionTestUtils.setField(drops, "status", DropsStatus.ACTIVE);
+    Drops drops = createActiveDrop(product, now);
     ReflectionTestUtils.setField(drops, "remainStock", 5L);
 
-    given(dropsService.findById(10L)).willReturn(drops);
+    given(dropsService.findById(DEFAULT_DROP_ID)).willReturn(drops);
 
-    Drops result = dropsFacadeService.reserveStockForOrder(10L, 1L, 1);
+    Drops result = dropsFacadeService.reserveStockForOrder(DEFAULT_DROP_ID, 1L, 1);
 
     assertThat(result.getRemainStock()).isEqualTo(4L);
     verify(productDomainFacadeService, never()).updateStatusByDrop(any(Product.class), any(ProductStatus.class));
@@ -114,14 +118,14 @@ class DropsFacadeServiceTest {
   @Test
   @DisplayName("드랍 종료 상태에서 재고 복원 시 ACTIVE로 재전환된다")
   void restoreStockForOrder_reactivateSuccess() {
+    LocalDateTime now = LocalDateTime.now();
     Product product = createProduct(1L);
-    Drops drops = createDrop(product);
-    ReflectionTestUtils.setField(drops, "status", DropsStatus.FINISHED);
+    Drops drops = createFinishedButReactivatableDrop(product, now);
     ReflectionTestUtils.setField(drops, "remainStock", 0L);
 
-    given(dropsService.findById(10L)).willReturn(drops);
+    given(dropsService.findById(DEFAULT_DROP_ID)).willReturn(drops);
 
-    dropsFacadeService.restoreStockForOrder(10L, 1);
+    dropsFacadeService.restoreStockForOrder(DEFAULT_DROP_ID, 1);
 
     assertThat(drops.isActive()).isTrue();
     assertThat(drops.getRemainStock()).isEqualTo(1L);
@@ -131,19 +135,20 @@ class DropsFacadeServiceTest {
   @Test
   @DisplayName("재고 복원 후 재활성화 중 동시성 충돌이 발생해도 예외를 전파하지 않는다")
   void restoreStockForOrder_optimisticLockIgnore() {
+    LocalDateTime now = LocalDateTime.now();
     Product product = createProduct(1L);
-    Drops drops = createDrop(product);
-    ReflectionTestUtils.setField(drops, "status", DropsStatus.FINISHED);
+    Drops drops = createFinishedButReactivatableDrop(product, now);
     ReflectionTestUtils.setField(drops, "remainStock", 0L);
 
-    given(dropsService.findById(10L)).willReturn(drops);
+    given(dropsService.findById(DEFAULT_DROP_ID)).willReturn(drops);
     doThrow(new OptimisticLockingFailureException("conflict"))
         .when(productDomainFacadeService)
         .updateStatusByDrop(product, ProductStatus.ON_SALE);
 
-    dropsFacadeService.restoreStockForOrder(10L, 1);
+    dropsFacadeService.restoreStockForOrder(DEFAULT_DROP_ID, 1);
 
     assertThat(drops.getRemainStock()).isEqualTo(1L);
+    verify(productDomainFacadeService).updateStatusByDrop(product, ProductStatus.ON_SALE);
   }
 
   private Product createProduct(Long sellerId) {
@@ -160,28 +165,61 @@ class DropsFacadeServiceTest {
         "배송 안내",
         "환불 정책"
     );
-    ReflectionTestUtils.setField(product, "id", 1L);
+    ReflectionTestUtils.setField(product, "id", DEFAULT_PRODUCT_ID);
     return product;
   }
 
-  private Drops createDrop(Product product) {
+  private Drops createDrop(
+      Product product,
+      LocalDateTime startAt,
+      LocalDateTime endAt,
+      DropsStatus status
+  ) {
     Drops drops = Drops.create(
         product,
-        LocalDateTime.now().plusDays(1),
-        LocalDateTime.now().plusDays(2),
+        startAt,
+        endAt,
         30L,
         1L,
         true
     );
-    ReflectionTestUtils.setField(drops, "id", 10L);
+    ReflectionTestUtils.setField(drops, "status", status);
+    ReflectionTestUtils.setField(drops, "id", DEFAULT_DROP_ID);
     return drops;
   }
 
-  private DropCreateRequest createDropCreateRequest(Long productId) {
+  private Drops createScheduledDrop(Product product, LocalDateTime baseTime) {
+    return createDrop(
+        product,
+        baseTime.plusDays(1),
+        baseTime.plusDays(2),
+        DropsStatus.SCHEDULED
+    );
+  }
+
+  private Drops createActiveDrop(Product product, LocalDateTime baseTime) {
+    return createDrop(
+        product,
+        baseTime.minusHours(1),
+        baseTime.plusHours(1),
+        DropsStatus.ACTIVE
+    );
+  }
+
+  private Drops createFinishedButReactivatableDrop(Product product, LocalDateTime baseTime) {
+    return createDrop(
+        product,
+        baseTime.minusDays(1),
+        baseTime.plusHours(2),
+        DropsStatus.FINISHED
+    );
+  }
+
+  private DropCreateRequest createDropCreateRequest(Long productId, LocalDateTime baseTime) {
     DropCreateRequest request = new DropCreateRequest();
     ReflectionTestUtils.setField(request, "productId", productId);
-    ReflectionTestUtils.setField(request, "startAt", LocalDateTime.now().plusDays(1));
-    ReflectionTestUtils.setField(request, "endAt", LocalDateTime.now().plusDays(2));
+    ReflectionTestUtils.setField(request, "startAt", baseTime.plusDays(1));
+    ReflectionTestUtils.setField(request, "endAt", baseTime.plusDays(2));
     ReflectionTestUtils.setField(request, "totalStock", 30L);
     ReflectionTestUtils.setField(request, "purchaseLimit", 1L);
     ReflectionTestUtils.setField(request, "useQueue", true);

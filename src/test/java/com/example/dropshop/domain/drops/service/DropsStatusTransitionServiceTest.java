@@ -1,7 +1,6 @@
 package com.example.dropshop.domain.drops.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
@@ -21,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,15 +38,16 @@ class DropsStatusTransitionServiceTest {
   @DisplayName("예정 드랍을 활성 상태로 전이하고 상품을 ON_SALE로 동기화한다")
   void transitionScheduledToActive_success() {
     LocalDateTime now = LocalDateTime.now();
-    Drops scheduled = createDrop(1L, 1L, LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusDays(1));
+    Drops scheduled = createDrop(1L, 1L, now.minusMinutes(1), now.plusDays(1));
 
-    given(dropsService.findScheduledDropsToActivate(any(LocalDateTime.class)))
+    given(dropsService.findScheduledDropsToActivate(eq(now)))
         .willReturn(List.of(scheduled));
 
     int transitioned = dropsStatusTransitionService.transitionScheduledToActive(now);
 
     assertThat(transitioned).isEqualTo(1);
     assertThat(scheduled.isActive()).isTrue();
+    verify(dropsService).findScheduledDropsToActivate(eq(now));
     verify(productDomainFacadeService).updateStatusByDrop(scheduled.getProduct(), ProductStatus.ON_SALE);
   }
 
@@ -56,8 +55,8 @@ class DropsStatusTransitionServiceTest {
   @DisplayName("상태 전이 중 동시성 예외가 발생해도 다음 드랍 처리를 계속한다")
   void transitionScheduledToActive_optimisticLockContinue() {
     LocalDateTime now = LocalDateTime.now();
-    Drops first = createDrop(1L, 1L, LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusDays(1));
-    Drops second = createDrop(2L, 1L, LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusDays(1));
+    Drops first = createDrop(1L, 1L, now.minusMinutes(1), now.plusDays(1));
+    Drops second = createDrop(2L, 1L, now.minusMinutes(1), now.plusDays(1));
 
     given(dropsService.findScheduledDropsToActivate(eq(now)))
         .willReturn(List.of(first, second));
@@ -83,7 +82,7 @@ class DropsStatusTransitionServiceTest {
   @DisplayName("종료 대상 ACTIVE 드랍을 FINISHED로 전이하고 상품을 OUT_OF_STOCK으로 동기화한다")
   void transitionActiveToFinished_success() {
     LocalDateTime now = LocalDateTime.now();
-    Drops active = createDrop(2L, 1L, LocalDateTime.now().minusDays(1), LocalDateTime.now().minusMinutes(1));
+    Drops active = createDrop(2L, 1L, now.minusDays(1), now.minusMinutes(1));
     active.activate();
 
     given(dropsService.findActiveDropsToFinish(eq(now))).willReturn(List.of(active));
