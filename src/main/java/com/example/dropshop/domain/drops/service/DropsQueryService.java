@@ -28,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DropsQueryService {
 
   private static final Set<DropsStatus> PUBLIC_VISIBLE_STATUSES =
-      DropsService.PUBLIC_VISIBLE_STATUSES;
+      DropsConstants.PUBLIC_VISIBLE_STATUSES;
 
   private final DropsRepository dropsRepository;
 
