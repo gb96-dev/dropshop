@@ -17,7 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -44,10 +44,10 @@ public class DropsController {
    */
   @PostMapping
   public ResponseEntity<ApiResponse<DropResponse>> createDrop(
-      Authentication authentication,
+      @AuthenticationPrincipal String email,
       @Valid @RequestBody DropCreateRequest request
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     DropResponse response = dropsFacadeService.createSellerDrop(
         sellerAuth.sellerId(),
         sellerAuth.sellerApproved(),
@@ -63,10 +63,10 @@ public class DropsController {
   @PatchMapping("/{id}")
   public ResponseEntity<ApiResponse<DropResponse>> updateDrop(
       @PathVariable Long id,
-      Authentication authentication,
+      @AuthenticationPrincipal String email,
       @Valid @RequestBody DropUpdateRequest request
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     DropResponse response = dropsFacadeService.updateSellerDrop(
         id,
         sellerAuth.sellerId(),
@@ -83,9 +83,9 @@ public class DropsController {
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteDrop(
       @PathVariable Long id,
-      Authentication authentication
+      @AuthenticationPrincipal String email
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     dropsFacadeService.deleteSellerDrop(
         id,
         sellerAuth.sellerId(),
@@ -101,9 +101,9 @@ public class DropsController {
   @PatchMapping("/{id}/stop")
   public ResponseEntity<ApiResponse<DropResponse>> stopDrop(
       @PathVariable Long id,
-      Authentication authentication
+      @AuthenticationPrincipal String email
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     DropResponse response = dropsFacadeService.stopSellerDrop(
         id,
         sellerAuth.sellerId(),
@@ -119,11 +119,11 @@ public class DropsController {
   @GetMapping("/mine")
   public ResponseEntity<
       ApiResponse<ApiResponse.PageResponse<DropListItemResponse>>> getMyDrops(
-      Authentication authentication,
+      @AuthenticationPrincipal String email,
       @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
       Pageable pageable
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     Page<DropListItemResponse> response = dropsQueryService.findSellerDrops(
         sellerAuth.sellerId(),
         pageable
