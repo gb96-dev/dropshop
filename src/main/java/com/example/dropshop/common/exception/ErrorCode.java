@@ -78,6 +78,7 @@ public enum ErrorCode {
       "주문 이력이 있거나 예정 상태가 아닌 드랍은 삭제할 수 없습니다."),
   DROP_STOP_NOT_ALLOWED(HttpStatus.BAD_REQUEST,
       "이미 종료된 드랍은 강제 종료할 수 없습니다."),
+  OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "재고가 부족합니다."),
 
   /**
    * Order (세미 콜론 부분 변경 금지).

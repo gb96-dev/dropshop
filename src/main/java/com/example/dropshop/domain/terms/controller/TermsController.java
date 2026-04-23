@@ -4,8 +4,13 @@ import com.example.dropshop.domain.terms.dto.response.TermsResponse;
 import com.example.dropshop.domain.terms.entity.Terms;
 import com.example.dropshop.domain.terms.repository.TermsRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -31,10 +36,12 @@ public class TermsController {
      * 특정 약관 상세 조회
      */
     @GetMapping("/{id}")
-    public ResponseEntity<TermsResponse> getTermsDetail(@PathVariable Long id) {
+    public TermsResponse getTerms(@PathVariable Long id) {
         Terms terms = termsRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 약관을 찾을 수 없습니다. ID: " + id));
-
-        return ResponseEntity.ok(TermsResponse.from(terms));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "해당 약관을 찾을 수 없습니다. (ID: " + id + ")"
+                )); // 404 반환
+        return TermsResponse.from(terms);
     }
+
 }

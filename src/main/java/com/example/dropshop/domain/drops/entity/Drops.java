@@ -5,24 +5,13 @@ import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.exception.DropsException;
 import com.example.dropshop.domain.product.entity.Product;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
-import java.time.LocalDateTime;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 /**
  * 드랍 엔티티.
@@ -216,6 +205,25 @@ public class Drops extends BaseEntity {
   private void validatePurchaseLimit(Long purchaseLimit) {
     if (purchaseLimit == null || purchaseLimit <= 0) {
       throw new DropsException(ErrorCode.INVALID_DROP_PURCHASE_LIMIT);
+    }
+  }
+
+  /**
+   * 남은 재고를 차감한다.
+   */
+  public void removeRemainStock(int quantity) {
+    long restStock = this.remainStock - quantity;
+
+    // 재고가 0보다 작아지면 예외 발생
+    if (restStock < 0) {
+      throw new DropsException(ErrorCode.OUT_OF_STOCK); // 또는 적절한 에러 코드
+    }
+
+    this.remainStock = restStock;
+
+    // 재고가 0이 되면 드랍을 종료 상태로 변경
+    if (this.remainStock == 0) {
+      finish();
     }
   }
 }

@@ -10,17 +10,16 @@ import com.example.dropshop.domain.order.service.OrderHistoryQueryService;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * 드랍 도메인 파사드 서비스.
@@ -146,7 +145,7 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Optional<Drops> findLatestDropByProductId(Long productId) {
-    return dropsRepository.findTopByProductIdOrderByStartAtDesc(productId);
+    return dropsService.findLatestDropByProductId(productId);
   }
 
   /**
@@ -154,13 +153,7 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
-    List<Drops> dropsList = dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
-    Map<Long, Drops> latestDrops = new HashMap<>();
-    for (Drops drops : dropsList) {
-      Long productId = drops.getProduct().getId();
-      latestDrops.putIfAbsent(productId, drops);
-    }
-    return latestDrops;
+    return dropsService.findLatestDropsByProductIds(productIds);
   }
 
   /**
@@ -190,6 +183,23 @@ public class DropsFacadeService {
     if (!drops.getProduct().getId().equals(productId)) {
       throw new DropsException(ErrorCode.DROP_PRODUCT_MISMATCH);
     }
+  }
+
+  /**
+   * 주문을 위해 드랍 재고를 예약(차감)한다.
+   */
+  @Transactional
+  public Drops reserveStockForOrder(Long dropId, Long productId, int quantity) {
+    // 1. 드랍 존재 확인
+    Drops drops = dropsService.findById(dropId);
+
+    // 2. 주문 가능 상태 및 해당 상품의 드랍인지 검증 (기존 private 메서드 활용)
+    validateOrderableDrop(drops, productId);
+
+    // 3. 재고 차감 (Drops 엔티티 내의 비즈니스 로직 호출)
+    drops.removeRemainStock(quantity);
+
+    return drops;
   }
 }
 
