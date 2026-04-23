@@ -4,14 +4,13 @@ import com.example.dropshop.common.entity.BaseEntity;
 import com.example.dropshop.domain.seller.enums.SellerStatus;
 import com.example.dropshop.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 public class Seller extends BaseEntity {
 
     @Id
@@ -23,7 +22,7 @@ public class Seller extends BaseEntity {
     private User user;
 
     @Column(nullable = false, length = 10, unique = true)
-    private String businessNo; // 사업자 번호 10자리
+    private String businessNo;
 
     @Column(nullable = false)
     private String brandName;
@@ -31,21 +30,12 @@ public class Seller extends BaseEntity {
     private String brandLogo;
 
     @Column(nullable = false)
-    private String accountInfo; // 정산 계좌 정보
+    private String accountInfo;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private SellerStatus status;
-
-    @Builder
-    public Seller(User user, String businessNo, String brandName, String brandLogo, String accountInfo) {
-        this.user = user;
-        this.businessNo = businessNo;
-        this.brandName = brandName;
-        this.brandLogo = brandLogo;
-        this.accountInfo = accountInfo;
-        this.status = SellerStatus.PENDING;
-    }
+    @Builder.Default // 빌더 사용 시 값이 없으면 PENDING으로 설정
+    private SellerStatus status = SellerStatus.PENDING;
 
     public void updateInfo(String brandName, String brandLogo, String accountInfo) {
         this.brandName = brandName;
