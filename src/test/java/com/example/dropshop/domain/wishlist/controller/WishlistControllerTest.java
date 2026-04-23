@@ -1,18 +1,23 @@
 package com.example.dropshop.domain.wishlist.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.dropshop.common.config.SecurityConfig;
+import com.example.dropshop.common.jwt.JwtUtil;
 import com.example.dropshop.domain.wishlist.dto.request.WishlistRequest;
 import com.example.dropshop.domain.wishlist.dto.response.WishlistResponse;
+import com.example.dropshop.domain.wishlist.facade.WishlistsFacadeService;
 import com.example.dropshop.domain.wishlist.service.WishlistService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,7 +26,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
@@ -33,23 +40,27 @@ class WishlistControllerTest {
   private MockMvc mockMvc;
 
   @MockitoBean
-  private WishlistService wishlistService;
+  private WishlistsFacadeService wishlistsFacadeService;
 
   @MockitoBean
   private JpaMetamodelMappingContext jpaMetamodelMappingContext;
+
+  @MockitoBean
+  private JwtUtil jwtUtil;
 
   @Autowired
   private ObjectMapper objectMapper;
 
   @Test
   @DisplayName("찜 생성 API - 성공")
+  @WithMockUser(username = "testUser@gmail.com")
   void createWishlist() throws Exception {
 
     // given
     WishlistResponse response =
         WishlistResponse.build(1L, LocalDateTime.now());
 
-    given(wishlistService.create(any()))
+    given(wishlistsFacadeService.create(any(), any()))
         .willReturn(response);
 
     String json = """
@@ -67,12 +78,12 @@ class WishlistControllerTest {
         .andExpect(jsonPath("$.code").value(201))
         .andExpect(jsonPath("$.data.dropId").value(1));
 
-    verify(wishlistService, times(1)).create(any());
+    verify(wishlistsFacadeService, times(1)).create(any(), any());
 
     ArgumentCaptor<WishlistRequest> captor =
         ArgumentCaptor.forClass(WishlistRequest.class);
 
-    verify(wishlistService).create(captor.capture());
+    verify(wishlistsFacadeService).create(any(), captor.capture());
 
     WishlistRequest captured = captor.getValue();
     assert captured.getDropId().equals(1L);
@@ -89,7 +100,7 @@ class WishlistControllerTest {
             }
         """;
 
-    willDoNothing().given(wishlistService).cancel(any());
+    willDoNothing().given(wishlistsFacadeService).cancel(any(), any());
 
     // when & then
     mockMvc.perform(delete("/api/wishlists")
@@ -99,12 +110,12 @@ class WishlistControllerTest {
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.code").value(204));
 
-    verify(wishlistService, times(1)).cancel(any());
+    verify(wishlistsFacadeService, times(1)).cancel(any(), any());
 
     ArgumentCaptor<WishlistRequest> captor =
         ArgumentCaptor.forClass(WishlistRequest.class);
 
-    verify(wishlistService).cancel(captor.capture());
+    verify(wishlistsFacadeService).cancel(any(), captor.capture());
 
     assert captor.getValue().getDropId().equals(1L);
   }
@@ -119,7 +130,7 @@ class WishlistControllerTest {
         WishlistResponse.build(2L, LocalDateTime.now())
     );
 
-    given(wishlistService.getRecent(5))
+    given(wishlistsFacadeService.getRecent(any(), eq(5)))
         .willReturn(list);
 
     // when & then
@@ -130,6 +141,6 @@ class WishlistControllerTest {
         .andExpect(jsonPath("$.code").value(200))
         .andExpect(jsonPath("$.data.length()").value(2));
 
-    verify(wishlistService, times(1)).getRecent(5);
+    verify(wishlistsFacadeService, times(1)).getRecent(any(),  eq(5));
   }
 }

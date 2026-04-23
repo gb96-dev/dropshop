@@ -6,10 +6,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
@@ -50,6 +52,9 @@ public class Queue {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private QueueStatus status; // WAITING, ALLOWED, EXPIRED
+
+  @OneToOne(mappedBy = "queue", fetch = FetchType.LAZY)
+  private QueueToken queueToken;
 
   @CreatedDate
   @Column(updatable = false)

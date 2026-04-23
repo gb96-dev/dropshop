@@ -72,7 +72,7 @@ class WishlistServiceTest {
     when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
     // when
-    wishlistService.create(request);
+    wishlistService.create(USER_ID, request);
 
     // then
     verify(wishlistRepository, times(1)).save(any());
@@ -90,7 +90,7 @@ class WishlistServiceTest {
         .willReturn(true);
 
     // when && then
-    assertThatThrownBy(() -> wishlistService.create(request))
+    assertThatThrownBy(() -> wishlistService.create(USER_ID, request))
         .isInstanceOf(ServiceException.class);
 
     verify(wishlistRepository, never()).save(any());
@@ -108,7 +108,7 @@ class WishlistServiceTest {
     when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
     // when
-    wishlistService.cancel(request);
+    wishlistService.cancel(USER_ID, request);
 
     // then
     verify(wishlistRepository, times(1))
@@ -127,7 +127,7 @@ class WishlistServiceTest {
         .willReturn(false);
 
     // when && then
-    assertThatThrownBy(() -> wishlistService.cancel(request))
+    assertThatThrownBy(() -> wishlistService.cancel(USER_ID, request))
         .isInstanceOf(ServiceException.class);
 
     verify(wishlistRepository, never()).deleteByUserIdAndDropId(any(), any());
@@ -151,7 +151,7 @@ class WishlistServiceTest {
     ArgumentCaptor<Wishlist> captor = ArgumentCaptor.forClass(Wishlist.class);
 
     // when
-    wishlistService.create(request);
+    wishlistService.create(USER_ID, request);
 
     // then
     verify(wishlistRepository).save(captor.capture());
@@ -180,7 +180,7 @@ class WishlistServiceTest {
     when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
     // when
-    List<WishlistResponse> result = wishlistService.getRecent(VIEW_SIZE);
+    List<WishlistResponse> result = wishlistService.getRecent(USER_ID, VIEW_SIZE);
 
     // then
     assertThat(result).hasSize(1);
@@ -209,7 +209,7 @@ class WishlistServiceTest {
     when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
     // when
-    List<WishlistResponse> result = wishlistService.getRecent(VIEW_SIZE);
+    List<WishlistResponse> result = wishlistService.getRecent(USER_ID, VIEW_SIZE);
 
     // then
     assertThat(result).isEmpty();

@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * 대기열 리포지토리.
@@ -29,4 +31,12 @@ public interface QueueRepository extends JpaRepository<Queue, Integer> {
 
   // EXPIRED 대상 조회 (expiredAt 기준)
   List<Queue> findByStatusAndExpiredAtBefore(QueueStatus status, LocalDateTime time);
+
+  @Query("""
+    SELECT q
+    FROM Queue q
+    JOIN FETCH q.queueToken qt
+    WHERE q.status = :status
+""")
+  List<Queue> findReadyQueuesWithToken(@Param("status") QueueStatus status);
 }

@@ -107,7 +107,7 @@ public class QueueService {
       Queue queue = new Queue(userId, dropId);
 
       cnt = queueRepository.countByDropIdAndStatusIn(dropId, List.of(QueueStatus.WAITING, QueueStatus.READY));
-      
+
       queue = queueRepository.save(queue);
 
       if (cnt < THRESHOLD) {

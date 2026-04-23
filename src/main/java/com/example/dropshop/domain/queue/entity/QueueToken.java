@@ -53,6 +53,6 @@ public class QueueToken {
    * @return 리턴.
    */
   public boolean validateToken(){
-    this.queue.getStatus().equals(QueueStatus.EXPIRED);
+    return this.queue.getStatus().equals(QueueStatus.EXPIRED);
   }
 }

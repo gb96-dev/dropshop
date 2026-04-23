@@ -53,7 +53,7 @@ public class QueueScheduler {
   public void processReadyToEntered() {
 
     List<Queue> readyQueues =
-        queueRepository.findByStatus(QueueStatus.READY);
+        queueRepository.findReadyQueuesWithToken(QueueStatus.READY);
 
     LocalDateTime now = LocalDateTime.now();
 
