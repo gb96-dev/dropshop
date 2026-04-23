@@ -2,11 +2,13 @@ package com.example.dropshop.domain.seller.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class SellerApplyRequest {
     @NotBlank(message = "사업자 번호는 필수입니다.")
     @Pattern(regexp = "\\d{10}", message = "사업자 번호는 10자리 숫자여야 합니다.")
