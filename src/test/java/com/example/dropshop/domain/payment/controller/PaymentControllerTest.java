@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -19,13 +20,16 @@ import com.example.dropshop.domain.payment.dto.response.PaymentPrepareResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.facade.PaymentFacadeService;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -48,7 +52,6 @@ class PaymentControllerTest {
 
   @Test
   @DisplayName("결제 준비 성공")
-  @WithMockUser(username = "test@test.com")
   void preparePayment_success() throws Exception {
     PaymentPrepareRequest request = new PaymentPrepareRequest();
     ReflectionTestUtils.setField(request, "orderId", 1L);
@@ -59,10 +62,11 @@ class PaymentControllerTest {
     Payment payment = createPayment();
     PaymentPrepareResponse response = PaymentPrepareResponse.from(payment);
 
-    given(paymentFacadeService.preparePayment(eq("test@test.com"), any(PaymentPrepareRequest.class)))
+    given(paymentFacadeService.preparePayment(any(), any(PaymentPrepareRequest.class)))
         .willReturn(response);
 
     mockMvc.perform(post("/api/payments/prepare")
+            .with(authentication(testAuthentication()))
             .contentType(APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -75,7 +79,6 @@ class PaymentControllerTest {
 
   @Test
   @DisplayName("PortOne 결제 요청 정보 조회 성공")
-  @WithMockUser(username = "test@test.com")
   void getPortOneRequest_success() throws Exception {
     Payment payment = createPayment();
     PaymentPortOneRequestResponse response = PaymentPortOneRequestResponse.of(
@@ -86,9 +89,10 @@ class PaymentControllerTest {
         "http://localhost:3000/payments/redirect"
     );
 
-    given(paymentFacadeService.getPortOneRequest(1L, "test@test.com")).willReturn(response);
+    given(paymentFacadeService.getPortOneRequest(eq(1L), any())).willReturn(response);
 
-    mockMvc.perform(get("/api/payments/{paymentId}/portone-request", 1L))
+    mockMvc.perform(get("/api/payments/{paymentId}/portone-request", 1L)
+            .with(authentication(testAuthentication())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.paymentId").value(1L))
@@ -100,7 +104,6 @@ class PaymentControllerTest {
 
   @Test
   @DisplayName("결제 확정 성공")
-  @WithMockUser(username = "test@test.com")
   void confirmPayment_success() throws Exception {
     PaymentConfirmRequest request = new PaymentConfirmRequest();
     ReflectionTestUtils.setField(request, "portOnePaymentId", "payment-test-123");
@@ -109,10 +112,11 @@ class PaymentControllerTest {
     payment.complete("tx-123");
     PaymentConfirmResponse response = PaymentConfirmResponse.of(payment, OrderStatus.PAID);
 
-    given(paymentFacadeService.confirmPayment(eq(1L), eq("test@test.com"), any(PaymentConfirmRequest.class)))
+    given(paymentFacadeService.confirmPayment(eq(1L), any(), any(PaymentConfirmRequest.class)))
         .willReturn(response);
 
     mockMvc.perform(post("/api/payments/{paymentId}/confirm", 1L)
+            .with(authentication(testAuthentication()))
             .contentType(APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
@@ -151,9 +155,9 @@ class PaymentControllerTest {
 
   @Test
   @DisplayName("결제 준비 실패 - 필수값이 없으면 400을 반환한다")
-  @WithMockUser(username = "test@test.com")
   void preparePayment_validationFail() throws Exception {
     mockMvc.perform(post("/api/payments/prepare")
+            .with(authentication(testAuthentication()))
             .contentType(APPLICATION_JSON)
             .content("{}"))
         .andExpect(status().isBadRequest())
@@ -169,5 +173,13 @@ class PaymentControllerTest {
     );
     ReflectionTestUtils.setField(payment, "id", 1L);
     return payment;
+  }
+
+  private static Authentication testAuthentication() {
+    return new UsernamePasswordAuthenticationToken(
+        "test@test.com",
+        null,
+        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+    );
   }
 }

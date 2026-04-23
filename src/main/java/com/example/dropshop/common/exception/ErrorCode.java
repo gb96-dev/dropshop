@@ -59,7 +59,7 @@ public enum ErrorCode {
   /**
    * Drop.
    */
-  INVALID_DROP_START_AT(HttpStatus.BAD_REQUEST, "드랍 시작 시간은 현재 시간보다 이후여야 합니다."),
+  DROP_NOT_LIVE(HttpStatus.NOT_FOUND, "LIVE중인 드랍을 찾을 수 없습니다."),
   INVALID_DROP_DATE_RANGE(HttpStatus.BAD_REQUEST, "드랍 종료 시간은 시작 시간보다 뒤여야 합니다."),
   INVALID_DROP_TOTAL_STOCK(HttpStatus.BAD_REQUEST, "드랍 총 판매 수량은 0보다 커야 합니다."),
   INVALID_DROP_REMAIN_STOCK(HttpStatus.BAD_REQUEST, "잔여 수량은 0 이상이며 총 판매 수량 이하여야 합니다."),
@@ -78,7 +78,7 @@ public enum ErrorCode {
       "주문 이력이 있거나 예정 상태가 아닌 드랍은 삭제할 수 없습니다."),
   DROP_STOP_NOT_ALLOWED(HttpStatus.BAD_REQUEST,
       "이미 종료된 드랍은 강제 종료할 수 없습니다."),
-  OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "재고가 부족합니다."),
+  INVALID_DROP_START_AT(HttpStatus.BAD_REQUEST, "INVALID_DROP_START_AT"),
 
   /**
    * Order (세미 콜론 부분 변경 금지).
@@ -107,6 +107,15 @@ public enum ErrorCode {
   PAYMENT_WEBHOOK_PAYMENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "웹훅 결제 식별자가 필요합니다."),
   PAYMENT_WEBHOOK_PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "웹훅 대상 결제를 찾을 수 없습니다."),
 
+  /**
+   * Refund.
+   */
+  REFUND_NOT_FOUND(HttpStatus.NOT_FOUND, "환불 요청을 찾을 수 없습니다."),
+  REFUND_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 진행 중인 환불 요청이 있습니다."),
+  REFUND_PAYMENT_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "결제 완료된 건만 환불할 수 있습니다."),
+  REFUND_ORDER_INVALID_STATUS(HttpStatus.BAD_REQUEST, "결제 완료된 주문만 환불할 수 있습니다."),
+  REFUND_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "환불 금액이 결제 금액과 일치하지 않습니다."),
+  REFUND_INVALID_STATUS(HttpStatus.BAD_REQUEST, "환불 상태가 올바르지 않습니다."),
 
   // Wishlist
   EXISTS_BY_USER_AND_DROP(HttpStatus.CONFLICT, "이미 찜한 상품입니다."),

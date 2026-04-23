@@ -11,8 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,53 +35,71 @@ public class OrderController {
 
   /**
    * 주문 생성.
+   *
+   * @param request 주문 생성 요청
+   * @return 생성된 주문 응답
    */
   @PostMapping
   public ResponseEntity<ApiResponse<OrderCreateResponse>> createOrder(
+      @AuthenticationPrincipal String email,
       @RequestBody @Valid OrderCreateRequest request) {
-    return ResponseEntity.status(201)
-        .body(ApiResponse.created(orderFacadeService.createOrder(getAuthenticatedEmail(), request)));
+
+    OrderCreateResponse response =
+        orderFacadeService.createOrder(email, request);
+
+    return ResponseEntity
+        .status(HttpStatus.CREATED)
+        .body(ApiResponse.created(response));
   }
 
   /**
    * 주문 단건 조회.
+   *
+   * @param orderId 주문 ID
+   * @return 주문 상세 응답
    */
   @GetMapping("/{orderId}")
   public ResponseEntity<ApiResponse<OrderDetailResponse>> findOrderById(
+      @AuthenticationPrincipal String email,
       @PathVariable Long orderId) {
     return ResponseEntity.ok(ApiResponse.ok(
-        orderFacadeService.findOrderById(orderId, getAuthenticatedEmail())
+        orderFacadeService.findOrderById(orderId, email)
     ));
   }
 
   /**
    * 주문 목록 조회.
+   *
+   * @param page 페이지 번호
+   * @param size 페이지 크기
+   * @return 주문 목록 응답
    */
   @GetMapping
   public ResponseEntity<ApiResponse<ApiResponse.PageResponse<OrderListItemResponse>>> findOrders(
+      @AuthenticationPrincipal String email,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size
   ) {
     Pageable pageable = PageRequest.of(page, size);
 
     Page<OrderListItemResponse> response =
-        orderFacadeService.findOrdersByUserId(getAuthenticatedEmail(), pageable);
+        orderFacadeService.findOrdersByUserId(email, pageable);
 
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 
   /**
    * 주문 수동 취소.
+   *
+   * @param orderId 주문 ID
+   * @return 취소된 주문 응답
    */
   @PatchMapping("/{orderId}/cancel")
   public ResponseEntity<ApiResponse<OrderDetailResponse>> cancelOrder(
+      @AuthenticationPrincipal String email,
       @PathVariable Long orderId) {
     return ResponseEntity.ok(ApiResponse.ok(
-        orderFacadeService.cancelOrder(orderId, getAuthenticatedEmail())
+        orderFacadeService.cancelOrder(orderId, email)
     ));
-  }
-
-  private String getAuthenticatedEmail() {
-    return SecurityContextHolder.getContext().getAuthentication().getName();
   }
 }

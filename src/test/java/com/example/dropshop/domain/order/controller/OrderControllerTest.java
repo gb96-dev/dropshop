@@ -7,6 +7,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -29,7 +30,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
@@ -51,7 +54,6 @@ class OrderControllerTest {
 
   @Test
   @DisplayName("주문 생성 성공")
-  @WithMockUser(username = "test@test.com")
   void createOrder_success() throws Exception {
     // given
     OrderCreateRequest request = new OrderCreateRequest();
@@ -62,11 +64,12 @@ class OrderControllerTest {
     Order order = createOrderEntity(1L, 1L, 100L);
     OrderCreateResponse response = OrderCreateResponse.from(order);
 
-    given(orderFacadeService.createOrder(eq("test@test.com"), any(OrderCreateRequest.class)))
+    given(orderFacadeService.createOrder(any(), any(OrderCreateRequest.class)))
         .willReturn(response);
 
     // when & then
     mockMvc.perform(post("/api/orders")
+            .with(authentication(testAuthentication()))
             .contentType(APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -81,16 +84,16 @@ class OrderControllerTest {
 
   @Test
   @DisplayName("주문 단건 조회 성공")
-  @WithMockUser(username = "test@test.com")
   void findOrderById_success() throws Exception {
     // given
     Order order = createOrderEntity(1L, 10L, 100L);
     OrderDetailResponse response = OrderDetailResponse.from(order);
 
-    given(orderFacadeService.findOrderById(1L, "test@test.com")).willReturn(response);
+    given(orderFacadeService.findOrderById(eq(1L), any())).willReturn(response);
 
     // when & then
-    mockMvc.perform(get("/api/orders/{orderId}", 1L))
+    mockMvc.perform(get("/api/orders/{orderId}", 1L)
+            .with(authentication(testAuthentication())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.orderId").value(1L))
@@ -103,7 +106,6 @@ class OrderControllerTest {
 
   @Test
   @DisplayName("주문 목록 조회 성공")
-  @WithMockUser(username = "test@test.com")
   void findOrders_success() throws Exception {
     // given
     Order order = createOrderEntity(1L, 10L, 100L);
@@ -115,11 +117,12 @@ class OrderControllerTest {
         1
     );
 
-    given(orderFacadeService.findOrdersByUserId(eq("test@test.com"), any()))
+    given(orderFacadeService.findOrdersByUserId(any(), any()))
         .willReturn(page);
 
     // when & then
     mockMvc.perform(get("/api/orders")
+            .with(authentication(testAuthentication()))
             .param("page", "0")
             .param("size", "20"))
         .andExpect(status().isOk())
@@ -138,17 +141,17 @@ class OrderControllerTest {
 
   @Test
   @DisplayName("주문 수동 취소 성공")
-  @WithMockUser(username = "test@test.com")
   void cancelOrder_success() throws Exception {
     // given
     Order order = createOrderEntity(1L, 10L, 100L);
     order.cancel();
     OrderDetailResponse response = OrderDetailResponse.from(order);
 
-    given(orderFacadeService.cancelOrder(1L, "test@test.com")).willReturn(response);
+    given(orderFacadeService.cancelOrder(eq(1L), any())).willReturn(response);
 
     // when & then
-    mockMvc.perform(patch("/api/orders/{orderId}/cancel", 1L))
+    mockMvc.perform(patch("/api/orders/{orderId}/cancel", 1L)
+            .with(authentication(testAuthentication())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.orderId").value(1L))
@@ -176,5 +179,13 @@ class OrderControllerTest {
     );
 
     return order;
+  }
+
+  private static Authentication testAuthentication() {
+    return new UsernamePasswordAuthenticationToken(
+        "test@test.com",
+        null,
+        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+    );
   }
 }

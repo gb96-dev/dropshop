@@ -3,6 +3,7 @@ package com.example.dropshop.domain.order.service;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
+import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.order.exception.OrderException;
@@ -103,6 +104,18 @@ public class OrderService {
   @Transactional
   public Order payOrder(Order order) {
     order.pay();
+    return order;
+  }
+
+  /**
+   * 주문 환불 완료 처리.
+   *
+   * @param order 주문 엔티티
+   * @return 환불 완료 처리된 주문 엔티티
+   */
+  @Transactional
+  public Order refundOrder(Order order) {
+    order.refund();
     return order;
   }
 

@@ -25,11 +25,16 @@ public class UserFacadeService {
   }
 
   /**
-   * 이메일로 사용자 정보를 조회한다.
+   * 이메일로 사용자 ID를 조회한다.
+   *
+   * @param email 사용자 이메일
+   * @return 사용자 ID
    */
   @Transactional(readOnly = true)
-  public Optional<User> findByEmail(String email) {
-    return userRepository.findByEmail(email);
+  public Long getUserIdByEmail(String email) {
+    return userRepository.findByEmail(email)
+        .orElseThrow(() -> new IllegalArgumentException("인증된 사용자를 찾을 수 없습니다."))
+        .getId();
   }
 }
 

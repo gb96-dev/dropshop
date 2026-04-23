@@ -8,8 +8,7 @@ import com.example.dropshop.domain.order.dto.response.OrderDetailResponse;
 import com.example.dropshop.domain.order.dto.response.OrderListItemResponse;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.service.OrderService;
-import com.example.dropshop.domain.user.entity.User;
-import com.example.dropshop.domain.user.repository.UserRepository;
+import com.example.dropshop.domain.user.service.UserFacadeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +24,7 @@ public class OrderFacadeService {
 
   private final OrderService orderService;
   private final DropsFacadeService dropsFacadeService;
-  private final UserRepository userRepository;
+  private final UserFacadeService userFacadeService;
 
   /**
    * 주문 생성.
@@ -91,6 +90,16 @@ public class OrderFacadeService {
   }
 
   /**
+   * 환불 완료에 따른 주문 환불 처리.
+   *
+   * @param order 주문 엔티티
+   * @return 환불 완료 처리된 주문 엔티티
+   */
+  public Order refundOrderByRefund(Order order) {
+    return orderService.refundOrder(order);
+  }
+
+  /**
    * 주문 목록 조회.
    */
   @Transactional(readOnly = true)
@@ -115,8 +124,6 @@ public class OrderFacadeService {
   }
 
   private Long getUserIdByEmail(String email) {
-    User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new IllegalArgumentException("인증된 사용자를 찾을 수 없습니다."));
-    return user.getId();
+    return userFacadeService.getUserIdByEmail(email);
   }
 }
