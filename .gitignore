@@ -36,8 +36,13 @@ out/
 ### VS Code ###
 .vscode/
 
+application.yml
+secret.yml
 **/src/main/generated
 
+# application.yml
+application.yml
+application-local.yml
 # Local / secret yaml files
 /secret.yml
 /application-local.yml

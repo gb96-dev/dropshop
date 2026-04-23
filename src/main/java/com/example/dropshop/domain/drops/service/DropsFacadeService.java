@@ -5,20 +5,30 @@ import com.example.dropshop.domain.drops.dto.request.DropCreateRequest;
 import com.example.dropshop.domain.drops.dto.request.DropUpdateRequest;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.entity.Drops;
+import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.exception.DropsException;
+import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.order.service.OrderHistoryQueryService;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
+import com.example.dropshop.domain.drops.entity.Drops;
+import com.example.dropshop.domain.drops.repository.DropsRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
 
 /**
  * 드랍 도메인 파사드 서비스.
@@ -30,6 +40,8 @@ public class DropsFacadeService {
 
   private final DropsService dropsService;
   private final ProductDomainFacadeService productDomainFacadeService;
+  private final OrderFacadeService orderFacadeService;
+  private final DropsRepository dropsRepository;
   private final OrderHistoryQueryService orderHistoryQueryService;
 
   /**
@@ -89,13 +101,13 @@ public class DropsFacadeService {
     Product product = drops.getProduct();
     productDomainFacadeService.validateOwnership(product, sellerId);
 
-    if (!drops.isScheduled() || orderHistoryQueryService.existsOrderHistoryForDrop(dropId)) {
+    if (!drops.isScheduled() || orderFacadeService.existsOrderHistoryForDrop(dropId)) {
       throw new DropsException(ErrorCode.DROP_DELETE_NOT_ALLOWED);
     }
 
     dropsService.delete(drops);
 
-    if (!dropsService.existsOngoingDropForProduct(product.getId())) {
+     if (!dropsService.existsOngoingDropForProduct(product.getId())) {
       productDomainFacadeService.updateStatusByDrop(product, ProductStatus.HIDDEN);
     }
   }
@@ -134,7 +146,7 @@ public class DropsFacadeService {
   }
 
   private void validateDuplicatedOngoingDrop(Long productId) {
-    if (dropsService.existsOngoingDropForProduct(productId)) {
+     if (dropsService.existsOngoingDropForProduct(productId)) {
       throw new DropsException(ErrorCode.DROP_ALREADY_EXISTS);
     }
   }
@@ -144,7 +156,7 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Optional<Drops> findLatestDropByProductId(Long productId) {
-    return dropsService.findLatestDropByProductId(productId);
+    return dropsRepository.findTopByProductIdOrderByStartAtDesc(productId);
   }
 
   /**
@@ -152,23 +164,13 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
-    return dropsService.findLatestDropsByProductIds(productIds);
-  }
-
-  /**
-   * 주문 생성을 위해 드랍 재고를 차감한다.
-   */
-  @Transactional
-  public Drops reserveStockForOrder(Long dropId, Long productId, int quantity) {
-    Drops drops = dropsService.findById(dropId);
-    validateOrderableDrop(drops, productId);
-
-    drops.decrementRemainStock(quantity);
-    if (drops.getRemainStock() == 0L) {
-      drops.finish();
-      productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
+    List<Drops> dropsList = dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
+    Map<Long, Drops> latestDrops = new HashMap<>();
+    for (Drops drops : dropsList) {
+      Long productId = drops.getProduct().getId();
+      latestDrops.putIfAbsent(productId, drops);
     }
-    return drops;
+    return latestDrops;
   }
 
   /**
