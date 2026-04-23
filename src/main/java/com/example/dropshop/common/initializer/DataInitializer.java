@@ -77,7 +77,7 @@ public class DataInitializer implements CommandLineRunner {
       int userId = i;
 
       executor.submit(() -> {
-        queueService.decideQueue(1L, (long) userId);
+        queueService.decideQueue(1L, userId + "@email.com");
       });
     }
 

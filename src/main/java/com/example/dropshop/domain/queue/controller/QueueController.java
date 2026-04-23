@@ -5,6 +5,7 @@ import com.example.dropshop.domain.queue.service.QueueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,14 +24,14 @@ public class QueueController {
   /**
    * 대기열 여부 결정
    * @param dropId 드랍 아이디.
-   * @param userId 유저 아이디.
+   * @param userEmail 유저 이메일.
    */
   @PostMapping
   public ResponseEntity<ThreadHoldResponse> decideQueue(
       @RequestParam(name = "dropId") Long dropId,
-      @RequestParam(name = "userId") Long userId
+      @AuthenticationPrincipal String userEmail
   ) {
-    ThreadHoldResponse response = queueService.decideQueue(dropId, userId);
+    ThreadHoldResponse response = queueService.decideQueue(dropId, userEmail);
 
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }

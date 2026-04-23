@@ -11,6 +11,8 @@ import com.example.dropshop.domain.queue.entity.QueueToken;
 import com.example.dropshop.domain.queue.enums.QueueStatus;
 import com.example.dropshop.domain.queue.repository.QueueRepository;
 import com.example.dropshop.domain.queue.repository.QueueTokenRepository;
+import com.example.dropshop.domain.user.entity.User;
+import com.example.dropshop.domain.user.repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +31,7 @@ public class QueueService {
   private final QueueRepository queueRepository;
   private final QueueTokenRepository queueTokenRepository;
   private final DropsRepository dropsRepository;
+  private final UserRepository userRepository;
 
   private static final Long THRESHOLD = 10L;
   private static final Long PROCESS_TIME = 10L;
@@ -36,10 +39,16 @@ public class QueueService {
   /**
    * 대기열 direct, queue 결정 메소드.
    * @param dropId 드랍 아이디.
-   * @param userId 유저 아이디.
+   * @param userEmail 유저 이메일.
    */
   @Transactional
-  public ThreadHoldResponse decideQueue(Long dropId, Long userId) {
+  public ThreadHoldResponse decideQueue(Long dropId, String userEmail) {
+    User user = userRepository.findByEmail(userEmail).orElseThrow(
+        () -> new ServiceException(ErrorCode.USER_NOT_FOUND)
+    );
+
+    Long userId = user.getId();
+
     // 1. Drops의 Live 여부 확인
 
     Drops drop = dropsRepository.findById(dropId).orElseThrow(

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -20,6 +21,8 @@ import com.example.dropshop.domain.queue.enums.QueueStatus;
 import com.example.dropshop.domain.queue.enums.ThreadHoldResult;
 import com.example.dropshop.domain.queue.repository.QueueRepository;
 import com.example.dropshop.domain.queue.repository.QueueTokenRepository;
+import com.example.dropshop.domain.user.entity.User;
+import com.example.dropshop.domain.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -41,22 +44,38 @@ class QueueServiceTest {
   @Mock
   private DropsRepository dropsRepository;
 
+  @Mock
+  private UserRepository userRepository;
+
   @InjectMocks
   private QueueService queueService;
+
+  private static final Long DROP_ID = 1L;
+  private static final String USER_EMAIL = "1@email.com";
 
   @Test
   void 드랍이_존재하지_않음() {
     // given
+    User mockUser = mock(User.class);
+
+    given(userRepository.findByEmail(anyString()))
+        .willReturn(Optional.of(mockUser));
+
     given(dropsRepository.findById(1L)).willReturn(Optional.empty());
 
     // when && then
     assertThrows(ServiceException.class,
-        () -> queueService.decideQueue(1L, 1L));
+        () -> queueService.decideQueue(DROP_ID, USER_EMAIL));
   }
 
   @Test
   void 드랍이_ACTIVE가_아니면_예외() {
     // given
+    User mockUser = mock(User.class);
+
+    given(userRepository.findByEmail(anyString()))
+        .willReturn(Optional.of(mockUser));
+
     Drops drop = mock(Drops.class);
 
     given(drop.getStatus()).willReturn(DropsStatus.FINISHED);
@@ -65,12 +84,17 @@ class QueueServiceTest {
 
     // when && then
     assertThrows(ServiceException.class,
-        () -> queueService.decideQueue(1L, 1L));
+        () -> queueService.decideQueue(DROP_ID, USER_EMAIL));
   }
 
   @Test
   void 기존_WAITING이면_대기열_DIRECT_반환() {
     // given
+    User mockUser = mock(User.class);
+
+    given(userRepository.findByEmail(anyString()))
+        .willReturn(Optional.of(mockUser));
+
     Queue queue = mock(Queue.class);
 
     Drops activeDrop = mock(Drops.class);
@@ -98,7 +122,7 @@ class QueueServiceTest {
     given(mockToken.getCreatedAt()).willReturn(LocalDateTime.now());
 
     // when
-    ThreadHoldResponse response = queueService.decideQueue(1L, 1L);
+    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
 
     // then
     assertEquals(ThreadHoldResult.DIRECT, response.getResult());
@@ -108,6 +132,11 @@ class QueueServiceTest {
   @Test
   void 기존_WAITING이면_대기열_QUEUE_반환() {
     // given
+    User mockUser = mock(User.class);
+
+    given(userRepository.findByEmail(anyString()))
+        .willReturn(Optional.of(mockUser));
+
     Queue queue = mock(Queue.class);
 
     Drops activeDrop = mock(Drops.class);
@@ -129,7 +158,7 @@ class QueueServiceTest {
         .willReturn(500L);
 
     // when
-    ThreadHoldResponse response = queueService.decideQueue(1L, 1L);
+    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
 
     // then
     assertEquals(ThreadHoldResult.QUEUE, response.getResult());
@@ -140,6 +169,11 @@ class QueueServiceTest {
   @Test
   void 기존_READY이면_바로_입장() {
     // given
+    User mockUser = mock(User.class);
+
+    given(userRepository.findByEmail(anyString()))
+        .willReturn(Optional.of(mockUser));
+
     Queue queue = mock(Queue.class);
     QueueToken token = mock(QueueToken.class);
     Drops activeDrop = mock(Drops.class);
@@ -163,7 +197,7 @@ class QueueServiceTest {
     given(token.getCreatedAt()).willReturn(LocalDateTime.now());
 
     // when
-    ThreadHoldResponse response = queueService.decideQueue(1L, 1L);
+    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
 
     // then
     assertEquals(ThreadHoldResult.DIRECT, response.getResult());
@@ -173,6 +207,11 @@ class QueueServiceTest {
   @Test
   void 신규유저_자리있으면_DIRECT() {
     // given
+    User mockUser = mock(User.class);
+
+    given(userRepository.findByEmail(anyString()))
+        .willReturn(Optional.of(mockUser));
+
     Drops activeDrop = mock(Drops.class);
 
     given(activeDrop.getStatus()).willReturn(DropsStatus.ACTIVE);
@@ -193,7 +232,7 @@ class QueueServiceTest {
         .willAnswer(invocation -> invocation.getArgument(0));
 
     // when
-    ThreadHoldResponse response = queueService.decideQueue(1L, 1L);
+    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
 
     // then
     assertEquals(ThreadHoldResult.DIRECT, response.getResult());
@@ -203,6 +242,11 @@ class QueueServiceTest {
   @Test
   void 신규유저_자리없으면_QUEUE() {
     // given
+    User mockUser = mock(User.class);
+
+    given(userRepository.findByEmail(anyString()))
+        .willReturn(Optional.of(mockUser));
+    
     Drops activeDrop = mock(Drops.class);
 
     given(activeDrop.getStatus()).willReturn(DropsStatus.ACTIVE);
@@ -223,7 +267,7 @@ class QueueServiceTest {
 //        .willAnswer(invocation -> invocation.getArgument(0));
 
     // when
-    ThreadHoldResponse response = queueService.decideQueue(1L, 1L);
+    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
 
     // then
     assertEquals(ThreadHoldResult.QUEUE, response.getResult());
