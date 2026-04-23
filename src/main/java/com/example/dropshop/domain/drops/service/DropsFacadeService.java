@@ -20,6 +20,8 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.*;
+
 /**
  * 드랍 도메인 파사드 서비스.
  */
@@ -95,7 +97,7 @@ public class DropsFacadeService {
 
     dropsService.delete(drops);
 
-    if (!dropsService.existsOngoingDropForProduct(product.getId())) {
+     if (!dropsService.existsOngoingDropForProduct(product.getId())) {
       productDomainFacadeService.updateStatusByDrop(product, ProductStatus.HIDDEN);
     }
   }
@@ -134,7 +136,7 @@ public class DropsFacadeService {
   }
 
   private void validateDuplicatedOngoingDrop(Long productId) {
-    if (dropsService.existsOngoingDropForProduct(productId)) {
+     if (dropsService.existsOngoingDropForProduct(productId)) {
       throw new DropsException(ErrorCode.DROP_ALREADY_EXISTS);
     }
   }
@@ -144,7 +146,7 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Optional<Drops> findLatestDropByProductId(Long productId) {
-    return dropsService.findLatestDropByProductId(productId);
+    return dropsRepository.findTopByProductIdOrderByStartAtDesc(productId);
   }
 
   /**
@@ -152,23 +154,13 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
-    return dropsService.findLatestDropsByProductIds(productIds);
-  }
-
-  /**
-   * 주문 생성을 위해 드랍 재고를 차감한다.
-   */
-  @Transactional
-  public Drops reserveStockForOrder(Long dropId, Long productId, int quantity) {
-    Drops drops = dropsService.findById(dropId);
-    validateOrderableDrop(drops, productId);
-
-    drops.decrementRemainStock(quantity);
-    if (drops.getRemainStock() == 0L) {
-      drops.finish();
-      productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
+    List<Drops> dropsList = dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
+    Map<Long, Drops> latestDrops = new HashMap<>();
+    for (Drops drops : dropsList) {
+      Long productId = drops.getProduct().getId();
+      latestDrops.putIfAbsent(productId, drops);
     }
-    return drops;
+    return latestDrops;
   }
 
   /**

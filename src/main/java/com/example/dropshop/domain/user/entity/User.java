@@ -4,10 +4,8 @@ import com.example.dropshop.common.entity.BaseEntity;
 import com.example.dropshop.domain.user.enums.UserRole;
 import com.example.dropshop.domain.user.enums.UserStatus;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
