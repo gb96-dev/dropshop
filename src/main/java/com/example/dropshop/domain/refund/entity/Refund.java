@@ -49,6 +49,11 @@ public class Refund extends BaseEntity {
 
   /**
    * 환불 생성.
+   *
+   * @param paymentId 결제 ID
+   * @param refundAmount 환불 금액
+   * @param refundReason 환불 사유
+   * @return 생성된 환불 엔티티
    */
   public static Refund create(Long paymentId, BigDecimal refundAmount, String refundReason) {
     Refund refund = new Refund();
@@ -61,6 +66,8 @@ public class Refund extends BaseEntity {
 
   /**
    * 환불 상태 변경.
+   *
+   * @param status 변경할 환불 상태
    */
   public void updateStatus(RefundStatus status) {
     this.status = status;

@@ -107,6 +107,18 @@ public class OrderService {
   }
 
   /**
+   * 주문 환불 완료 처리.
+   *
+   * @param order 주문 엔티티
+   * @return 환불 완료 처리된 주문 엔티티
+   */
+  @Transactional
+  public Order refundOrder(Order order) {
+    order.refund();
+    return order;
+  }
+
+  /**
    * 주문 취소 후 재고 복원 이벤트를 발행한다.
    */
   @Transactional

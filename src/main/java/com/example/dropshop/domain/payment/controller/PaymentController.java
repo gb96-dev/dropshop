@@ -11,7 +11,7 @@ import com.example.dropshop.domain.payment.facade.PaymentFacadeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,9 +37,10 @@ public class PaymentController {
    */
   @PostMapping("/prepare")
   public ResponseEntity<ApiResponse<PaymentPrepareResponse>> preparePayment(
+      @AuthenticationPrincipal String email,
       @RequestBody @Valid PaymentPrepareRequest request) {
     return ResponseEntity.status(201)
-        .body(ApiResponse.created(paymentFacadeService.preparePayment(getAuthenticatedEmail(), request)));
+        .body(ApiResponse.created(paymentFacadeService.preparePayment(email, request)));
   }
 
   /**
@@ -50,9 +51,10 @@ public class PaymentController {
    */
   @GetMapping("/{paymentId}/portone-request")
   public ResponseEntity<ApiResponse<PaymentPortOneRequestResponse>> getPortOneRequest(
+      @AuthenticationPrincipal String email,
       @PathVariable Long paymentId) {
     return ResponseEntity.ok(ApiResponse.ok(
-        paymentFacadeService.getPortOneRequest(paymentId, getAuthenticatedEmail())
+        paymentFacadeService.getPortOneRequest(paymentId, email)
     ));
   }
 
@@ -65,17 +67,18 @@ public class PaymentController {
    */
   @PostMapping("/{paymentId}/confirm")
   public ResponseEntity<ApiResponse<PaymentConfirmResponse>> confirmPayment(
+      @AuthenticationPrincipal String email,
       @PathVariable Long paymentId,
       @RequestBody @Valid PaymentConfirmRequest request
   ) {
     return ResponseEntity.ok(ApiResponse.ok(
-        paymentFacadeService.confirmPayment(paymentId, getAuthenticatedEmail(), request)
+        paymentFacadeService.confirmPayment(paymentId, email, request)
     ));
   }
 
   /**
    * PortOne 웹훅을 수신해 결제 상태를 동기화한다.
-     *
+   *
    * @param request 웹훅 요청 본문
    * @return 처리 성공 응답
    */
@@ -85,9 +88,5 @@ public class PaymentController {
   ) {
     paymentFacadeService.handleWebhook(request);
     return ResponseEntity.ok(ApiResponse.ok());
-  }
-
-  private String getAuthenticatedEmail() {
-    return SecurityContextHolder.getContext().getAuthentication().getName();
   }
 }
