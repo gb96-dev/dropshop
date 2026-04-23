@@ -16,7 +16,6 @@ import lombok.NoArgsConstructor;
  * 상품 등록 요청 DTO.
  */
 @Getter
-@NoArgsConstructor
 public class ProductCreateRequest {
 
   @NotBlank
@@ -52,7 +51,6 @@ public class ProductCreateRequest {
    * 상품 이미지 등록 요청 DTO.
    */
   @Getter
-  @NoArgsConstructor
   public static class ImageRequest {
 
     @NotBlank

@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
  * 상품 이미지 Presigned URL 발급 요청 DTO.
  */
 @Getter
-@NoArgsConstructor
 public class PresignedUrlIssueRequest {
 
   @NotBlank
