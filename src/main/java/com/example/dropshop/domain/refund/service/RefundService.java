@@ -91,11 +91,13 @@ public class RefundService {
    * 환불을 승인한다.
    *
    * @param refundId 환불 ID
+   * @param email 인증된 사용자 이메일
    * @return 승인된 환불 엔티티
    */
   @Transactional
-  public Refund approveRefund(Long refundId) {
+  public Refund approveRefund(Long refundId, String email) {
     Refund refund = findRefund(refundId);
+    validateRefundOwnership(refund, email);
     validateRefundStatus(refund, RefundStatus.PENDING);
     refund.approve();
     return refund;
@@ -105,15 +107,16 @@ public class RefundService {
    * 환불을 완료하고 주문 상태를 환불 완료로 변경한다.
    *
    * @param refundId 환불 ID
+   * @param email 인증된 사용자 이메일
    * @return 완료된 환불 엔티티
    */
   @Transactional
-  public Refund completeRefund(Long refundId) {
+  public Refund completeRefund(Long refundId, String email) {
     Refund refund = findRefund(refundId);
     validateRefundStatus(refund, RefundStatus.APPROVED);
 
     Payment payment = getPayment(refund.getPaymentId());
-    Order order = orderFacadeService.findOrderForPaymentWebhook(payment.getOrderId());
+    Order order = orderFacadeService.findOrderForPayment(payment.getOrderId(), email);
     validateRefundableOrder(order);
 
     refund.complete();
@@ -125,13 +128,15 @@ public class RefundService {
    * 환불을 거절한다.
    *
    * @param refundId 환불 ID
+   * @param email 인증된 사용자 이메일
    * @return 거절된 환불 엔티티
    */
   @Transactional
-  public Refund rejectRefund(Long refundId) {
+  public Refund rejectRefund(Long refundId, String email) {
     Refund refund = findRefund(refundId);
+    validateRefundOwnership(refund, email);
     validateRefundStatus(refund, RefundStatus.PENDING);
-    refund.updateStatus(RefundStatus.REJECTED);
+    refund.reject();
     return refund;
   }
 

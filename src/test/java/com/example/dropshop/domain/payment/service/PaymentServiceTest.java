@@ -15,6 +15,7 @@ import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.payment.client.PortOneClient;
+import com.example.dropshop.domain.payment.dto.request.PaymentWebhookRequest;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.enums.PaymentMethod;
@@ -22,8 +23,12 @@ import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.exception.PaymentException;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -254,16 +259,47 @@ class PaymentServiceTest {
   }
 
   @Test
-  @DisplayName("웹훅 실패 상태는 주문과 결제를 즉시 취소하지 않는다")
-  void handleWebhook_failedStatus_doesNotCancelOrder() {
+  @DisplayName("웹훅 실패 상태는 결제만 실패 처리하고 주문은 즉시 취소하지 않는다")
+  void handleWebhook_failedStatus_failsPaymentOnly() {
     given(paymentRepository.findByIdempotencyKey("payment-test-123")).willReturn(Optional.of(payment));
     given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
     given(portOneClient.getPayment("payment-test-123")).willReturn(portOnePayment("FAILED", "tx-failed", "79000"));
 
     Payment result = paymentService.handleWebhook("payment-test-123");
 
-    assertThat(result.getStatus()).isEqualTo(PaymentStatus.PENDING);
+    assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
+  }
+
+  @Test
+  @DisplayName("웹훅 요청 처리 전 PortOne 서명을 검증한다")
+  void handleWebhook_requestVerifiesSignature() throws Exception {
+    PaymentWebhookRequest request = signedWebhookRequest();
+
+    given(portOneProperties.resolvedWebhookSecret()).willReturn("webhook-secret");
+    given(paymentRepository.findByIdempotencyKey("payment-test-123")).willReturn(Optional.of(payment));
+    given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
+    given(portOneClient.getPayment("payment-test-123")).willReturn(portOnePayment("FAILED", "tx-failed", "79000"));
+
+    Payment result = paymentService.handleWebhook(request);
+
+    assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
+  }
+
+  @Test
+  @DisplayName("웹훅 서명이 유효하지 않으면 예외가 발생한다")
+  void handleWebhook_invalidSignature_throwsException() {
+    PaymentWebhookRequest request = new PaymentWebhookRequest();
+    ReflectionTestUtils.setField(request, "id", "payment-test-123");
+    ReflectionTestUtils.setField(request, "signatureHash", "invalid");
+
+    given(portOneProperties.resolvedWebhookSecret()).willReturn("webhook-secret");
+
+    assertThatThrownBy(() -> paymentService.handleWebhook(request))
+        .isInstanceOf(PaymentException.class)
+        .hasMessage(ErrorCode.PAYMENT_WEBHOOK_INVALID_SIGNATURE.getMessage());
+
+    verify(paymentRepository, never()).findByIdempotencyKey(any());
   }
 
   @Test
@@ -320,5 +356,35 @@ class PaymentServiceTest {
         transactionId,
         new PortOnePaymentResponse.Amount(new BigDecimal(amount))
     );
+  }
+
+  private PaymentWebhookRequest signedWebhookRequest() throws Exception {
+    PaymentWebhookRequest request = new PaymentWebhookRequest();
+    ReflectionTestUtils.setField(request, "id", "payment-test-123");
+    ReflectionTestUtils.setField(request, "amount", new BigDecimal("79000"));
+    ReflectionTestUtils.setField(request, "currency", "KRW");
+    ReflectionTestUtils.setField(request, "status", "FAILED");
+    ReflectionTestUtils.setField(request, "channelKey", "channel-test");
+    ReflectionTestUtils.setField(request, "channelOrderRef", "channel-order");
+    ReflectionTestUtils.setField(request, "countryCode", "KR");
+    ReflectionTestUtils.setField(request, "merchantOrderRef", "merchant-order");
+    ReflectionTestUtils.setField(request, "methodName", "CARD");
+    ReflectionTestUtils.setField(request, "orderRef", "payment-test-123");
+    ReflectionTestUtils.setField(
+        request,
+        "signatureHash",
+        signature("webhook-secret",
+            "amount=79000&channel_key=channel-test&channel_order_ref=channel-order"
+                + "&country_code=KR&currency=KRW&merchant_order_ref=merchant-order"
+                + "&method_name=CARD&order_ref=payment-test-123&status=FAILED")
+    );
+    return request;
+  }
+
+  private String signature(String secret, String message) throws Exception {
+    Mac mac = Mac.getInstance("HmacSHA256");
+    mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+    return Base64.getEncoder()
+        .encodeToString(mac.doFinal(message.getBytes(StandardCharsets.UTF_8)));
   }
 }

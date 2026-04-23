@@ -82,8 +82,11 @@ public class RefundController {
    * @return 승인된 환불 응답
    */
   @PostMapping("/{refundId}/approve")
-  public ResponseEntity<ApiResponse<RefundResponse>> approveRefund(@PathVariable Long refundId) {
-    return ResponseEntity.ok(ApiResponse.ok(refundFacadeService.approveRefund(refundId)));
+  public ResponseEntity<ApiResponse<RefundResponse>> approveRefund(
+      @AuthenticationPrincipal String email,
+      @PathVariable Long refundId
+  ) {
+    return ResponseEntity.ok(ApiResponse.ok(refundFacadeService.approveRefund(refundId, email)));
   }
 
   /**
@@ -93,8 +96,11 @@ public class RefundController {
    * @return 완료된 환불 응답
    */
   @PostMapping("/{refundId}/complete")
-  public ResponseEntity<ApiResponse<RefundResponse>> completeRefund(@PathVariable Long refundId) {
-    return ResponseEntity.ok(ApiResponse.ok(refundFacadeService.completeRefund(refundId)));
+  public ResponseEntity<ApiResponse<RefundResponse>> completeRefund(
+      @AuthenticationPrincipal String email,
+      @PathVariable Long refundId
+  ) {
+    return ResponseEntity.ok(ApiResponse.ok(refundFacadeService.completeRefund(refundId, email)));
   }
 
   /**
@@ -104,7 +110,10 @@ public class RefundController {
    * @return 거절된 환불 응답
    */
   @PostMapping("/{refundId}/reject")
-  public ResponseEntity<ApiResponse<RefundResponse>> rejectRefund(@PathVariable Long refundId) {
-    return ResponseEntity.ok(ApiResponse.ok(refundFacadeService.rejectRefund(refundId)));
+  public ResponseEntity<ApiResponse<RefundResponse>> rejectRefund(
+      @AuthenticationPrincipal String email,
+      @PathVariable Long refundId
+  ) {
+    return ResponseEntity.ok(ApiResponse.ok(refundFacadeService.rejectRefund(refundId, email)));
   }
 }

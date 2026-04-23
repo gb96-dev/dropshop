@@ -8,6 +8,7 @@ import com.example.dropshop.domain.payment.dto.response.PaymentConfirmResponse;
 import com.example.dropshop.domain.payment.dto.response.PaymentPortOneRequestResponse;
 import com.example.dropshop.domain.payment.dto.response.PaymentPrepareResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
+import com.example.dropshop.domain.payment.service.PaymentService.PaymentConfirmResult;
 import com.example.dropshop.domain.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -69,15 +70,15 @@ public class PaymentFacadeService {
       String email,
       PaymentConfirmRequest request
   ) {
-    Payment payment = paymentService.confirmPayment(paymentId, email, request.getPortOnePaymentId());
-    Order order = paymentService.getOrder(payment.getOrderId(), email);
-    return PaymentConfirmResponse.of(payment, order.getStatus());
+    PaymentConfirmResult result =
+        paymentService.confirmPaymentWithOrderStatus(paymentId, email, request.getPortOnePaymentId());
+    return PaymentConfirmResponse.of(result.payment(), result.orderStatus());
   }
 
   /**
    * PortOne 웹훅을 처리한다.
    */
   public void handleWebhook(PaymentWebhookRequest request) {
-    paymentService.handleWebhook(request.extractPortOnePaymentId());
+    paymentService.handleWebhook(request);
   }
 }

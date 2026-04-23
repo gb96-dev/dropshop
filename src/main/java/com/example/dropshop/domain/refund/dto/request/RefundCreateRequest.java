@@ -13,6 +13,7 @@ import lombok.Getter;
 public class RefundCreateRequest {
 
   @NotNull
+  @Positive
   private Long paymentId;
 
   @NotNull
