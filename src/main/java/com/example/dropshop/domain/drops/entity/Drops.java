@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
     name = "drops",
     indexes = {
         @Index(name = "idx_drops_product_id", columnList = "product_id"),
+        @Index(name = "idx_drops_product_created_at", columnList = "product_id, created_at"),
         @Index(name = "idx_drops_status_start_at", columnList = "status, start_at"),
         @Index(name = "idx_drops_status_end_at", columnList = "status, end_at"),
         @Index(name = "idx_drops_status_remain_stock", columnList = "status, remain_stock")
