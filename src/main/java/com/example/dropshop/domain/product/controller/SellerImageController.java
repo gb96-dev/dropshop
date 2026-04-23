@@ -10,7 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,10 +32,10 @@ public class SellerImageController {
    */
   @PostMapping("/presigned-url")
   public ResponseEntity<ApiResponse<PresignedUrlIssueResponse>> issuePresignedUrl(
-      Authentication authentication,
+      @AuthenticationPrincipal String email,
       @Valid @RequestBody PresignedUrlIssueRequest request
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
 
     PresignedUrlIssueResponse response = productImageUploadService.issuePresignedUrl(
         sellerAuth.sellerId(),
