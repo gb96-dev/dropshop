@@ -14,13 +14,13 @@ import lombok.Getter;
 @Builder
 public class ProductListItemResponse {
 
-  private Long productId;
-  private String name;
-  private BigDecimal salePrice;
-  private int discountRate;
-  private String thumbnailUrl;
-  private String status;
-  private LocalDateTime dropStartAt;
+  private final Long productId;
+  private final String name;
+  private final BigDecimal salePrice;
+  private final int discountRate;
+  private final String thumbnailUrl;
+  private final String status;
+  private final LocalDateTime dropStartAt;
 
   /**
    * Product와 최신 Drop으로 목록 아이템을 생성한다.

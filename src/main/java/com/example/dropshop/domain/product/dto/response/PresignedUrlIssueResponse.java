@@ -10,7 +10,7 @@ import lombok.Getter;
 @Builder
 public class PresignedUrlIssueResponse {
 
-  private String presignedUrl;
-  private String imageUrl;
+  private final String presignedUrl;
+  private final String imageUrl;
 }
 
