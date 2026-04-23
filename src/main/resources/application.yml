@@ -35,6 +35,8 @@ drops:
   scheduler:
     enabled: true
     fixed-delay-millis: 30000
+    lock-at-most-for: PT1M
+    lock-at-least-for: PT1S
 
 jwt:
   access-token-expiration: 3600000 # 1시간 (ms 단위)

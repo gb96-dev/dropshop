@@ -3,17 +3,20 @@ package com.example.dropshop.domain.drops.scheduler;
 import com.example.dropshop.domain.drops.service.DropsStatusTransitionService;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
  * 드랍 상태 자동 전이 스케줄러.
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DropsStatusScheduler {
+
+  private static final Logger log = LoggerFactory.getLogger(DropsStatusScheduler.class);
 
   private final DropsStatusTransitionService dropsStatusTransitionService;
   private final DropsSchedulerProperties dropsSchedulerProperties;
@@ -22,6 +25,11 @@ public class DropsStatusScheduler {
    * 드랍 상태 자동 전이 작업을 주기적으로 실행한다.
    */
   @Scheduled(fixedDelayString = "${drops.scheduler.fixed-delay-millis:30000}")
+  @SchedulerLock(
+      name = "dropsStatusScheduler_transitionDropsStatus",
+      lockAtMostFor = "${drops.scheduler.lock-at-most-for:PT1M}",
+      lockAtLeastFor = "${drops.scheduler.lock-at-least-for:PT1S}"
+  )
   public void transitionDropsStatus() {
     if (!dropsSchedulerProperties.isEnabled()) {
       log.debug("[DropsStatusScheduler] 스케줄러 비활성화 상태입니다.");
