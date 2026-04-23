@@ -10,8 +10,8 @@ import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.enums.ProductListSortType;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.exception.ProductException;
-import com.example.dropshop.domain.product.repository.ProductRepository;
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.product.repository.ProductRepository;
 import com.example.dropshop.domain.user.entity.User;
 import com.example.dropshop.domain.user.service.UserFacadeService;
 import java.time.Duration;
@@ -110,25 +110,16 @@ public class ProductQueryService {
       ProductListSortType sortType,
       Pageable pageable
   ) {
-    return switch (sortType) {
-      case PRICE_HIGH -> productRepository.findAllByStatusIn(
-          statuses,
-          applySort(pageable, Sort.by(Sort.Direction.DESC, "salePrice"))
-      );
-      case PRICE_LOW -> productRepository.findAllByStatusIn(
-          statuses,
-          applySort(pageable, Sort.by(Sort.Direction.ASC, "salePrice"))
-      );
-      case DROP_IMMINENT -> productRepository.findPublicProductsOrderByDropImminent(
-          statuses,
-          LocalDateTime.now(),
-          pageable
-      );
-      case LATEST -> productRepository.findAllByStatusIn(
-          statuses,
-          applySort(pageable, Sort.by(Sort.Direction.DESC, "createdAt"))
-      );
-    };
+    Pageable normalizedPageable = PageRequest.of(
+        pageable.getPageNumber(),
+        pageable.getPageSize()
+    );
+    return productRepository.findPublicProducts(
+        statuses,
+        sortType,
+        LocalDateTime.now(),
+        normalizedPageable
+    );
   }
 
   private Collection<ProductStatus> parsePublicStatusFilter(String status) {
