@@ -14,6 +14,7 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,15 +40,15 @@ public class WishlistService {
    * @return 리턴.
    */
   @Transactional
-  public WishlistResponse create(WishlistRequest request) {
-    String key = key(1L);
+  public WishlistResponse create(Long userId, WishlistRequest request) {
+    String key = key(userId);
     Long dropId = request.getDropId();
 
-    if (wishlistRepository.existsByUserIdAndDropId(1L, dropId)){
+    if (wishlistRepository.existsByUserIdAndDropId(userId, dropId)){
       throw new ServiceException(ErrorCode.EXISTS_BY_USER_AND_DROP);
     }
 
-    Wishlist saved = wishlistRepository.save(new Wishlist(1L, dropId));
+    Wishlist saved = wishlistRepository.save(new Wishlist(userId, dropId));
 
     double score = System.currentTimeMillis();
     redisTemplate.opsForZSet().add(key, dropId, score);
@@ -60,15 +61,15 @@ public class WishlistService {
    * @param request 요청.
    */
   @Transactional
-  public void cancel(WishlistRequest request) {
-    String key = key(1L);
+  public void cancel(Long userId, WishlistRequest request) {
+    String key = key(userId);
     Long dropId = request.getDropId();
 
     if (!wishlistRepository.existsByDropId(dropId)) {
       throw new ServiceException(ErrorCode.DROP_NOT_FOUND);
     }
 
-    wishlistRepository.deleteByUserIdAndDropId(1L, dropId);
+    wishlistRepository.deleteByUserIdAndDropId(userId, dropId);
 
     redisTemplate.opsForZSet().remove(key, dropId);
   }
@@ -79,8 +80,8 @@ public class WishlistService {
    * @return 리턴.
    */
   @Transactional(readOnly = true)
-  public List<WishlistResponse> getRecent(int size){
-    String key = key(1L);
+  public List<WishlistResponse> getRecent(Long userId, int size){
+    String key = key(userId);
 
     Set<ZSetOperations.TypedTuple<Long>> result =
         redisTemplate.opsForZSet()

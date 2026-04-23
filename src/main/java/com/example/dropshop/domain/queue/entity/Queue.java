@@ -3,12 +3,15 @@ package com.example.dropshop.domain.queue.entity;
 import com.example.dropshop.domain.queue.enums.QueueStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
@@ -16,6 +19,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * 대기열 Entity.
@@ -32,6 +36,7 @@ import org.springframework.data.annotation.CreatedDate;
         @Index(name = "idx_drop_status_entered", columnList = "drop_id, status, entered_at")
     }
 )
+@EntityListeners(AuditingEntityListener.class)
 public class Queue {
 
   @Id
@@ -47,6 +52,9 @@ public class Queue {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private QueueStatus status; // WAITING, ALLOWED, EXPIRED
+
+  @OneToOne(mappedBy = "queue", fetch = FetchType.LAZY)
+  private QueueToken queueToken;
 
   @CreatedDate
   @Column(updatable = false)
@@ -65,5 +73,28 @@ public class Queue {
     this.userId = userId;
     this.dropId = dropId;
     this.status = QueueStatus.WAITING;
+    this.enteredAt = LocalDateTime.now();
+  }
+
+  /**
+   * 대기열 ready 변경.
+   */
+  public void ready() {
+    this.status = QueueStatus.READY;
+  }
+
+  /**
+   * 대기열 entered 변경.
+   */
+  public void enter() {
+    this.status = QueueStatus.ENTERED;
+  }
+
+  /**
+   * 대기열 expired 변경.
+   */
+  public void expire() {
+    this.status = QueueStatus.EXPIRED;
+    this.expiredAt = LocalDateTime.now();
   }
 }

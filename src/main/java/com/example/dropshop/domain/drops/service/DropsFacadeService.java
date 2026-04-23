@@ -5,15 +5,23 @@ import com.example.dropshop.domain.drops.dto.request.DropCreateRequest;
 import com.example.dropshop.domain.drops.dto.request.DropUpdateRequest;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.entity.Drops;
+import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.exception.DropsException;
+import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.order.service.OrderHistoryQueryService;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
+import com.example.dropshop.domain.drops.entity.Drops;
+import com.example.dropshop.domain.drops.repository.DropsRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -32,6 +40,8 @@ public class DropsFacadeService {
 
   private final DropsService dropsService;
   private final ProductDomainFacadeService productDomainFacadeService;
+  private final OrderFacadeService orderFacadeService;
+  private final DropsRepository dropsRepository;
   private final OrderHistoryQueryService orderHistoryQueryService;
 
   /**
@@ -91,7 +101,7 @@ public class DropsFacadeService {
     Product product = drops.getProduct();
     productDomainFacadeService.validateOwnership(product, sellerId);
 
-    if (!drops.isScheduled() || orderHistoryQueryService.existsOrderHistoryForDrop(dropId)) {
+    if (!drops.isScheduled() || orderFacadeService.existsOrderHistoryForDrop(dropId)) {
       throw new DropsException(ErrorCode.DROP_DELETE_NOT_ALLOWED);
     }
 
