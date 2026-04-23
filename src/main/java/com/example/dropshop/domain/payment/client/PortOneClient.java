@@ -28,8 +28,6 @@ public class PortOneClient {
    * @throws PaymentException API Secret이 없거나 외부 API 호출에 실패한 경우
    */
   public PortOnePaymentResponse getPayment(String paymentId) {
-    validateApiSecret();
-
     try {
       RestClient restClient = RestClient.builder()
           .baseUrl(portOneProperties.resolvedApiBaseUrl())
@@ -46,15 +44,6 @@ public class PortOneClient {
           .body(PortOnePaymentResponse.class);
     } catch (RestClientException e) {
       throw new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR, e.getMessage());
-    }
-  }
-
-  private void validateApiSecret() {
-    if (portOneProperties.apiSecret() == null || portOneProperties.apiSecret().isBlank()) {
-      throw new PaymentException(
-          ErrorCode.PAYMENT_PORTONE_API_ERROR,
-          "PortOne API Secret이 설정되지 않았습니다."
-      );
     }
   }
 }

@@ -107,6 +107,15 @@ public enum ErrorCode {
   PAYMENT_WEBHOOK_PAYMENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "웹훅 결제 식별자가 필요합니다."),
   PAYMENT_WEBHOOK_PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "웹훅 대상 결제를 찾을 수 없습니다."),
 
+  /**
+   * Refund.
+   */
+  REFUND_NOT_FOUND(HttpStatus.NOT_FOUND, "환불 요청을 찾을 수 없습니다."),
+  REFUND_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 진행 중인 환불 요청이 있습니다."),
+  REFUND_PAYMENT_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "결제 완료된 건만 환불할 수 있습니다."),
+  REFUND_ORDER_INVALID_STATUS(HttpStatus.BAD_REQUEST, "결제 완료된 주문만 환불할 수 있습니다."),
+  REFUND_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "환불 금액이 결제 금액과 일치하지 않습니다."),
+  REFUND_INVALID_STATUS(HttpStatus.BAD_REQUEST, "환불 상태가 올바르지 않습니다."),
 
   // Wishlist
   EXISTS_BY_USER_AND_DROP(HttpStatus.CONFLICT, "이미 찜한 상품입니다."),
