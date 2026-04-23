@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
  * 상품 정보 수정 요청 DTO.
  */
 @Getter
-@NoArgsConstructor
 public class ProductUpdateRequest {
 
   @Size(min = 1, max = 100)

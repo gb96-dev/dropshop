@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
  * 드랍 생성 요청 DTO.
  */
 @Getter
-@NoArgsConstructor
 public class DropCreateRequest {
 
   @NotNull

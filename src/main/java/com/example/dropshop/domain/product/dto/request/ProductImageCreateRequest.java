@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
  * 상품 이미지 추가 요청 DTO.
  */
 @Getter
-@NoArgsConstructor
 public class ProductImageCreateRequest {
 
   @NotBlank
