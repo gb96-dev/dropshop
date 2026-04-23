@@ -11,11 +11,11 @@ import lombok.Getter;
 @Builder
 public class ProductImageResponse {
 
-  private Long imageId;
-  private Long productId;
-  private String imageUrl;
-  private int sortOrder;
-  private boolean isThumbnail;
+  private final Long imageId;
+  private final Long productId;
+  private final String imageUrl;
+  private final int sortOrder;
+  private final boolean isThumbnail;
 
   /**
    * ProductImage 엔티티를 이미지 응답 DTO로 변환한다.

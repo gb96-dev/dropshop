@@ -13,17 +13,17 @@ import lombok.Getter;
 @Builder
 public class ProductCreateResponse {
 
-  private Long productId;
-  private String name;
-  private BigDecimal price;
-  private int discountRate;
-  private BigDecimal discountAmount;
-  private BigDecimal salePrice;
-  private int stock;
-  private String category;
-  private String status;
-  private String thumbnailUrl;
-  private LocalDateTime createdAt;
+  private final Long productId;
+  private final String name;
+  private final BigDecimal price;
+  private final int discountRate;
+  private final BigDecimal discountAmount;
+  private final BigDecimal salePrice;
+  private final int stock;
+  private final String category;
+  private final String status;
+  private final String thumbnailUrl;
+  private final LocalDateTime createdAt;
 
   /**
    * Product 엔티티를 등록 응답 DTO로 변환한다.

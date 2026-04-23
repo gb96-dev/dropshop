@@ -12,17 +12,17 @@ import lombok.Getter;
 @Builder
 public class DropListItemResponse {
 
-  private Long dropId;
-  private Long productId;
-  private String productName;
-  private String thumbnailUrl;
-  private String status;
-  private LocalDateTime startAt;
-  private LocalDateTime endAt;
-  private Long soldCount;
-  private Long remainStock;
-  private Long purchaseLimit;
-  private boolean useQueue;
+  private final Long dropId;
+  private final Long productId;
+  private final String productName;
+  private final String thumbnailUrl;
+  private final String status;
+  private final LocalDateTime startAt;
+  private final LocalDateTime endAt;
+  private final Long soldCount;
+  private final Long remainStock;
+  private final Long purchaseLimit;
+  private final boolean useQueue;
 
   /**
    * 드랍 엔티티를 목록 응답 DTO로 변환한다.

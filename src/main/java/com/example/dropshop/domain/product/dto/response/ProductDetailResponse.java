@@ -17,26 +17,26 @@ import lombok.Getter;
 @Builder
 public class ProductDetailResponse {
 
-  private Long productId;
-  private String name;
-  private BigDecimal price;
-  private int discountRate;
-  private BigDecimal discountAmount;
-  private BigDecimal salePrice;
-  private int stock;
-  private String category;
-  private String status;
-  private String thumbnailUrl;
-  private String description;
-  private String specification;
-  private String deliveryInfo;
-  private String refundPolicy;
-  private boolean isPurchasable;
-  private SellerInfo seller;
-  private DropInfo latestDrop;
-  private List<ProductImageResponse> images;
-  private LocalDateTime createdAt;
-  private LocalDateTime modifiedAt;
+  private final Long productId;
+  private final String name;
+  private final BigDecimal price;
+  private final int discountRate;
+  private final BigDecimal discountAmount;
+  private final BigDecimal salePrice;
+  private final int stock;
+  private final String category;
+  private final String status;
+  private final String thumbnailUrl;
+  private final String description;
+  private final String specification;
+  private final String deliveryInfo;
+  private final String refundPolicy;
+  private final boolean isPurchasable;
+  private final SellerInfo seller;
+  private final DropInfo latestDrop;
+  private final List<ProductImageResponse> images;
+  private final LocalDateTime createdAt;
+  private final LocalDateTime modifiedAt;
 
   /**
    * 상세 응답 객체를 생성한다.
@@ -80,9 +80,9 @@ public class ProductDetailResponse {
   @Builder
   public static class SellerInfo {
 
-    private Long sellerId;
-    private String email;
-    private String nickname;
+    private final Long sellerId;
+    private final String email;
+    private final String nickname;
 
     /**
      * 사용자 엔티티로 판매자 정보를 생성한다.
@@ -110,14 +110,14 @@ public class ProductDetailResponse {
   @Builder
   public static class DropInfo {
 
-    private Long dropId;
-    private String status;
-    private LocalDateTime startAt;
-    private LocalDateTime endAt;
-    private Long totalStock;
-    private Long remainStock;
-    private Long purchaseLimit;
-    private boolean useQueue;
+    private final Long dropId;
+    private final String status;
+    private final LocalDateTime startAt;
+    private final LocalDateTime endAt;
+    private final Long totalStock;
+    private final Long remainStock;
+    private final Long purchaseLimit;
+    private final boolean useQueue;
 
     /**
      * 드랍 엔티티로 최신 드랍 정보를 생성한다.
@@ -146,10 +146,10 @@ public class ProductDetailResponse {
   @Builder
   public static class ProductImageResponse {
 
-    private Long imageId;
-    private String imageUrl;
-    private int sortOrder;
-    private boolean isThumbnail;
+    private final Long imageId;
+    private final String imageUrl;
+    private final int sortOrder;
+    private final boolean isThumbnail;
 
     /**
      * 상품 이미지 엔티티로 상세 이미지 정보를 생성한다.

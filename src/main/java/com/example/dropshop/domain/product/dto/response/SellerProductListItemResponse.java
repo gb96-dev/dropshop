@@ -13,13 +13,13 @@ import lombok.Getter;
 @Builder
 public class SellerProductListItemResponse {
 
-  private Long productId;
-  private String name;
-  private String status;
-  private BigDecimal salePrice;
-  private int stock;
-  private String thumbnailUrl;
-  private LocalDateTime createdAt;
+  private final Long productId;
+  private final String name;
+  private final String status;
+  private final BigDecimal salePrice;
+  private final int stock;
+  private final String thumbnailUrl;
+  private final LocalDateTime createdAt;
 
   /**
    * Product를 판매자 목록 아이템으로 변환한다.
