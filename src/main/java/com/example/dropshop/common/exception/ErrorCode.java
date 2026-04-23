@@ -72,6 +72,8 @@ public enum ErrorCode {
   DROP_ACTIVE_UPDATE_LOCKED(HttpStatus.BAD_REQUEST,
       "ACTIVE 상태에서는 드랍 시작 시간과 총 판매 수량을 수정할 수 없습니다."),
   DROP_UPDATE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "종료된 드랍은 수정할 수 없습니다."),
+  DROP_ORDER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "진행 중인 드랍에서만 주문할 수 있습니다."),
+  DROP_PRODUCT_MISMATCH(HttpStatus.BAD_REQUEST, "요청 상품이 드랍 상품과 일치하지 않습니다."),
   DROP_DELETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST,
       "주문 이력이 있거나 예정 상태가 아닌 드랍은 삭제할 수 없습니다."),
   DROP_STOP_NOT_ALLOWED(HttpStatus.BAD_REQUEST,
@@ -102,6 +104,8 @@ public enum ErrorCode {
   PAYMENT_PORTONE_NOT_PAID(HttpStatus.BAD_REQUEST, "포트원 결제가 완료되지 않았습니다."),
   PAYMENT_PORTONE_MISMATCH(HttpStatus.BAD_REQUEST, "포트원 결제 정보가 내부 결제 정보와 일치하지 않습니다."),
   PAYMENT_PORTONE_API_ERROR(HttpStatus.BAD_GATEWAY, "포트원 결제 검증 중 오류가 발생했습니다."),
+  PAYMENT_WEBHOOK_PAYMENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "웹훅 결제 식별자가 필요합니다."),
+  PAYMENT_WEBHOOK_PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "웹훅 대상 결제를 찾을 수 없습니다."),
 
 
   // Wishlist

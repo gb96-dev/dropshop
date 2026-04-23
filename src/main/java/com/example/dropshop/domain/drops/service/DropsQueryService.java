@@ -27,11 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class DropsQueryService {
 
-  private static final Set<DropsStatus> PUBLIC_VISIBLE_STATUSES = EnumSet.of(
-      DropsStatus.SCHEDULED,
-      DropsStatus.ACTIVE,
-      DropsStatus.FINISHED
-  );
+  private static final Set<DropsStatus> PUBLIC_VISIBLE_STATUSES =
+      DropsService.PUBLIC_VISIBLE_STATUSES;
 
   private final DropsRepository dropsRepository;
 
@@ -77,7 +74,7 @@ public class DropsQueryService {
       Long sellerId,
       Pageable pageable
   ) {
-    Page<Drops> drops = dropsRepository.findAllByProduct_SellerIdOrderByCreatedAtDesc(
+    Page<Drops> drops = dropsRepository.findSellerDropsBySellerId(
         sellerId,
         pageable
     );

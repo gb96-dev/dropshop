@@ -9,7 +9,12 @@ import com.example.dropshop.domain.drops.exception.DropsException;
 import com.example.dropshop.domain.drops.repository.DropsRepository;
 import com.example.dropshop.domain.product.entity.Product;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +37,8 @@ public class DropsService {
       DropsStatus.ACTIVE,
       DropsStatus.FINISHED
   );
+
+  static final Set<DropsStatus> PUBLIC_VISIBLE_STATUSES = NON_DELETABLE_DROP_STATUSES;
 
   private final DropsRepository dropsRepository;
 
@@ -128,6 +135,43 @@ public class DropsService {
   @Transactional(readOnly = true)
   public boolean existsDropHistoryForProduct(Long productId) {
     return dropsRepository.existsByProductIdAndStatusIn(productId, NON_DELETABLE_DROP_STATUSES);
+  }
+
+  /**
+   * 시작 시간이 도달한 예정 드랍 목록을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public List<Drops> findScheduledDropsToActivate(LocalDateTime baseTime) {
+    return dropsRepository.findAllByStatusAndStartAtLessThanEqual(DropsStatus.SCHEDULED, baseTime);
+  }
+
+  /**
+   * 종료되어야 하는 진행 중 드랍 목록을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public List<Drops> findActiveDropsToFinish(LocalDateTime baseTime) {
+    return dropsRepository.findAllActiveDropsToFinish(DropsStatus.ACTIVE, baseTime);
+  }
+
+  /**
+   * 특정 상품의 최신 드랍 1건을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public Optional<Drops> findLatestDropByProductId(Long productId) {
+    return dropsRepository.findTopByProductIdOrderByStartAtDesc(productId);
+  }
+
+  /**
+   * 상품별 최신 드랍 맵을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
+    List<Drops> dropsList = dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
+    Map<Long, Drops> latestDrops = new HashMap<>();
+    for (Drops drops : dropsList) {
+      latestDrops.putIfAbsent(drops.getProduct().getId(), drops);
+    }
+    return latestDrops;
   }
 
   /**

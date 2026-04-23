@@ -21,13 +21,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
 
 /**
  * 드랍 도메인 파사드 서비스.
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class DropsFacadeService {
 
@@ -35,6 +40,7 @@ public class DropsFacadeService {
   private final ProductDomainFacadeService productDomainFacadeService;
   private final OrderFacadeService orderFacadeService;
   private final DropsRepository dropsRepository;
+  private final OrderHistoryQueryService orderHistoryQueryService;
 
   /**
    * 판매자 드랍을 생성한다.
@@ -163,6 +169,35 @@ public class DropsFacadeService {
       latestDrops.putIfAbsent(productId, drops);
     }
     return latestDrops;
+  }
+
+  /**
+   * 주문 취소/결제 실패 시 드랍 재고를 복원한다.
+   */
+  @Transactional
+  public void restoreStockForOrder(Long dropId, int quantity) {
+    Drops drops = dropsService.findById(dropId);
+    drops.restoreRemainStock(quantity);
+
+    try {
+      if (drops.isFinished()
+          && drops.getRemainStock() > 0L
+          && LocalDateTime.now().isBefore(drops.getEndAt())) {
+        drops.activate();
+        productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.ON_SALE);
+      }
+    } catch (OptimisticLockingFailureException e) {
+      log.info("드랍 ID={} 재활성화가 동시성 충돌로 스킵되었습니다.", dropId, e);
+    }
+  }
+
+  private void validateOrderableDrop(Drops drops, Long productId) {
+    if (!drops.isActive()) {
+      throw new DropsException(ErrorCode.DROP_ORDER_NOT_ALLOWED);
+    }
+    if (!drops.getProduct().getId().equals(productId)) {
+      throw new DropsException(ErrorCode.DROP_PRODUCT_MISMATCH);
+    }
   }
 }
 

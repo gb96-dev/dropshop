@@ -1,0 +1,48 @@
+spring:
+  config:
+    import:
+      optional:file:./secret.yml
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+dropshop:
+  product:
+    max-image-count: 5
+    purchasable-block-hours: 24
+  main:
+    allow-bean-definition-overriding: true
+
+product:
+  policy:
+    deliveryInfo: "기본 배송 정책을 입력하세요"
+    refundPolicy: "기본 환불 정책을 입력하세요"
+  image-upload:
+    region: ap-northeast-2
+    key-prefix: products
+    presigned-expiration-seconds: 300
+
+drops:
+  scheduler:
+    enabled: true
+    fixed-delay-millis: 30000
+
+jwt:
+  access-token-expiration: 3600000 # 1시간 (ms 단위)
+  refresh-token-expiration: 604800000 # 7일 (ms 단위)
+
+cloud:
+  aws:
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
