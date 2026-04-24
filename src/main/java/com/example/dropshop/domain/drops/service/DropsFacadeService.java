@@ -196,6 +196,10 @@ public class DropsFacadeService {
    */
   @Transactional
   public Drops reserveStockForOrder(Long dropId, Long productId, int quantity) {
+    if (quantity <= 0) {
+      throw new DropsException(ErrorCode.INVALID_DROP_ORDER_QUANTITY);
+    }
+
     Drops drops = dropsService.findById(dropId);
 
     if (!drops.isActive()) {
