@@ -22,6 +22,13 @@ public class ProductException extends ServiceException {
     this.errorCode = errorCode;
   }
 
+  /**
+   * 에러 코드와 사용자 메시지로 상품 예외를 생성한다.
+   *
+   * @param errorCode 공통 에러 코드
+   * @param message 상세 메시지
+   */
+  @SuppressWarnings("checkstyle:MissingJavadocMethod")
   public ProductException(ErrorCode errorCode, String message) {
     super(errorCode, message);
     this.errorCode = errorCode;

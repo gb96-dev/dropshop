@@ -34,8 +34,7 @@ public class ProductQueryController {
           @RequestParam(required = false) String status,
           @RequestParam(required = false, defaultValue = "LATEST") String sort,
           @RequestParam(defaultValue = "0") int page,
-          @RequestParam(defaultValue = "20") int size
-      ) {
+          @RequestParam(defaultValue = "20") int size) {
     Pageable pageable = PageRequest.of(page, size);
     Page<ProductListItemResponse> response = productFacadeService.findPublicProducts(
         status,
