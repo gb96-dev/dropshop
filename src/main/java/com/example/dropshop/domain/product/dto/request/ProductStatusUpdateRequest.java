@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
  * 상품 상태 변경 요청 DTO.
  */
 @Getter
-@NoArgsConstructor
 public class ProductStatusUpdateRequest {
 
   @NotNull

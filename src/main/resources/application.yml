@@ -6,6 +6,11 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -35,6 +40,8 @@ drops:
   scheduler:
     enabled: true
     fixed-delay-millis: 30000
+    lock-at-most-for: PT1M
+    lock-at-least-for: PT1S
 
 jwt:
   access-token-expiration: 3600000 # 1시간 (ms 단위)

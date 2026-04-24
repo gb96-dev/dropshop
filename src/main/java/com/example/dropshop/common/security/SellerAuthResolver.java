@@ -8,9 +8,7 @@ import com.example.dropshop.domain.seller.service.SellerFacadeService;
 import com.example.dropshop.domain.user.entity.User;
 import com.example.dropshop.domain.user.enums.UserRole;
 import com.example.dropshop.domain.user.service.UserFacadeService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,10 +24,9 @@ public class SellerAuthResolver {
   private final SellerFacadeService sellerFacadeService;
 
   /**
-   * JWT 인증 정보를 기반으로 판매자 인증 컨텍스트를 해석한다.
+   * JWT principal(email)을 기반으로 판매자 인증 컨텍스트를 해석한다.
    */
-  public SellerAuthContext resolve(Authentication authentication) {
-    String email = authentication == null ? null : authentication.getName();
+  public SellerAuthContext resolve(String email) {
     if (email == null || email.isBlank() || ANONYMOUS_USER.equals(email)) {
       throw new ServiceException(ErrorCode.SELLER_ROLE_REQUIRED);
     }
