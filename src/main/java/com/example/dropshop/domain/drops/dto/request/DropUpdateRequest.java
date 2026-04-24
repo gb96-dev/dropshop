@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
  * 드랍 수정 요청 DTO.
  */
 @Getter
-@NoArgsConstructor
 public class DropUpdateRequest {
 
   private LocalDateTime startAt;

@@ -10,12 +10,10 @@ import com.example.dropshop.domain.drops.repository.DropsRepository;
 import com.example.dropshop.domain.product.entity.Product;
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,19 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class DropsService {
-
-  static final Set<DropsStatus> ONGOING_DROP_STATUSES = EnumSet.of(
-      DropsStatus.SCHEDULED,
-      DropsStatus.ACTIVE
-  );
-
-  static final Set<DropsStatus> NON_DELETABLE_DROP_STATUSES = EnumSet.of(
-      DropsStatus.SCHEDULED,
-      DropsStatus.ACTIVE,
-      DropsStatus.FINISHED
-  );
-
-  static final Set<DropsStatus> PUBLIC_VISIBLE_STATUSES = NON_DELETABLE_DROP_STATUSES;
 
   private final DropsRepository dropsRepository;
 
@@ -126,7 +111,10 @@ public class DropsService {
    */
   @Transactional(readOnly = true)
   public boolean existsOngoingDropForProduct(Long productId) {
-    return dropsRepository.existsByProductIdAndStatusIn(productId, ONGOING_DROP_STATUSES);
+    return dropsRepository.existsByProductIdAndStatusIn(
+        productId,
+        DropsConstants.ONGOING_DROP_STATUSES
+    );
   }
 
   /**
@@ -134,7 +122,10 @@ public class DropsService {
    */
   @Transactional(readOnly = true)
   public boolean existsDropHistoryForProduct(Long productId) {
-    return dropsRepository.existsByProductIdAndStatusIn(productId, NON_DELETABLE_DROP_STATUSES);
+    return dropsRepository.existsByProductIdAndStatusIn(
+        productId,
+        DropsConstants.NON_DELETABLE_DROP_STATUSES
+    );
   }
 
   /**

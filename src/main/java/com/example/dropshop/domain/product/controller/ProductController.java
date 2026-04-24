@@ -19,7 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -46,10 +46,10 @@ public class ProductController {
    */
   @PostMapping
   public ResponseEntity<ApiResponse<ProductCreateResponse>> createProduct(
-      Authentication authentication,
+      @AuthenticationPrincipal String email,
       @Valid @RequestBody ProductCreateRequest request
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
 
     ProductCreateResponse response = productFacadeService.createSellerProduct(
         sellerAuth.sellerId(),
@@ -67,10 +67,10 @@ public class ProductController {
   @PatchMapping("/{id}")
   public ResponseEntity<ApiResponse<ProductCreateResponse>> updateProduct(
       @PathVariable Long id,
-      Authentication authentication,
+      @AuthenticationPrincipal String email,
       @Valid @RequestBody ProductUpdateRequest request
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     ProductCreateResponse response = productFacadeService.updateSellerProduct(
         id,
         sellerAuth.sellerId(),
@@ -87,10 +87,10 @@ public class ProductController {
   @PatchMapping("/{id}/status")
   public ResponseEntity<ApiResponse<ProductCreateResponse>> updateProductStatus(
       @PathVariable Long id,
-      Authentication authentication,
+      @AuthenticationPrincipal String email,
       @Valid @RequestBody ProductStatusUpdateRequest request
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     ProductCreateResponse response = productFacadeService.changeSellerProductStatus(
         id,
         sellerAuth.sellerId(),
@@ -107,9 +107,9 @@ public class ProductController {
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteProduct(
       @PathVariable Long id,
-      Authentication authentication
+      @AuthenticationPrincipal String email
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     productFacadeService.deleteSellerProduct(
         id,
         sellerAuth.sellerId(),
@@ -125,10 +125,10 @@ public class ProductController {
   @PostMapping("/{id}/images")
   public ResponseEntity<ApiResponse<ProductImageResponse>> createProductImage(
       @PathVariable Long id,
-      Authentication authentication,
+      @AuthenticationPrincipal String email,
       @Valid @RequestBody ProductImageCreateRequest request
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     ProductImageResponse response = productFacadeService.createSellerProductImage(
         id,
         sellerAuth.sellerId(),
@@ -146,10 +146,10 @@ public class ProductController {
   public ResponseEntity<ApiResponse<ProductImageResponse>> updateProductImage(
       @PathVariable Long id,
       @PathVariable Long imageId,
-      Authentication authentication,
+      @AuthenticationPrincipal String email,
       @Valid @RequestBody ProductImageUpdateRequest request
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     ProductImageResponse response = productFacadeService.updateSellerProductImage(
         id,
         imageId,
@@ -168,9 +168,9 @@ public class ProductController {
   public ResponseEntity<ApiResponse<Void>> deleteProductImage(
       @PathVariable Long id,
       @PathVariable Long imageId,
-      Authentication authentication
+      @AuthenticationPrincipal String email
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     productFacadeService.deleteSellerProductImage(
         id,
         imageId,
@@ -187,11 +187,11 @@ public class ProductController {
   @GetMapping("/mine")
   public ResponseEntity<
       ApiResponse<ApiResponse.PageResponse<SellerProductListItemResponse>>> findMineProducts(
-      Authentication authentication,
+      @AuthenticationPrincipal String email,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size
   ) {
-    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(authentication);
+    SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     Pageable pageable = PageRequest.of(page, size);
     Page<SellerProductListItemResponse> response = productFacadeService.findSellerProducts(
         sellerAuth.sellerId(),
