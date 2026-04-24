@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * 상품 이미지 추가 요청 DTO.
@@ -24,4 +23,3 @@ public class ProductImageCreateRequest {
   @NotNull
   private Boolean isThumbnail;
 }
-

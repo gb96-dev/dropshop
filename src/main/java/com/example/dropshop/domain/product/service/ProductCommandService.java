@@ -277,7 +277,11 @@ public class ProductCommandService {
         .orElseThrow(() -> new ProductException(ErrorCode.PRODUCT_IMAGE_NOT_FOUND));
   }
 
-  private ProductImage findImageByUrlAndSortOrder(Product product, String imageUrl, Integer sortOrder) {
+  private ProductImage findImageByUrlAndSortOrder(
+      Product product,
+      String imageUrl,
+      Integer sortOrder
+  ) {
     return product.getImages().stream()
         .filter(image -> image.getImageUrl().equals(imageUrl)
             && image.getSortOrder() == sortOrder)
@@ -304,4 +308,3 @@ public class ProductCommandService {
         .getImageUrl();
   }
 }
-

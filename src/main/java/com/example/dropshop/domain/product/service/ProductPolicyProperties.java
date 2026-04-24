@@ -14,6 +14,13 @@ public class ProductPolicyProperties {
   private final String deliveryInfo;
   private final String refundPolicy;
 
+  /**
+   * 상품 공통 정책 설정값을 생성한다.
+   *
+   * @param deliveryInfo 배송 정책 문구
+   * @param refundPolicy 환불 정책 문구
+   */
+  @SuppressWarnings("checkstyle:MissingJavadocMethod")
   public ProductPolicyProperties(
       @DefaultValue("Common delivery policy") String deliveryInfo,
       @DefaultValue("Common refund policy") String refundPolicy

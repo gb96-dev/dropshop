@@ -213,11 +213,16 @@ public class Drops extends BaseEntity {
    * 남은 재고를 차감한다.
    */
   public void removeRemainStock(int quantity) {
+    // [추가] 수량이 0 이하인 비정상적인 요청 차단
+    if (quantity <= 0) {
+      throw new DropsException(ErrorCode.INVALID_DROP_REMAIN_STOCK);
+    }
+
     long restStock = this.remainStock - quantity;
 
     // 재고가 0보다 작아지면 예외 발생
     if (restStock < 0) {
-      throw new DropsException(ErrorCode.OUT_OF_STOCK); // 또는 적절한 에러 코드
+      throw new DropsException(ErrorCode.INVALID_DROP_REMAIN_STOCK);
     }
 
     this.remainStock = restStock;

@@ -42,10 +42,10 @@ public class DropsFacadeService {
    */
   @Transactional
   public DropResponse createSellerDrop(
-      Long sellerId,
-      boolean sellerApproved,
-      boolean sellerVerified,
-      DropCreateRequest request
+          Long sellerId,
+          boolean sellerApproved,
+          boolean sellerVerified,
+          DropCreateRequest request
   ) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
@@ -62,11 +62,11 @@ public class DropsFacadeService {
    */
   @Transactional
   public DropResponse updateSellerDrop(
-      Long dropId,
-      Long sellerId,
-      boolean sellerApproved,
-      boolean sellerVerified,
-      DropUpdateRequest request
+          Long dropId,
+          Long sellerId,
+          boolean sellerApproved,
+          boolean sellerVerified,
+          DropUpdateRequest request
   ) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
@@ -83,10 +83,10 @@ public class DropsFacadeService {
    */
   @Transactional
   public void deleteSellerDrop(
-      Long dropId,
-      Long sellerId,
-      boolean sellerApproved,
-      boolean sellerVerified
+          Long dropId,
+          Long sellerId,
+          boolean sellerApproved,
+          boolean sellerVerified
   ) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
@@ -100,7 +100,7 @@ public class DropsFacadeService {
 
     dropsService.delete(drops);
 
-     if (!dropsService.existsOngoingDropForProduct(product.getId())) {
+    if (!dropsService.existsOngoingDropForProduct(product.getId())) {
       productDomainFacadeService.updateStatusByDrop(product, ProductStatus.HIDDEN);
     }
   }
@@ -110,10 +110,10 @@ public class DropsFacadeService {
    */
   @Transactional
   public DropResponse stopSellerDrop(
-      Long dropId,
-      Long sellerId,
-      boolean sellerApproved,
-      boolean sellerVerified
+          Long dropId,
+          Long sellerId,
+          boolean sellerApproved,
+          boolean sellerVerified
   ) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
@@ -139,7 +139,7 @@ public class DropsFacadeService {
   }
 
   private void validateDuplicatedOngoingDrop(Long productId) {
-     if (dropsService.existsOngoingDropForProduct(productId)) {
+    if (dropsService.existsOngoingDropForProduct(productId)) {
       throw new DropsException(ErrorCode.DROP_ALREADY_EXISTS);
     }
   }
@@ -170,8 +170,8 @@ public class DropsFacadeService {
 
     try {
       if (drops.isFinished()
-          && drops.getRemainStock() > 0L
-          && LocalDateTime.now().isBefore(drops.getEndAt())) {
+              && drops.getRemainStock() > 0L
+              && LocalDateTime.now().isBefore(drops.getEndAt())) {
         drops.activate();
         productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.ON_SALE);
       }
@@ -194,16 +194,35 @@ public class DropsFacadeService {
    */
   @Transactional
   public Drops reserveStockForOrder(Long dropId, Long productId, int quantity) {
-    // 1. 드랍 존재 확인
+    // 1. 수량이 0 이하인 비정상적인 요청을 입구에서 즉시 차단
+    if (quantity <= 0) {
+      throw new DropsException(ErrorCode.INVALID_DROP_REMAIN_STOCK);
+    }
+
+    // 2. 드랍 존재 확인
     Drops drops = dropsService.findById(dropId);
 
-    // 2. 주문 가능 상태 및 해당 상품의 드랍인지 검증 (기존 private 메서드 활용)
+    // 3. 주문 가능 상태 및 해당 상품의 드랍인지 검증
     validateOrderableDrop(drops, productId);
 
-    // 3. 재고 차감 (Drops 엔티티 내의 비즈니스 로직 호출)
-    drops.removeRemainStock(quantity);
+    try {
+      // 4. 재고 차감 시도 (int -> long 자동 형변환되어 안전하게 전달됨)
+      drops.removeRemainStock(quantity);
 
-    return drops;
+      // 드랍 종료 시 상품 상태 업데이트 (이전 단계에서 추가한 로직)
+      if (drops.isFinished()) {
+        Product product = drops.getProduct();
+        if (product.getStatus() != ProductStatus.OUT_OF_STOCK) {
+          productDomainFacadeService.updateStatusByDrop(product, ProductStatus.OUT_OF_STOCK);
+        }
+      }
+
+      return drops;
+
+    } catch (OptimisticLockingFailureException e) {
+      log.warn("드랍 재고 선점 중 동시성 충돌 발생: dropId={}, productId={}", dropId, productId);
+      throw new DropsException(ErrorCode.INVALID_DROP_REMAIN_STOCK);
+    }
   }
 }
 

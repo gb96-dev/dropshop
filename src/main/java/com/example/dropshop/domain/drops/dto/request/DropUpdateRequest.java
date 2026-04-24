@@ -3,7 +3,6 @@ package com.example.dropshop.domain.drops.dto.request;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDateTime;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * 드랍 수정 요청 DTO.
@@ -23,4 +22,3 @@ public class DropUpdateRequest {
 
   private Boolean useQueue;
 }
-

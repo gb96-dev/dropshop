@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * 상품 정보 수정 요청 DTO.
@@ -37,4 +36,3 @@ public class ProductUpdateRequest {
   @Size(min = 1)
   private String specification;
 }
-
