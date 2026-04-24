@@ -59,19 +59,19 @@ public class DropsService {
       throw new DropsException(ErrorCode.DROP_ACTIVE_UPDATE_LOCKED);
     }
 
-    LocalDateTime updatedStartAt = request.getStartAt() == null
+    final LocalDateTime updatedStartAt = request.getStartAt() == null
         ? drops.getStartAt()
         : request.getStartAt();
-    LocalDateTime updatedEndAt = request.getEndAt() == null
+    final LocalDateTime updatedEndAt = request.getEndAt() == null
         ? drops.getEndAt()
         : request.getEndAt();
-    Long updatedTotalStock = request.getTotalStock() == null
+    final Long updatedTotalStock = request.getTotalStock() == null
         ? drops.getTotalStock()
         : request.getTotalStock();
-    Long updatedPurchaseLimit = request.getPurchaseLimit() == null
+    final Long updatedPurchaseLimit = request.getPurchaseLimit() == null
         ? drops.getPurchaseLimit()
         : request.getPurchaseLimit();
-    boolean updatedUseQueue = request.getUseQueue() == null
+    final boolean updatedUseQueue = request.getUseQueue() == null
         ? drops.isUseQueue()
         : request.getUseQueue();
 
@@ -157,7 +157,8 @@ public class DropsService {
    */
   @Transactional(readOnly = true)
   public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
-    List<Drops> dropsList = dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
+    List<Drops> dropsList =
+        dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
     Map<Long, Drops> latestDrops = new HashMap<>();
     for (Drops drops : dropsList) {
       latestDrops.putIfAbsent(drops.getProduct().getId(), drops);
@@ -185,5 +186,4 @@ public class DropsService {
     }
   }
 }
-
 

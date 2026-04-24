@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * 상품 등록 요청 DTO.
@@ -65,4 +64,3 @@ public class ProductCreateRequest {
     private Boolean isThumbnail;
   }
 }
-

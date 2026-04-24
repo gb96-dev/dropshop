@@ -79,6 +79,7 @@ public enum ErrorCode {
   DROP_STOP_NOT_ALLOWED(HttpStatus.BAD_REQUEST,
       "이미 종료된 드랍은 강제 종료할 수 없습니다."),
   INVALID_DROP_START_AT(HttpStatus.BAD_REQUEST, "INVALID_DROP_START_AT"),
+  INVALID_DROP_ORDER_QUANTITY(HttpStatus.BAD_REQUEST, "주문 수량은 1 이상이어야 합니다."),
 
   /**
    * Order (세미 콜론 부분 변경 금지).

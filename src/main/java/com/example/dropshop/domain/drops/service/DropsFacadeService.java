@@ -5,30 +5,23 @@ import com.example.dropshop.domain.drops.dto.request.DropCreateRequest;
 import com.example.dropshop.domain.drops.dto.request.DropUpdateRequest;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.entity.Drops;
-import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.exception.DropsException;
+import com.example.dropshop.domain.drops.repository.DropsRepository;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
-import com.example.dropshop.domain.order.service.OrderHistoryQueryService;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
-import com.example.dropshop.domain.drops.entity.Drops;
-import com.example.dropshop.domain.drops.repository.DropsRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
 
 /**
  * 드랍 도메인 파사드 서비스.
@@ -42,7 +35,6 @@ public class DropsFacadeService {
   private final ProductDomainFacadeService productDomainFacadeService;
   private final OrderFacadeService orderFacadeService;
   private final DropsRepository dropsRepository;
-  private final OrderHistoryQueryService orderHistoryQueryService;
 
   /**
    * 판매자 드랍을 생성한다.
@@ -107,7 +99,7 @@ public class DropsFacadeService {
 
     dropsService.delete(drops);
 
-     if (!dropsService.existsOngoingDropForProduct(product.getId())) {
+    if (!dropsService.existsOngoingDropForProduct(product.getId())) {
       productDomainFacadeService.updateStatusByDrop(product, ProductStatus.HIDDEN);
     }
   }
@@ -146,7 +138,7 @@ public class DropsFacadeService {
   }
 
   private void validateDuplicatedOngoingDrop(Long productId) {
-     if (dropsService.existsOngoingDropForProduct(productId)) {
+    if (dropsService.existsOngoingDropForProduct(productId)) {
       throw new DropsException(ErrorCode.DROP_ALREADY_EXISTS);
     }
   }
@@ -164,7 +156,8 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
-    List<Drops> dropsList = dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
+    List<Drops> dropsList =
+        dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
     Map<Long, Drops> latestDrops = new HashMap<>();
     for (Drops drops : dropsList) {
       Long productId = drops.getProduct().getId();
@@ -193,13 +186,34 @@ public class DropsFacadeService {
     }
   }
 
-  private void validateOrderableDrop(Drops drops, Long productId) {
+  /**
+   * 주문 생성을 위해 드랍 재고를 선점(차감)한다.
+   *
+   * @param dropId 드랍 ID
+   * @param productId 상품 ID
+   * @param quantity 구매 수량
+   * @return 재고 차감이 반영된 드랍
+   */
+  @Transactional
+  public Drops reserveStockForOrder(Long dropId, Long productId, int quantity) {
+    if (quantity <= 0) {
+      throw new DropsException(ErrorCode.INVALID_DROP_ORDER_QUANTITY);
+    }
+
+    Drops drops = dropsService.findById(dropId);
+
     if (!drops.isActive()) {
       throw new DropsException(ErrorCode.DROP_ORDER_NOT_ALLOWED);
     }
     if (!drops.getProduct().getId().equals(productId)) {
       throw new DropsException(ErrorCode.DROP_PRODUCT_MISMATCH);
     }
+
+    drops.decrementRemainStock(quantity);
+    if (drops.getRemainStock() <= 0L) {
+      drops.finish();
+      productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
+    }
+    return drops;
   }
 }
-
