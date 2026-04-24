@@ -185,4 +185,31 @@ public class DropsFacadeService {
       log.info("드랍 ID={} 재활성화가 동시성 충돌로 스킵되었습니다.", dropId, e);
     }
   }
+
+  /**
+   * 주문 생성을 위해 드랍 재고를 선점(차감)한다.
+   *
+   * @param dropId 드랍 ID
+   * @param productId 상품 ID
+   * @param quantity 구매 수량
+   * @return 재고 차감이 반영된 드랍
+   */
+  @Transactional
+  public Drops reserveStockForOrder(Long dropId, Long productId, int quantity) {
+    Drops drops = dropsService.findById(dropId);
+
+    if (!drops.isActive()) {
+      throw new DropsException(ErrorCode.DROP_ORDER_NOT_ALLOWED);
+    }
+    if (!drops.getProduct().getId().equals(productId)) {
+      throw new DropsException(ErrorCode.DROP_PRODUCT_MISMATCH);
+    }
+
+    drops.decrementRemainStock(quantity);
+    if (drops.getRemainStock() <= 0L) {
+      drops.finish();
+      productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
+    }
+    return drops;
+  }
 }
