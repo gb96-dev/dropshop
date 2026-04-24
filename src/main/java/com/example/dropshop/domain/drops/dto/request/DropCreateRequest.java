@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDateTime;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * 드랍 생성 요청 DTO.
@@ -32,4 +31,3 @@ public class DropCreateRequest {
   @NotNull
   private Boolean useQueue;
 }
-

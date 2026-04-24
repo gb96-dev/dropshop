@@ -2,7 +2,6 @@ package com.example.dropshop.domain.product.dto.request;
 
 import jakarta.validation.constraints.Min;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * 상품 이미지 수정 요청 DTO.
@@ -15,4 +14,3 @@ public class ProductImageUpdateRequest {
 
   private Boolean isThumbnail;
 }
-

@@ -31,13 +31,12 @@ public class ProductDropsQueryController {
    * 특정 상품의 드롭 이력을 조회한다.
    */
   @GetMapping("/{productId}/drops")
-  public ResponseEntity<ApiResponse<ApiResponse.PageResponse<DropListItemResponse>>> getDropsByProduct(
-      @PathVariable Long productId,
-      @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-      Pageable pageable
-  ) {
+  public ResponseEntity<ApiResponse<ApiResponse.PageResponse<DropListItemResponse>>>
+      getDropsByProduct(
+          @PathVariable Long productId,
+          @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+          Pageable pageable) {
     Page<DropListItemResponse> response = dropsQueryService.findDropsByProduct(productId, pageable);
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 }
-
