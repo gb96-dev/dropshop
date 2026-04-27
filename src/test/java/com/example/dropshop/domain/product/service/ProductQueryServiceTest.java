@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -18,6 +19,7 @@ import com.example.dropshop.domain.product.dto.response.ProductDetailResponse;
 import com.example.dropshop.domain.product.dto.response.ProductListItemResponse;
 import com.example.dropshop.domain.product.dto.response.SellerProductListItemResponse;
 import com.example.dropshop.domain.product.entity.Product;
+import com.example.dropshop.domain.product.enums.ProductListSortType;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.exception.ProductException;
 import com.example.dropshop.domain.product.repository.ProductRepository;
@@ -73,8 +75,8 @@ class ProductQueryServiceTest {
     Drops latestDrop = createDrop(product, dropStartAt);
     Page<Product> page = new PageImpl<Product>(List.of(product), PageRequest.of(0, 10), 1);
 
-    given(productRepository.findAllByStatusIn(anyCollection(), any(Pageable.class)))
-        .willReturn(page);
+    given(productRepository.findPublicProducts(anyCollection(), eq(ProductListSortType.LATEST),
+        any(LocalDateTime.class), any(Pageable.class))).willReturn(page);
     given(dropsFacadeService.findLatestDropsByProductIds(List.of(11L)))
         .willReturn(Map.of(11L, latestDrop));
 
@@ -113,18 +115,19 @@ class ProductQueryServiceTest {
   }
 
   @Test
-  @DisplayName("드랍 임박 정렬은 전용 쿼리를 호출한다")
+  @DisplayName("드랍 임박 정렬은 커스텀 공개 목록 쿼리로 조회한다")
   void findPublicProducts_dropImminent_callsCustomQuery() {
     Page<Product> page = new PageImpl<Product>(List.of(), PageRequest.of(0, 10), 0);
 
-    given(productRepository.findPublicProductsOrderByDropImminent(anyCollection(), any(LocalDateTime.class),
-        any(Pageable.class))).willReturn(page);
+    given(productRepository.findPublicProducts(anyCollection(), eq(ProductListSortType.DROP_IMMINENT),
+        any(LocalDateTime.class), any(Pageable.class))).willReturn(page);
     given(dropsFacadeService.findLatestDropsByProductIds(List.of())).willReturn(Map.of());
 
     productQueryService.findPublicProducts("READY", "DROP_IMMINENT", PageRequest.of(0, 10));
 
-    verify(productRepository).findPublicProductsOrderByDropImminent(
+    verify(productRepository).findPublicProducts(
         anyCollection(),
+        eq(ProductListSortType.DROP_IMMINENT),
         any(LocalDateTime.class),
         any(Pageable.class)
     );
@@ -214,5 +217,3 @@ class ProductQueryServiceTest {
     return drops;
   }
 }
-
-
