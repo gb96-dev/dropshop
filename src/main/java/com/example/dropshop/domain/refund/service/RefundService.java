@@ -4,6 +4,7 @@ import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
+import com.example.dropshop.domain.payment.client.PortOneClient;
 import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.exception.PaymentException;
@@ -30,6 +31,7 @@ public class RefundService {
 
   private final RefundRepository refundRepository;
   private final PaymentRepository paymentRepository;
+  private final PortOneClient portOneClient;
   private final OrderFacadeService orderFacadeService;
 
   /**
@@ -91,11 +93,13 @@ public class RefundService {
    * 환불을 승인한다.
    *
    * @param refundId 환불 ID
+   * @param email 인증된 사용자 이메일
    * @return 승인된 환불 엔티티
    */
   @Transactional
-  public Refund approveRefund(Long refundId) {
+  public Refund approveRefund(Long refundId, String email) {
     Refund refund = findRefund(refundId);
+    validateRefundOwnership(refund, email);
     validateRefundStatus(refund, RefundStatus.PENDING);
     refund.approve();
     return refund;
@@ -105,16 +109,28 @@ public class RefundService {
    * 환불을 완료하고 주문 상태를 환불 완료로 변경한다.
    *
    * @param refundId 환불 ID
+   * @param email 인증된 사용자 이메일
    * @return 완료된 환불 엔티티
    */
   @Transactional
-  public Refund completeRefund(Long refundId) {
+  public Refund completeRefund(Long refundId, String email) {
     Refund refund = findRefund(refundId);
+    validateRefundOwnership(refund, email);
     validateRefundStatus(refund, RefundStatus.APPROVED);
 
     Payment payment = getPayment(refund.getPaymentId());
-    Order order = orderFacadeService.findOrderForPaymentWebhook(payment.getOrderId());
+    Order order = orderFacadeService.findOrderForPayment(payment.getOrderId(), email);
     validateRefundableOrder(order);
+
+    try {
+      portOneClient.cancelPayment(
+          payment.getIdempotencyKey(),
+          refund.getRefundAmount(),
+          refund.getRefundReason() == null ? "환불 요청" : refund.getRefundReason()
+      );
+    } catch (PaymentException e) {
+      throw new RefundException(ErrorCode.REFUND_PORTONE_API_ERROR, e.getMessage());
+    }
 
     refund.complete();
     orderFacadeService.refundOrderByRefund(order);
@@ -125,13 +141,15 @@ public class RefundService {
    * 환불을 거절한다.
    *
    * @param refundId 환불 ID
+   * @param email 인증된 사용자 이메일
    * @return 거절된 환불 엔티티
    */
   @Transactional
-  public Refund rejectRefund(Long refundId) {
+  public Refund rejectRefund(Long refundId, String email) {
     Refund refund = findRefund(refundId);
+    validateRefundOwnership(refund, email);
     validateRefundStatus(refund, RefundStatus.PENDING);
-    refund.updateStatus(RefundStatus.REJECTED);
+    refund.reject();
     return refund;
   }
 

@@ -65,12 +65,10 @@ public class Refund extends BaseEntity {
   }
 
   /**
-   * 환불 상태 변경.
-   *
-   * @param status 변경할 환불 상태
+   * 환불 거절.
    */
-  public void updateStatus(RefundStatus status) {
-    this.status = status;
+  public void reject() {
+    this.status = RefundStatus.REJECTED;
   }
 
   /**

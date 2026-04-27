@@ -1,0 +1,144 @@
+package com.example.dropshop.domain.refund.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.order.entity.Order;
+import com.example.dropshop.domain.order.entity.OrderItem;
+import com.example.dropshop.domain.order.facade.OrderFacadeService;
+import com.example.dropshop.domain.payment.client.PortOneClient;
+import com.example.dropshop.domain.payment.entity.Payment;
+import com.example.dropshop.domain.payment.enums.PaymentMethod;
+import com.example.dropshop.domain.payment.exception.PaymentException;
+import com.example.dropshop.domain.payment.repository.PaymentRepository;
+import com.example.dropshop.domain.refund.entity.Refund;
+import com.example.dropshop.domain.refund.entity.RefundStatus;
+import com.example.dropshop.domain.refund.exception.RefundException;
+import com.example.dropshop.domain.refund.repository.RefundRepository;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+@ExtendWith(MockitoExtension.class)
+class RefundServiceTest {
+
+  @Mock
+  private RefundRepository refundRepository;
+
+  @Mock
+  private PaymentRepository paymentRepository;
+
+  @Mock
+  private PortOneClient portOneClient;
+
+  @Mock
+  private OrderFacadeService orderFacadeService;
+
+  @InjectMocks
+  private RefundService refundService;
+
+  private Payment payment;
+  private Order order;
+  private Refund refund;
+
+  @BeforeEach
+  void setUp() {
+    order = Order.create(1L, 10L);
+    ReflectionTestUtils.setField(order, "id", 1L);
+    order.addOrderItem(OrderItem.create(
+        order,
+        100L,
+        new BigDecimal("100000"),
+        new BigDecimal("79000"),
+        new BigDecimal("21000"),
+        "https://dummy-image"
+    ));
+    order.pay();
+
+    payment = Payment.prepare(1L, "payment-test-123", PaymentMethod.CARD, new BigDecimal("79000"));
+    ReflectionTestUtils.setField(payment, "id", 1L);
+    payment.complete("tx-123");
+
+    refund = Refund.create(1L, new BigDecimal("79000"), "단순 변심");
+    ReflectionTestUtils.setField(refund, "id", 1L);
+  }
+
+  @Test
+  @DisplayName("환불 요청 생성 성공")
+  void createRefund_success() {
+    given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
+    given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
+    given(refundRepository.existsByPaymentIdAndStatusIn(
+        1L,
+        List.of(RefundStatus.PENDING, RefundStatus.APPROVED)
+    )).willReturn(false);
+    given(refundRepository.save(any(Refund.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+    Refund result = refundService.createRefund(
+        "test@test.com",
+        1L,
+        new BigDecimal("79000"),
+        "단순 변심"
+    );
+
+    assertThat(result.getStatus()).isEqualTo(RefundStatus.PENDING);
+    verify(refundRepository, times(1)).save(any(Refund.class));
+  }
+
+  @Test
+  @DisplayName("환불 완료 성공 시 PortOne 환불을 호출하고 주문 상태를 환불 완료로 변경한다")
+  void completeRefund_success() {
+    refund.approve();
+
+    given(refundRepository.findById(1L)).willReturn(Optional.of(refund));
+    given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
+    given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
+    given(orderFacadeService.refundOrderByRefund(order)).willAnswer(invocation -> {
+      order.refund();
+      return order;
+    });
+
+    Refund result = refundService.completeRefund(1L, "test@test.com");
+
+    assertThat(result.getStatus()).isEqualTo(RefundStatus.COMPLETED);
+    assertThat(order.getStatus().name()).isEqualTo("REFUNDED");
+    verify(portOneClient, times(1))
+        .cancelPayment("payment-test-123", new BigDecimal("79000"), "단순 변심");
+    verify(orderFacadeService, times(1)).refundOrderByRefund(order);
+  }
+
+  @Test
+  @DisplayName("PortOne 환불에 실패하면 내부 환불 완료 처리를 진행하지 않는다")
+  void completeRefund_portOneFailure_throwsException() {
+    refund.approve();
+
+    given(refundRepository.findById(1L)).willReturn(Optional.of(refund));
+    given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
+    given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
+    willThrow(new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR))
+        .given(portOneClient)
+        .cancelPayment("payment-test-123", new BigDecimal("79000"), "단순 변심");
+
+    assertThatThrownBy(() -> refundService.completeRefund(1L, "test@test.com"))
+        .isInstanceOf(RefundException.class)
+        .hasMessage(ErrorCode.REFUND_PORTONE_API_ERROR.getMessage());
+
+    assertThat(refund.getStatus()).isEqualTo(RefundStatus.APPROVED);
+    verify(orderFacadeService, never()).refundOrderByRefund(order);
+  }
+}

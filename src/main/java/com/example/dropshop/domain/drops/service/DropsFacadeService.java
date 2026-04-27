@@ -7,21 +7,21 @@ import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.entity.Drops;
 import com.example.dropshop.domain.drops.exception.DropsException;
 import com.example.dropshop.domain.drops.repository.DropsRepository;
-import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.order.service.OrderHistoryQueryService;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * 드랍 도메인 파사드 서비스.
@@ -33,19 +33,18 @@ public class DropsFacadeService {
 
   private final DropsService dropsService;
   private final ProductDomainFacadeService productDomainFacadeService;
-  private final OrderFacadeService orderFacadeService;
-  private final DropsRepository dropsRepository;
   private final OrderHistoryQueryService orderHistoryQueryService;
+  private final DropsRepository dropsRepository;
 
   /**
    * 판매자 드랍을 생성한다.
    */
   @Transactional
   public DropResponse createSellerDrop(
-          Long sellerId,
-          boolean sellerApproved,
-          boolean sellerVerified,
-          DropCreateRequest request
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified,
+      DropCreateRequest request
   ) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
@@ -62,11 +61,11 @@ public class DropsFacadeService {
    */
   @Transactional
   public DropResponse updateSellerDrop(
-          Long dropId,
-          Long sellerId,
-          boolean sellerApproved,
-          boolean sellerVerified,
-          DropUpdateRequest request
+      Long dropId,
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified,
+      DropUpdateRequest request
   ) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
@@ -83,10 +82,10 @@ public class DropsFacadeService {
    */
   @Transactional
   public void deleteSellerDrop(
-          Long dropId,
-          Long sellerId,
-          boolean sellerApproved,
-          boolean sellerVerified
+      Long dropId,
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified
   ) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
@@ -94,7 +93,7 @@ public class DropsFacadeService {
     Product product = drops.getProduct();
     productDomainFacadeService.validateOwnership(product, sellerId);
 
-    if (!drops.isScheduled() || orderFacadeService.existsOrderHistoryForDrop(dropId)) {
+    if (!drops.isScheduled() || orderHistoryQueryService.existsOrderHistoryForDrop(dropId)) {
       throw new DropsException(ErrorCode.DROP_DELETE_NOT_ALLOWED);
     }
 
@@ -110,10 +109,10 @@ public class DropsFacadeService {
    */
   @Transactional
   public DropResponse stopSellerDrop(
-          Long dropId,
-          Long sellerId,
-          boolean sellerApproved,
-          boolean sellerVerified
+      Long dropId,
+      Long sellerId,
+      boolean sellerApproved,
+      boolean sellerVerified
   ) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
@@ -149,7 +148,7 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Optional<Drops> findLatestDropByProductId(Long productId) {
-    return dropsService.findLatestDropByProductId(productId);
+    return dropsRepository.findTopByProductIdOrderByStartAtDesc(productId);
   }
 
   /**
@@ -157,7 +156,14 @@ public class DropsFacadeService {
    */
   @Transactional(readOnly = true)
   public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
-    return dropsService.findLatestDropsByProductIds(productIds);
+    List<Drops> dropsList =
+        dropsRepository.findAllByProductIdInOrderByProductIdAscStartAtDesc(productIds);
+    Map<Long, Drops> latestDrops = new HashMap<>();
+    for (Drops drops : dropsList) {
+      Long productId = drops.getProduct().getId();
+      latestDrops.putIfAbsent(productId, drops);
+    }
+    return latestDrops;
   }
 
   /**
@@ -170,8 +176,8 @@ public class DropsFacadeService {
 
     try {
       if (drops.isFinished()
-              && drops.getRemainStock() > 0L
-              && LocalDateTime.now().isBefore(drops.getEndAt())) {
+          && drops.getRemainStock() > 0L
+          && LocalDateTime.now().isBefore(drops.getEndAt())) {
         drops.activate();
         productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.ON_SALE);
       }
@@ -180,49 +186,35 @@ public class DropsFacadeService {
     }
   }
 
-  private void validateOrderableDrop(Drops drops, Long productId) {
+  /**
+   * 주문 생성을 위해 드랍 재고를 선점(차감)한다.
+   *
+   * @param dropId 드랍 ID
+   * @param productId 상품 ID
+   * @param quantity 구매 수량
+   * @return 재고 차감이 반영된 드랍
+   */
+  @Transactional
+  public Drops reserveStockForOrder(Long dropId, Long productId, int quantity) {
+    if (quantity <= 0) {
+      throw new DropsException(ErrorCode.INVALID_DROP_ORDER_QUANTITY);
+    }
+
+    Drops drops = dropsService.findById(dropId);
+
     if (!drops.isActive()) {
       throw new DropsException(ErrorCode.DROP_ORDER_NOT_ALLOWED);
     }
     if (!drops.getProduct().getId().equals(productId)) {
       throw new DropsException(ErrorCode.DROP_PRODUCT_MISMATCH);
     }
-  }
 
-  /**
-   * 주문을 위해 드랍 재고를 예약(차감)한다.
-   */
-  @Transactional
-  public Drops reserveStockForOrder(Long dropId, Long productId, int quantity) {
-    // 1. 수량이 0 이하인 비정상적인 요청을 입구에서 즉시 차단
-    if (quantity <= 0) {
-      throw new DropsException(ErrorCode.INVALID_DROP_REMAIN_STOCK);
+    drops.decrementRemainStock(quantity);
+    if (drops.getRemainStock() <= 0L) {
+      drops.finish();
+      productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
     }
-
-    // 2. 드랍 존재 확인
-    Drops drops = dropsService.findById(dropId);
-
-    // 3. 주문 가능 상태 및 해당 상품의 드랍인지 검증
-    validateOrderableDrop(drops, productId);
-
-    try {
-      // 4. 재고 차감 시도 (int -> long 자동 형변환되어 안전하게 전달됨)
-      drops.removeRemainStock(quantity);
-
-      // 드랍 종료 시 상품 상태 업데이트 (이전 단계에서 추가한 로직)
-      if (drops.isFinished()) {
-        Product product = drops.getProduct();
-        if (product.getStatus() != ProductStatus.OUT_OF_STOCK) {
-          productDomainFacadeService.updateStatusByDrop(product, ProductStatus.OUT_OF_STOCK);
-        }
-      }
-
-      return drops;
-
-    } catch (OptimisticLockingFailureException e) {
-      log.warn("드랍 재고 선점 중 동시성 충돌 발생: dropId={}, productId={}", dropId, productId);
-      throw new DropsException(ErrorCode.INVALID_DROP_REMAIN_STOCK);
-    }
+    return drops;
   }
 }
 

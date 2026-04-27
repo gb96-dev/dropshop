@@ -4,6 +4,7 @@ import com.example.dropshop.common.config.PortOneProperties;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.exception.PaymentException;
+import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,21 +30,62 @@ public class PortOneClient {
    */
   public PortOnePaymentResponse getPayment(String paymentId) {
     try {
-      RestClient restClient = RestClient.builder()
-          .baseUrl(portOneProperties.resolvedApiBaseUrl())
-          .defaultHeader(
-              HttpHeaders.AUTHORIZATION,
-              "PortOne " + portOneProperties.apiSecret()
-          )
-          .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-          .build();
-
-      return restClient.get()
+      return restClient().get()
           .uri("/payments/{paymentId}", paymentId)
           .retrieve()
           .body(PortOnePaymentResponse.class);
     } catch (RestClientException e) {
       throw new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR, e.getMessage());
     }
+  }
+
+  /**
+   * PortOne에 결제 취소(환불)를 요청한다.
+   *
+   * @param paymentId PortOne 결제 식별자
+   * @param amount 취소 금액
+   * @param reason 취소 사유
+   * @throws PaymentException 외부 API 호출에 실패한 경우
+   */
+  public void cancelPayment(String paymentId, BigDecimal amount, String reason) {
+    try {
+      restClient().post()
+          .uri("/payments/{paymentId}/cancel", paymentId)
+          .body(new CancelPaymentBody(
+              portOneProperties.storeId(),
+              toPortOneAmount(amount),
+              reason
+          ))
+          .retrieve()
+          .toBodilessEntity();
+    } catch (RestClientException e) {
+      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR, e.getMessage());
+    }
+  }
+
+  private Long toPortOneAmount(BigDecimal amount) {
+    try {
+      return amount.stripTrailingZeros().longValueExact();
+    } catch (ArithmeticException e) {
+      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR, "포트원 취소 금액은 정수여야 합니다.");
+    }
+  }
+
+  private RestClient restClient() {
+    return RestClient.builder()
+        .baseUrl(portOneProperties.resolvedApiBaseUrl())
+        .defaultHeader(
+            HttpHeaders.AUTHORIZATION,
+            "PortOne " + portOneProperties.apiSecret()
+        )
+        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .build();
+  }
+
+  private record CancelPaymentBody(
+      String storeId,
+      Long amount,
+      String reason
+  ) {
   }
 }

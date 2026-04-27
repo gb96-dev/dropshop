@@ -343,6 +343,41 @@ class OrderServiceTest {
   }
 
   @Test
+  @DisplayName("환불 완료 시 주문 상태가 REFUNDED로 변경되고 재고 복원 이벤트가 발행된다")
+  void refundOrder_success() {
+    // given
+    Order order = Order.create(userId, dropId);
+    ReflectionTestUtils.setField(order, "id", 1L);
+
+    order.addOrderItem(
+        com.example.dropshop.domain.order.entity.OrderItem.create(
+            order,
+            productId,
+            priceSnapshot,
+            salePriceSnapshot,
+            discountAmountSnapshot,
+            thumbnailUrlSnapshot
+        )
+    );
+    order.pay();
+
+    // when
+    Order result = orderService.refundOrder(order);
+
+    // then
+    assertThat(result.getStatus()).isEqualTo(OrderStatus.REFUNDED);
+
+    ArgumentCaptor<StockRestoreEvent> eventCaptor =
+        ArgumentCaptor.forClass(StockRestoreEvent.class);
+
+    verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
+
+    StockRestoreEvent event = eventCaptor.getValue();
+    assertThat(event.getDropId()).isEqualTo(dropId);
+    assertThat(event.getQuantity()).isEqualTo(1);
+  }
+
+  @Test
   @DisplayName("만료된 주문이 없으면 아무 일도 일어나지 않는다")
   void cancelExpiredOrders_noExpiredOrders() {
     // given
