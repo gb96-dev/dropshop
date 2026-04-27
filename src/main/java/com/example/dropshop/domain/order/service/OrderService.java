@@ -116,6 +116,7 @@ public class OrderService {
   @Transactional
   public Order refundOrder(Order order) {
     order.refund();
+    restoreDropStock(order);
     return order;
   }
 

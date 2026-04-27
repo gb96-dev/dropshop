@@ -1,6 +1,7 @@
 package com.example.dropshop.domain.payment.facade;
 
 import com.example.dropshop.domain.order.entity.Order;
+import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.payment.dto.request.PaymentConfirmRequest;
 import com.example.dropshop.domain.payment.dto.request.PaymentPrepareRequest;
 import com.example.dropshop.domain.payment.dto.request.PaymentWebhookRequest;
@@ -10,6 +11,8 @@ import com.example.dropshop.domain.payment.dto.response.PaymentPrepareResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.service.PaymentService.PaymentConfirmResult;
 import com.example.dropshop.domain.payment.service.PaymentService;
+import com.example.dropshop.domain.product.entity.Product;
+import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Service;
 public class PaymentFacadeService {
 
   private final PaymentService paymentService;
+  private final ProductDomainFacadeService productDomainFacadeService;
 
   /**
    * 결제를 준비하고 응답 DTO로 변환한다.
@@ -53,7 +57,7 @@ public class PaymentFacadeService {
         payment,
         paymentService.getStoreId(),
         paymentService.getChannelKey(),
-        order.getOrderNumber(),
+        buildOrderName(order),
         paymentService.getRedirectUrl()
     );
   }
@@ -80,5 +84,15 @@ public class PaymentFacadeService {
    */
   public void handleWebhook(PaymentWebhookRequest request) {
     paymentService.handleWebhook(request);
+  }
+
+  private String buildOrderName(Order order) {
+    if (order.getOrderItems().isEmpty()) {
+      return order.getOrderNumber();
+    }
+
+    OrderItem firstOrderItem = order.getOrderItems().get(0);
+    Product firstProduct = productDomainFacadeService.findProduct(firstOrderItem.getProductId());
+    return firstProduct.getName();
   }
 }

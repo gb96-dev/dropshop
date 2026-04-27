@@ -4,6 +4,7 @@ import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
+import com.example.dropshop.domain.payment.client.PortOneClient;
 import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.exception.PaymentException;
@@ -30,6 +31,7 @@ public class RefundService {
 
   private final RefundRepository refundRepository;
   private final PaymentRepository paymentRepository;
+  private final PortOneClient portOneClient;
   private final OrderFacadeService orderFacadeService;
 
   /**
@@ -113,11 +115,22 @@ public class RefundService {
   @Transactional
   public Refund completeRefund(Long refundId, String email) {
     Refund refund = findRefund(refundId);
+    validateRefundOwnership(refund, email);
     validateRefundStatus(refund, RefundStatus.APPROVED);
 
     Payment payment = getPayment(refund.getPaymentId());
     Order order = orderFacadeService.findOrderForPayment(payment.getOrderId(), email);
     validateRefundableOrder(order);
+
+    try {
+      portOneClient.cancelPayment(
+          payment.getIdempotencyKey(),
+          refund.getRefundAmount(),
+          refund.getRefundReason() == null ? "환불 요청" : refund.getRefundReason()
+      );
+    } catch (PaymentException e) {
+      throw new RefundException(ErrorCode.REFUND_PORTONE_API_ERROR, e.getMessage());
+    }
 
     refund.complete();
     orderFacadeService.refundOrderByRefund(order);
