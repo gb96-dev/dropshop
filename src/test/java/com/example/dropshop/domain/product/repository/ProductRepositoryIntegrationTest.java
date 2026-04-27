@@ -7,6 +7,7 @@ import com.example.dropshop.domain.drops.entity.Drops;
 import com.example.dropshop.domain.drops.repository.DropsRepository;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.entity.ProductImage;
+import com.example.dropshop.domain.product.enums.ProductListSortType;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
@@ -124,8 +125,9 @@ class ProductRepositoryIntegrationTest {
     ));
     dropsRepository.flush();
 
-    Page<Product> page = productRepository.findPublicProductsOrderByDropImminent(
+    Page<Product> page = productRepository.findPublicProducts(
         EnumSet.of(ProductStatus.READY, ProductStatus.ON_SALE, ProductStatus.OUT_OF_STOCK),
+        ProductListSortType.DROP_IMMINENT,
         baseTime,
         PageRequest.of(0, 10)
     );
@@ -158,6 +160,4 @@ class ProductRepositoryIntegrationTest {
     return productRepository.saveAndFlush(product);
   }
 }
-
-
 
