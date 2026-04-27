@@ -62,29 +62,32 @@ public class RefundFacadeService {
    * 환불을 승인하고 응답 DTO로 변환한다.
    *
    * @param refundId 환불 ID
+   * @param email 인증된 사용자 이메일
    * @return 승인된 환불 응답
    */
-  public RefundResponse approveRefund(Long refundId) {
-    return RefundResponse.from(refundService.approveRefund(refundId));
+  public RefundResponse approveRefund(Long refundId, String email) {
+    return RefundResponse.from(refundService.approveRefund(refundId, email));
   }
 
   /**
    * 환불을 완료하고 응답 DTO로 변환한다.
    *
    * @param refundId 환불 ID
+   * @param email 인증된 사용자 이메일
    * @return 완료된 환불 응답
    */
-  public RefundResponse completeRefund(Long refundId) {
-    return RefundResponse.from(refundService.completeRefund(refundId));
+  public RefundResponse completeRefund(Long refundId, String email) {
+    return RefundResponse.from(refundService.completeRefund(refundId, email));
   }
 
   /**
    * 환불을 거절하고 응답 DTO로 변환한다.
    *
    * @param refundId 환불 ID
+   * @param email 인증된 사용자 이메일
    * @return 거절된 환불 응답
    */
-  public RefundResponse rejectRefund(Long refundId) {
-    return RefundResponse.from(refundService.rejectRefund(refundId));
+  public RefundResponse rejectRefund(Long refundId, String email) {
+    return RefundResponse.from(refundService.rejectRefund(refundId, email));
   }
 }

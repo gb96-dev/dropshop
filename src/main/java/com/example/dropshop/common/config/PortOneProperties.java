@@ -13,6 +13,7 @@ public record PortOneProperties(
     String apiBaseUrl,
     @NotBlank(message = "PortOne API Secret은 필수입니다.")
     String apiSecret,
+    String webhookSecret,
     @NotBlank(message = "PortOne storeId는 필수입니다.")
     String storeId,
     @NotBlank(message = "PortOne channelKey는 필수입니다.")
@@ -31,5 +32,17 @@ public record PortOneProperties(
       return "https://api.portone.io";
     }
     return apiBaseUrl;
+  }
+
+  /**
+   * PortOne 웹훅 서명 검증에 사용할 secret을 반환한다.
+   *
+   * @return 웹훅 secret
+   */
+  public String resolvedWebhookSecret() {
+    if (webhookSecret == null || webhookSecret.isBlank()) {
+      return apiSecret;
+    }
+    return webhookSecret;
   }
 }

@@ -42,6 +42,15 @@ public class ProductDomainFacadeService {
   }
 
   /**
+   * 다른 도메인에서 사용할 상품 단건을 조회한다.
+   */
+  @Transactional(readOnly = true)
+  public Product findProduct(Long productId) {
+    return productRepository.findById(productId)
+        .orElseThrow(() -> new ProductException(ErrorCode.PRODUCT_NOT_FOUND));
+  }
+
+  /**
    * 상품 소유권을 검증한다.
    */
   public void validateOwnership(Product product, Long sellerId) {

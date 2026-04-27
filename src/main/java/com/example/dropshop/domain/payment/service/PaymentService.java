@@ -7,6 +7,7 @@ import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.payment.client.PortOneClient;
+import com.example.dropshop.domain.payment.dto.request.PaymentWebhookRequest;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.enums.PaymentMethod;
@@ -29,6 +30,9 @@ public class PaymentService {
   private final OrderFacadeService orderFacadeService;
   private final PortOneClient portOneClient;
   private final PortOneProperties portOneProperties;
+
+  public record PaymentConfirmResult(Payment payment, OrderStatus orderStatus) {
+  }
 
   /**
    * 주문에 대한 결제를 준비한다.
@@ -99,6 +103,18 @@ public class PaymentService {
    */
   @Transactional
   public Payment confirmPayment(Long paymentId, String email, String portOnePaymentId) {
+    return confirmPaymentWithOrderStatus(paymentId, email, portOnePaymentId).payment();
+  }
+
+  /**
+   * PortOne 결제 결과를 검증하고 주문 상태까지 함께 반환한다.
+   */
+  @Transactional
+  public PaymentConfirmResult confirmPaymentWithOrderStatus(
+      Long paymentId,
+      String email,
+      String portOnePaymentId
+  ) {
     Payment payment = getPayment(paymentId, email);
     Order order = getOrder(payment.getOrderId(), email);
 
@@ -108,7 +124,8 @@ public class PaymentService {
     validatePortOnePaymentId(payment, portOnePaymentId);
 
     PortOnePaymentResponse portOnePayment = portOneClient.getPayment(portOnePaymentId);
-    return applyPortOnePaymentResult(payment, order, portOnePayment, true);
+    Payment confirmedPayment = applyPortOnePaymentResult(payment, order, portOnePayment, true);
+    return new PaymentConfirmResult(confirmedPayment, order.getStatus());
   }
 
   /**
@@ -126,6 +143,17 @@ public class PaymentService {
 
     PortOnePaymentResponse portOnePayment = portOneClient.getPayment(portOnePaymentId);
     return applyPortOnePaymentResult(payment, order, portOnePayment, false);
+  }
+
+  /**
+   * PortOne 웹훅 서명을 검증한 뒤 내부 결제 상태를 동기화한다.
+   */
+  @Transactional
+  public Payment handleWebhook(PaymentWebhookRequest request) {
+    if (!request.verifySignature(portOneProperties.resolvedWebhookSecret())) {
+      throw new PaymentException(ErrorCode.PAYMENT_WEBHOOK_INVALID_SIGNATURE);
+    }
+    return handleWebhook(request.extractPortOnePaymentId());
   }
 
   /**
@@ -176,8 +204,8 @@ public class PaymentService {
     }
 
     if (isFailureStatus(portOnePayment.status())) {
+      payment.fail();
       if (cancelOrderOnFailure) {
-        payment.fail();
         if (order.getStatus() == OrderStatus.PENDING) {
           orderFacadeService.cancelOrderByPaymentFailure(order);
         }

@@ -21,4 +21,9 @@ public class RefundException extends ServiceException {
     super(errorCode);
     this.errorCode = errorCode;
   }
+
+  public RefundException(ErrorCode errorCode, String message) {
+    super(errorCode, message);
+    this.errorCode = errorCode;
+  }
 }
