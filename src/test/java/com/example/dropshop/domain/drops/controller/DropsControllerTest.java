@@ -186,12 +186,11 @@ class DropsControllerTest {
             .contentType(APPLICATION_JSON)
             .content(request))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.errorCode").value("DROP_ALREADY_EXISTS"))
+        .andExpect(jsonPath("$.errorCode").value(400))
         .andExpect(jsonPath("$.message").value(ErrorCode.DROP_ALREADY_EXISTS.getMessage()));
 
     verify(dropsFacadeService).createSellerDrop(eq(1L), eq(true), eq(true), any(DropCreateRequest.class));
   }
 }
-
 
 
