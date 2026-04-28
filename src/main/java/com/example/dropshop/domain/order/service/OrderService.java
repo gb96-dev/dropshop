@@ -6,8 +6,8 @@ import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
-import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
+import com.example.dropshop.domain.statistics.service.PopularProductRedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -28,6 +28,7 @@ public class OrderService {
 
   private final OrderRepository orderRepository;
   private final ApplicationEventPublisher eventPublisher;
+  private final PopularProductRedisService popularProductRedisService;
 
   /**
    * 주문 생성.
@@ -100,10 +101,14 @@ public class OrderService {
 
   /**
    * 주문 결제 완료 처리.
+   * 결제 완료 시 Redis Z셋에 상품별 판매 수량을 누적한다.
    */
   @Transactional
   public Order payOrder(Order order) {
     order.pay();
+    order.getOrderItems().forEach(item ->
+        popularProductRedisService.incrementScore(item.getProductId(), item.getQuantity())
+    );
     return order;
   }
 
