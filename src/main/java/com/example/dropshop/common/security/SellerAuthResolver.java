@@ -34,7 +34,7 @@ public class SellerAuthResolver {
   }
 
   private SellerAuthContext resolveFromJwt(String email) {
-    User user = userFacadeService.findByEmail(email);
+    User user = userFacadeService.findByEmailOrThrow(email);
     if (user.getRole() != UserRole.SELLER) {
       throw new ServiceException(ErrorCode.SELLER_ROLE_REQUIRED);
     }

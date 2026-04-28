@@ -1,55 +1,53 @@
 spring:
-  config:
-    import:
-      optional:file:./secret.yml
-
+  main:
+    allow-circular-references: true
   datasource:
+    url: jdbc:mysql://localhost:3306/dropshop?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
     driver-class-name: com.mysql.cj.jdbc.Driver
-
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-
+    username: root
+    password: 1234
   jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
 
-dropshop:
-  product:
-    max-image-count: 5
-    purchasable-block-hours: 24
-  main:
-    allow-bean-definition-overriding: true
+# PortOne 설정
+portone:
+  api-base-url: ${PORTONE_API_BASE_URL:https://api.portone.io}
+  api-secret: "dummy_secret"
+  store-id: "store-dummy"
+  channel-key: "channel-dummy"
+  redirect-url: ${PORTONE_REDIRECT_URL:http://localhost:8080/payments/redirect}
 
-product:
-  policy:
-    deliveryInfo: "기본 배송 정책을 입력하세요"
-    refundPolicy: "기본 환불 정책을 입력하세요"
-  image-upload:
-    region: ap-northeast-2
-    key-prefix: products
-    presigned-expiration-seconds: 300
-
-drops:
-  scheduler:
-    enabled: true
-    fixed-delay-millis: 30000
-    lock-at-most-for: PT1M
-    lock-at-least-for: PT1S
-
-jwt:
-  access-token-expiration: 3600000 # 1시간 (ms 단위)
-  refresh-token-expiration: 604800000 # 7일 (ms 단위)
-
+# AWS 설정
 cloud:
   aws:
     region:
       static: ap-northeast-2
     stack:
       auto: false
+    credentials:
+      access-key: "dummy_key"
+      secret-key: "dummy_secret"
+
+# ✅ 이미지 업로드 관련
+product:
+  image-upload:
+    bucket: "dummy-bucket"
+    region: ap-northeast-2
+    key-prefix: "products"
+    cdn-base-url: "http://localhost:8080"
+    presigned-expiration-seconds: 300
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+
+server:
+  port: 8081

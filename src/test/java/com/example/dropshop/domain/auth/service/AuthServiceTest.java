@@ -1,8 +1,9 @@
 package com.example.dropshop.domain.auth.service;
 
-import com.example.dropshop.common.jwt.JwtUtil; // JwtUtil 경로 확인 필요
+import com.example.dropshop.common.jwt.JwtUtil;
 import com.example.dropshop.domain.auth.dto.request.LoginRequest;
 import com.example.dropshop.domain.auth.dto.response.TokenResponse;
+import com.example.dropshop.domain.auth.repository.RefreshTokenRepository;
 import com.example.dropshop.domain.user.entity.User;
 import com.example.dropshop.domain.user.enums.UserRole;
 import com.example.dropshop.domain.user.repository.UserRepository;
@@ -35,6 +36,9 @@ class AuthServiceTest {
 
     @Mock
     private JwtUtil jwtUtil;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Test
     @DisplayName("로그인 성공 테스트")

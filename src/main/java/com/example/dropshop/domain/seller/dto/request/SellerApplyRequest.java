@@ -1,20 +1,30 @@
 package com.example.dropshop.domain.seller.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SellerApplyRequest {
-    @NotBlank(message = "사업자 번호는 필수입니다.")
-    @Pattern(regexp = "\\d{10}", message = "사업자 번호는 10자리 숫자여야 합니다.")
+    private String companyName;
+    private String representativeName;
     private String businessNo;
-
-    @NotBlank(message = "브랜드 이름은 필수입니다.")
+    private String phoneNumber;
     private String brandName;
-
     private String brandLogo;
+    private String accountInfo; // ✅ 이번에 터진 필드 추가
 
-    @NotBlank(message = "정산 계좌 정보는 필수입니다.")
-    private String accountInfo;
+    // 생성자 (모든 필드 포함)
+    public SellerApplyRequest(String companyName, String representativeName,
+                              String businessNo, String phoneNumber,
+                              String brandName, String brandLogo, String accountInfo) {
+        this.companyName = companyName;
+        this.representativeName = representativeName;
+        this.businessNo = businessNo;
+        this.phoneNumber = phoneNumber;
+        this.brandName = brandName;
+        this.brandLogo = brandLogo;
+        this.accountInfo = accountInfo;
+    }
 }

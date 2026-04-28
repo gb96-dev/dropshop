@@ -46,4 +46,8 @@ public class Seller extends BaseEntity {
     public void approve() {
         this.status = SellerStatus.APPROVED;
     }
+
+    public void suspend() {
+        this.status = SellerStatus.SUSPENDED;
+    }
 }
