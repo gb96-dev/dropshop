@@ -29,9 +29,10 @@ public class QueueController {
   @PostMapping
   public ResponseEntity<ThreadHoldResponse> decideQueue(
       @RequestParam(name = "dropId") Long dropId,
+      @RequestParam(name = "userId") Long userId,
       @AuthenticationPrincipal String userEmail
   ) {
-    ThreadHoldResponse response = queueService.decideQueue(dropId, userEmail);
+    ThreadHoldResponse response = queueService.decideQueue(dropId, userId, userEmail);
 
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }

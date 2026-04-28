@@ -2,6 +2,7 @@ package com.example.dropshop.domain.wishlist.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.exception.ServiceException;
+import com.example.dropshop.domain.wishlist.dto.WishlistDto;
 import com.example.dropshop.domain.wishlist.dto.request.WishlistRequest;
 import com.example.dropshop.domain.wishlist.dto.response.WishlistResponse;
 import com.example.dropshop.domain.wishlist.entity.Wishlist;
@@ -12,6 +13,8 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WishlistService {
 
   private final RedisTemplate<String, Long> redisTemplate;
@@ -48,10 +52,15 @@ public class WishlistService {
       throw new ServiceException(ErrorCode.EXISTS_BY_USER_AND_DROP);
     }
 
-    Wishlist saved = wishlistRepository.save(new Wishlist(userId, dropId));
+    Wishlist saved = wishlistRepository.saveAndFlush(new Wishlist(userId, dropId));
 
-    double score = System.currentTimeMillis();
-    redisTemplate.opsForZSet().add(key, dropId, score);
+    // Redis는 캐시 → 실패해도 무시
+    try {
+      double score = System.currentTimeMillis();
+      redisTemplate.opsForZSet().add(key, dropId, score);
+    } catch (Exception e) {
+      log.warn("Redis 저장 실패 (create) - fallback to DB", e);
+    }
 
     return WishlistResponse.build(dropId, saved.getCreatedAt());
   }
@@ -71,7 +80,12 @@ public class WishlistService {
 
     wishlistRepository.deleteByUserIdAndDropId(userId, dropId);
 
-    redisTemplate.opsForZSet().remove(key, dropId);
+    // Redis는 캐시 → 실패해도 무시
+    try {
+      redisTemplate.opsForZSet().remove(key, dropId);
+    } catch (Exception e) {
+      log.warn("Redis 삭제 실패 (cancel) - fallback to DB", e);
+    }
   }
 
   /**
@@ -83,28 +97,58 @@ public class WishlistService {
   public List<WishlistResponse> getRecent(Long userId, int size){
     String key = key(userId);
 
-    Set<ZSetOperations.TypedTuple<Long>> result =
-        redisTemplate.opsForZSet()
-            .reverseRangeWithScores(key, 0, size - 1);
+    // Redis 조회 시도
+    try {
+      Set<ZSetOperations.TypedTuple<Long>> result =
+          redisTemplate.opsForZSet()
+              .reverseRangeWithScores(key, 0, size - 1);
 
-    if (result != null && !result.isEmpty()){
-      return result.stream()
-          .map(tuple -> {
-            Long dropId = ((Number) tuple.getValue()).longValue();
-            Double score = tuple.getScore();
+      if (result != null && !result.isEmpty()){
+        return result.stream()
+            .map(tuple -> {
+              Long dropId = ((Number) tuple.getValue()).longValue();
+              Double score = tuple.getScore();
 
-            LocalDateTime createdAt = Instant.ofEpochMilli(score.longValue())
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime();
+              LocalDateTime createdAt = Instant.ofEpochMilli(score.longValue())
+                  .atZone(ZoneId.systemDefault())
+                  .toLocalDateTime();
 
-            return WishlistResponse.build(
-                dropId,
-                createdAt
-            );
-          })
-          .toList();
+              return WishlistResponse.build(
+                  dropId,
+                  createdAt
+              );
+            })
+            .toList();
+      }
+    } catch (Exception e) {
+      log.warn("Redis 조회 실패 (getRecent) - fallback to DB", e);
     }
 
-    return List.of();
+    // Redis miss or 장애 -> DB 조회
+    List<Wishlist> list = wishlistRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, size));
+
+    List<WishlistResponse> response = list.stream()
+        .map(w -> WishlistResponse.build(w.getDropId(), w.getCreatedAt()))
+        .toList();
+
+    // Redis 재적재 (lazy caching)
+    try {
+      for (Wishlist w : list) {
+        double score = w.getCreatedAt()
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli();
+
+        redisTemplate.opsForZSet().add(
+            key,
+            w.getDropId(),
+            score
+        );
+      }
+    } catch (Exception e) {
+      log.warn("Redis 재적재 실패 (getRecent)", e);
+    }
+
+    return response;
   }
 }

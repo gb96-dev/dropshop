@@ -51,6 +51,7 @@ class QueueServiceTest {
   private QueueService queueService;
 
   private static final Long DROP_ID = 1L;
+  private static final Long USER_ID = 1L;
   private static final String USER_EMAIL = "1@email.com";
 
   @Test
@@ -65,7 +66,7 @@ class QueueServiceTest {
 
     // when && then
     assertThrows(ServiceException.class,
-        () -> queueService.decideQueue(DROP_ID, USER_EMAIL));
+        () -> queueService.decideQueue(DROP_ID, USER_ID, USER_EMAIL));
   }
 
   @Test
@@ -84,7 +85,7 @@ class QueueServiceTest {
 
     // when && then
     assertThrows(ServiceException.class,
-        () -> queueService.decideQueue(DROP_ID, USER_EMAIL));
+        () -> queueService.decideQueue(DROP_ID, USER_ID, USER_EMAIL));
   }
 
   @Test
@@ -122,7 +123,7 @@ class QueueServiceTest {
     given(mockToken.getCreatedAt()).willReturn(LocalDateTime.now());
 
     // when
-    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
+    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_ID, USER_EMAIL);
 
     // then
     assertEquals(ThreadHoldResult.DIRECT, response.getResult());
@@ -158,7 +159,7 @@ class QueueServiceTest {
         .willReturn(500L);
 
     // when
-    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
+    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_ID, USER_EMAIL);
 
     // then
     assertEquals(ThreadHoldResult.QUEUE, response.getResult());
@@ -197,7 +198,7 @@ class QueueServiceTest {
     given(token.getCreatedAt()).willReturn(LocalDateTime.now());
 
     // when
-    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
+    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_ID, USER_EMAIL);
 
     // then
     assertEquals(ThreadHoldResult.DIRECT, response.getResult());
@@ -232,7 +233,7 @@ class QueueServiceTest {
         .willAnswer(invocation -> invocation.getArgument(0));
 
     // when
-    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
+    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_ID, USER_EMAIL);
 
     // then
     assertEquals(ThreadHoldResult.DIRECT, response.getResult());
@@ -267,7 +268,7 @@ class QueueServiceTest {
 //        .willAnswer(invocation -> invocation.getArgument(0));
 
     // when
-    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
+    ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_ID, USER_EMAIL);
 
     // then
     assertEquals(ThreadHoldResult.QUEUE, response.getResult());

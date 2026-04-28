@@ -1,6 +1,8 @@
 package com.example.dropshop.domain.wishlist.repository;
 
 import com.example.dropshop.domain.wishlist.entity.Wishlist;
+import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -13,4 +15,6 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long>, Wishl
   void deleteByUserIdAndDropId(Long userId, Long dropId);
 
   boolean existsByDropId(Long dropId);
+
+  List<Wishlist> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 }
