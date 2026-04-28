@@ -42,12 +42,14 @@ public class QueueService {
    * @param userEmail 유저 이메일.
    */
   @Transactional
-  public ThreadHoldResponse decideQueue(Long dropId, String userEmail) {
+  public ThreadHoldResponse decideQueue(Long dropId, Long userId, String userEmail) {
     User user = userRepository.findByEmail(userEmail).orElseThrow(
         () -> new ServiceException(ErrorCode.USER_NOT_FOUND)
     );
 
-    Long userId = user.getId();
+    if (!userId.equals(user.getId())){
+      throw new ServiceException(ErrorCode.USER_NOT_MATCH);
+    }
 
     // 1. Drops의 Live 여부 확인
 
@@ -113,7 +115,7 @@ public class QueueService {
     } else {
       // 3-3. 기존 큐의 상태가 없다면 해당 Drops의 전체 Queue의 수 Check
 
-      Queue queue = new Queue(userId, dropId);
+      Queue queue = new Queue(user.getId(), dropId);
 
       cnt = queueRepository.countByDropIdAndStatusIn(dropId, List.of(QueueStatus.WAITING, QueueStatus.READY));
 
