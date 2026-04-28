@@ -1,10 +1,12 @@
 package com.example.dropshop.domain.queue.repository;
 
 import com.example.dropshop.domain.queue.entity.Queue;
+import com.example.dropshop.domain.queue.entity.QueueToken;
 import com.example.dropshop.domain.queue.enums.QueueStatus;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -39,4 +41,12 @@ public interface QueueRepository extends JpaRepository<Queue, Integer> {
     WHERE q.status = :status
 """)
   List<Queue> findReadyQueuesWithToken(@Param("status") QueueStatus status);
+
+  @Query("""
+    SELECT q
+    FROM Queue q
+    JOIN FETCH q.queueToken qt
+    WHERE qt = :token
+""")
+  Optional<Queue> findByQueue(@Param("token") QueueToken token);
 }

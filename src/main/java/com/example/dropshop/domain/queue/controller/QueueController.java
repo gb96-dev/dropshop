@@ -1,5 +1,6 @@
 package com.example.dropshop.domain.queue.controller;
 
+import com.example.dropshop.common.dto.ApiResponse;
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
 import com.example.dropshop.domain.queue.service.QueueService;
 import lombok.RequiredArgsConstructor;
@@ -27,13 +28,13 @@ public class QueueController {
    * @param userEmail 유저 이메일.
    */
   @PostMapping
-  public ResponseEntity<ThreadHoldResponse> decideQueue(
+  public ResponseEntity<ApiResponse<ThreadHoldResponse>> decideQueue(
       @RequestParam(name = "dropId") Long dropId,
       @RequestParam(name = "userId") Long userId,
       @AuthenticationPrincipal String userEmail
   ) {
     ThreadHoldResponse response = queueService.decideQueue(dropId, userId, userEmail);
 
-    return ResponseEntity.status(HttpStatus.OK).body(response);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(response));
   }
 }

@@ -1,8 +1,11 @@
 package com.example.dropshop.domain.queue.dto.response;
 
+import static com.example.dropshop.common.constant.kafka.MagicNumbers.FIVE_MINUTES;
+
 import com.example.dropshop.domain.queue.enums.ThreadHoldResult;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import lombok.Getter;
 
 /**
@@ -34,6 +37,9 @@ public class ThreadHoldResponse {
   // 서버 기준 시간
   private LocalDateTime serverTime;
 
+  // 지연큐 활성 시간 (epoch millis)
+  private long executeAt;
+
   /**
    * 대기열 direct.
    * @param dropsId 드랍 아이디.
@@ -54,7 +60,31 @@ public class ThreadHoldResponse {
     if (response.expiresInSeconds < 0) response.expiresInSeconds = 0;
 
     response.queueId = queueId;
-    response.serverTime = LocalDateTime.now();
+
+    LocalDateTime now = LocalDateTime.now();
+
+    response.serverTime = now;
+
+    return response;
+  }
+
+  public static ThreadHoldResponse newDirect(
+      Long dropsId, String admissionToken, LocalDateTime expiresAt, Long queueId
+  ) {
+    ThreadHoldResponse response = new ThreadHoldResponse();
+    response.result = ThreadHoldResult.DIRECT;
+    response.dropsId = dropsId;
+    response.admissionToken = admissionToken;
+    response.expiresInSeconds = (int) Duration.between(LocalDateTime.now(), expiresAt).getSeconds();
+
+    if (response.expiresInSeconds < 0) response.expiresInSeconds = 0;
+
+    response.queueId = queueId;
+
+    LocalDateTime now = LocalDateTime.now();
+
+    response.serverTime = now;
+    response.executeAt = now.toEpochSecond(ZoneOffset.UTC) + FIVE_MINUTES;
 
     return response;
   }
