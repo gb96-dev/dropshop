@@ -38,6 +38,9 @@ public class SellerService {
         // 4. 저장
         Seller seller = Seller.builder()
                 .user(user)
+                .companyName(request.getCompanyName())
+                .representativeName(request.getRepresentativeName())
+                .phoneNumber(request.getPhoneNumber())
                 .businessNo(request.getBusinessNo())
                 .brandName(request.getBrandName())
                 .brandLogo(request.getBrandLogo())

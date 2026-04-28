@@ -39,6 +39,8 @@ public class AuthService {
         String refreshToken = jwtUtil.createRefreshToken(user.getEmail());
 
         // ✅ BCrypt 72바이트 제한 해결: SHA-256 해싱 적용
+        // 기존 토큰 삭제 후 새 토큰 저장 (명시적 단일 세션 유지)
+        refreshTokenRepository.deleteByEmail(user.getEmail());
         String hashedToken = hashToken(refreshToken);
         RefreshToken refreshTokenEntity = new RefreshToken(user.getEmail(), hashedToken);
         refreshTokenRepository.save(refreshTokenEntity);

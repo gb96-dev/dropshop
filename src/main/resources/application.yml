@@ -10,7 +10,7 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -21,7 +21,7 @@ portone:
   api-secret: "dummy_secret"
   store-id: "store-dummy"
   channel-key: "channel-dummy"
-  redirect-url: ${PORTONE_REDIRECT_URL:http://localhost:8080/payments/redirect}
+  redirect-url: ${PORTONE_REDIRECT_URL:http://localhost:8081/payments/redirect}
 
 # AWS 설정
 cloud:
@@ -40,12 +40,12 @@ product:
     bucket: "dummy-bucket"
     region: ap-northeast-2
     key-prefix: "products"
-    cdn-base-url: "http://localhost:8080"
+    cdn-base-url: "http://localhost:8081"
     presigned-expiration-seconds: 300
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG
+    org.hibernate.SQL: INFO
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 

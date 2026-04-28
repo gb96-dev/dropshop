@@ -21,6 +21,15 @@ public class Seller extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(nullable = false)
+    private String companyName;
+
+    @Column(nullable = false)
+    private String representativeName;
+
+    @Column(nullable = false)
+    private String phoneNumber;
+
     @Column(nullable = false, length = 10, unique = true)
     private String businessNo;
 
