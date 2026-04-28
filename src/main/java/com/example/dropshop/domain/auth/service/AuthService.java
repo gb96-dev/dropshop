@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.auth.exception.AuthException;
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -25,25 +28,29 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Transactional
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("정보가 틀렸습니다."));
+                .orElseThrow(() -> new AuthException(ErrorCode.INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("정보가 틀렸습니다.");
+            throw new AuthException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         String accessToken = jwtUtil.createAccessToken(user.getEmail(), user.getRole().name());
         String refreshToken = jwtUtil.createRefreshToken(user.getEmail());
 
         // ✅ BCrypt 72바이트 제한 해결: SHA-256 해싱 적용
-        // 기존 토큰 삭제 후 새 토큰 저장 (명시적 단일 세션 유지)
-        refreshTokenRepository.deleteByEmail(user.getEmail());
+        // 기존 토큰이 있으면 update, 없으면 insert (upsert 패턴)
+        // delete+save 대신 사용해 unique 제약 위반 및 동시성 문제 방지
         String hashedToken = hashToken(refreshToken);
-        RefreshToken refreshTokenEntity = new RefreshToken(user.getEmail(), hashedToken);
-        refreshTokenRepository.save(refreshTokenEntity);
+        refreshTokenRepository.findByEmail(user.getEmail())
+                .ifPresentOrElse(
+                        existing -> existing.updateToken(hashedToken),
+                        () -> refreshTokenRepository.save(new RefreshToken(user.getEmail(), hashedToken))
+                );
 
         return new TokenResponse(accessToken, refreshToken);
     }
@@ -51,21 +58,37 @@ public class AuthService {
     @Transactional
     public String refresh(String refreshToken) {
         if (!jwtUtil.validateToken(refreshToken)) {
-            throw new RuntimeException("유효하지 않은 토큰입니다.");
+            throw new AuthException(ErrorCode.INVALID_TOKEN);
         }
 
         String email = jwtUtil.getEmail(refreshToken);
         RefreshToken savedToken = refreshTokenRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("로그아웃된 세션입니다."));
+                .orElseThrow(() -> new AuthException(ErrorCode.TOKEN_NOT_FOUND));
 
         if (!savedToken.getHashedToken().equals(hashToken(refreshToken))) {
-            throw new RuntimeException("토큰 정보가 일치하지 않습니다.");
+            throw new AuthException(ErrorCode.TOKEN_MISMATCH);
         }
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("유저 없음"));
+                .orElseThrow(() -> new AuthException(ErrorCode.INVALID_CREDENTIALS));
 
         return jwtUtil.createAccessToken(email, user.getRole().name());
+    }
+
+    /**
+     * 로그아웃 처리.
+     * - 액세스 토큰 → Redis 블랙리스트 등록 (남은 만료 시간 동안 유지)
+     * - 리프레시 토큰 → DB에서 삭제
+     */
+    @Transactional
+    public void logout(String accessToken) {
+        // 액세스 토큰 블랙리스트 등록
+        long remaining = jwtUtil.getRemainingExpiration(accessToken);
+        tokenBlacklistService.blacklist(accessToken, remaining);
+
+        // 리프레시 토큰 DB에서 삭제
+        String email = jwtUtil.getEmail(accessToken);
+        refreshTokenRepository.deleteByEmail(email);
     }
 
     private String hashToken(String token) {

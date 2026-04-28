@@ -15,7 +15,7 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -27,4 +27,11 @@ public class RefreshToken {
     }
 
     protected RefreshToken() {}
+
+    /**
+     * 기존 리프레시 토큰을 갱신한다 (upsert 패턴용).
+     */
+    public void updateToken(String newHashedToken) {
+        this.hashedToken = newHashedToken;
+    }
 }
