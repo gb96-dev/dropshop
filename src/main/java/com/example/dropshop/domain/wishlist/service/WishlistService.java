@@ -74,18 +74,18 @@ public class WishlistService {
     String key = key(userId);
     Long dropId = request.getDropId();
 
+    if (!wishlistRepository.existsByDropId(dropId)) {
+      throw new ServiceException(ErrorCode.DROP_NOT_FOUND);
+    }
+
+    wishlistRepository.deleteByUserIdAndDropId(userId, dropId);
+
     // Redis는 캐시 → 실패해도 무시
     try {
       redisTemplate.opsForZSet().remove(key, dropId);
     } catch (Exception e) {
       log.warn("Redis 삭제 실패 (cancel) - fallback to DB", e);
     }
-
-    if (!wishlistRepository.existsByDropId(dropId)) {
-      throw new ServiceException(ErrorCode.DROP_NOT_FOUND);
-    }
-
-    wishlistRepository.deleteByUserIdAndDropId(userId, dropId);
   }
 
   /**

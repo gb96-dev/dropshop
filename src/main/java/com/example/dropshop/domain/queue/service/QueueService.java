@@ -16,6 +16,7 @@ import com.example.dropshop.domain.user.repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,7 @@ public class QueueService {
         () -> new ServiceException(ErrorCode.USER_NOT_FOUND)
     );
 
-    if (!userId.equals(user.getId())){
+    if (!Objects.equals(userId, user.getId())){
       throw new ServiceException(ErrorCode.USER_NOT_MATCH);
     }
 
