@@ -36,6 +36,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/products/**").permitAll() // TODO: JWT 구현 후 제거
                         .requestMatchers("/payments/**").permitAll()
                         .requestMatchers("/api/payments/**").permitAll()
+                        .requestMatchers("/api/wishlists/**").permitAll()
                         .requestMatchers("/api/queues/**").permitAll()
                         .anyRequest().authenticated()
                 )

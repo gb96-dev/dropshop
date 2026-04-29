@@ -1,14 +1,16 @@
 package com.example.dropshop.domain.drops.service;
 
 import com.example.dropshop.domain.drops.entity.Drops;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Supplier;
+import com.example.dropshop.domain.drops.exception.DropsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 
 /**
  * 드랍 상태 자동 전이 서비스.
@@ -90,6 +92,9 @@ public class DropsStatusTransitionService {
             attempt,
             MAX_RETRY_ATTEMPTS
         );
+      } catch (DropsException e) {
+        log.warn("드랍 상태 전이 스킵: 존재하지 않는 드랍입니다. dropId={}, transition={}", dropId, transitionName);
+        return false;
       } catch (Exception e) {
         log.error("드랍 ID={} {} 전이 중 예기치 않은 오류가 발생했습니다.", dropId, transitionName, e);
         return false;

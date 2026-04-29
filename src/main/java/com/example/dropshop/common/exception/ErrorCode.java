@@ -12,10 +12,19 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
   /**
+   * Auth
+   */
+  INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
+  INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
+  TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "로그아웃된 세션입니다."),
+  TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "토큰 정보가 일치하지 않습니다."),
+
+  /**
    * User
    */
   DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
+  USER_NOT_MATCH(HttpStatus.FORBIDDEN, "사용자가 일치하지 않습니다."),
   INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호는 영문, 숫자, 특수문자를 포함한 8~16자여야 합니다."),
   PASSWORD_MISMATCH(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 일치하지 않습니다."),
   ALREADY_WITHDRAWN(HttpStatus.BAD_REQUEST, "이미 탈퇴 처리된 사용자입니다."),
