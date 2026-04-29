@@ -11,6 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
@@ -226,6 +227,7 @@ class OrderServiceTest {
         ArgumentCaptor.forClass(StockRestoreEvent.class);
     verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
     assertThat(eventCaptor.getValue().getQuantity()).isEqualTo(1);
+    verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
   }
 
   @Test
@@ -280,6 +282,25 @@ class OrderServiceTest {
 
     orderService.cancelExpiredOrders();
 
+    verify(eventPublisher, never()).publishEvent(any());
+  }
+
+  @Test
+  @DisplayName("만료 주문 취소 - 락을 획득하지 못하면 해당 주문은 건너뛴다")
+  void cancelExpiredOrders_lockNotAcquired_skipsOrder() {
+    Order expiredOrder = createPendingOrder();
+    ReflectionTestUtils.setField(expiredOrder, "holdExpiredAt", LocalDateTime.now().minusMinutes(1));
+
+    given(orderRepository.findAllByStatusAndHoldExpiredAtBefore(
+        eq(OrderStatus.PENDING),
+        any(LocalDateTime.class)
+    )).willReturn(List.of(expiredOrder));
+    given(redisLockService.tryExecuteWithLock(eq(LockKeys.order(1L)), any())).willReturn(false);
+
+    orderService.cancelExpiredOrders();
+
+    assertThat(expiredOrder.getStatus()).isEqualTo(OrderStatus.PENDING);
+    verify(orderRepository, never()).findById(1L);
     verify(eventPublisher, never()).publishEvent(any());
   }
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.lenient;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.order.entity.Order;
@@ -119,6 +121,7 @@ class RefundServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(RefundStatus.PENDING);
     verify(refundRepository, times(1)).save(any(Refund.class));
+    verify(redisLockService).executeWithLock(eq(LockKeys.payment(1L)), any());
   }
 
   @Test
@@ -151,6 +154,7 @@ class RefundServiceTest {
     verify(portOneClient, times(1))
         .cancelPayment("tx-123", new BigDecimal("79000"), "단순 변심");
     verify(refundCompletionWorker, times(1)).finalizeRefundCompletion(1L, 1L);
+    verify(redisLockService).executeWithLock(eq(LockKeys.refund(1L)), any());
   }
 
   @Test
