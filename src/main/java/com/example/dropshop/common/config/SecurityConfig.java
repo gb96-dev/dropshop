@@ -32,14 +32,11 @@ public class SecurityConfig {
                         // 인증 없이 접근 가능한 경로
                         .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/api/users/signup").permitAll()
-                        .requestMatchers("/api/sellers/drops/**").hasRole("SELLER")
-                        .requestMatchers("/api/sellers/products/**").hasRole("SELLER")
-                        .requestMatchers("/api/sellers/images/**").hasRole("SELLER")
-                        .requestMatchers("/api/sellers/me/statistics/**").hasRole("SELLER")
                         .requestMatchers("/api/sellers/**").permitAll() // TODO: JWT 구현 후 제거
                         .requestMatchers("/api/products/**").permitAll() // TODO: JWT 구현 후 제거
                         .requestMatchers("/payments/**").permitAll()
                         .requestMatchers("/api/payments/**").permitAll()
+                        .requestMatchers("/api/wishlists/**").permitAll()
                         .requestMatchers("/api/queues/**").permitAll()
                         .requestMatchers("/api/admin/sellers/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/statistics/**").hasRole("ADMIN")
