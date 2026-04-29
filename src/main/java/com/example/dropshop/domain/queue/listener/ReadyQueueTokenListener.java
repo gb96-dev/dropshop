@@ -36,5 +36,7 @@ public class ReadyQueueTokenListener {
     Queue queue = queueRepository.findByQueue(token).get();
 
     queue.expire();
+
+    queueRepository.save(queue);
   }
 }
