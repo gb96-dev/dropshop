@@ -1,6 +1,7 @@
 package com.example.dropshop.domain.product.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.product.common.service.ProductPolicyService;
 import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
 import com.example.dropshop.domain.product.dto.request.ProductImageCreateRequest;
 import com.example.dropshop.domain.product.dto.request.ProductImageUpdateRequest;
@@ -28,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductCommandService {
 
   private final ProductRepository productRepository;
-  private final ProductPolicyProperties policyProperties;
+  private final ProductPolicyService productPolicyService;
   private final ProductValidator productValidator;
 
   /**
@@ -54,8 +55,12 @@ public class ProductCommandService {
         extractThumbnailUrl(request),
         request.getDescription(),
         request.getSpecification(),
-        policyProperties.getDeliveryInfo(),
-        policyProperties.getRefundPolicy()
+        request.getDeliveryInfo() != null
+            ? request.getDeliveryInfo()
+            : productPolicyService.getDeliveryInfo(),
+        request.getRefundPolicy() != null
+            ? request.getRefundPolicy()
+            : productPolicyService.getRefundPolicy()
     );
 
     request.getImages().stream()

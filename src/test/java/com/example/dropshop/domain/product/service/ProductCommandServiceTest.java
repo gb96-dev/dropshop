@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.product.common.service.ProductPolicyService;
 import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
 import com.example.dropshop.domain.product.dto.request.ProductImageCreateRequest;
 import com.example.dropshop.domain.product.dto.request.ProductImageUpdateRequest;
@@ -39,16 +40,21 @@ class ProductCommandServiceTest {
   private ProductRepository productRepository;
 
   @Mock
+  private ProductPolicyService productPolicyService;
+
+  @Mock
   private ProductValidator productValidator;
 
   private ProductCommandService productCommandService;
 
   @BeforeEach
   void setUp() {
-    ProductPolicyProperties policyProperties =
-        new ProductPolicyProperties("기본 배송 정책", "기본 환불 정책");
     productCommandService =
-        new ProductCommandService(productRepository, policyProperties, productValidator);
+        new ProductCommandService(productRepository, productPolicyService, productValidator);
+
+    // 기본 정책값 mock 설정
+    given(productPolicyService.getDeliveryInfo()).willReturn("기본 배송 정책");
+    given(productPolicyService.getRefundPolicy()).willReturn("기본 환불 정책");
   }
 
   @Test
