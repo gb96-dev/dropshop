@@ -9,6 +9,7 @@ import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
+import com.example.dropshop.domain.statistics.service.PopularProductRedisService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +32,7 @@ public class OrderService {
   private final ApplicationEventPublisher eventPublisher;
   private final RedisLockService redisLockService;
   private final TransactionTemplate transactionTemplate;
+  private final PopularProductRedisService popularProductRedisService;
 
   /**
    * 주문 생성.
@@ -101,10 +103,14 @@ public class OrderService {
 
   /**
    * 주문 결제 완료 처리.
+   * 결제 완료 시 인기 상품 Redis Z셋 점수를 누적한다.
    */
   @Transactional
   public Order payOrder(Order order) {
     order.pay();
+    order.getOrderItems().forEach(item ->
+        popularProductRedisService.incrementScore(item.getProductId(), item.getQuantity())
+    );
     return order;
   }
 

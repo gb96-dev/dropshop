@@ -12,6 +12,14 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
   /**
+   * Auth
+   */
+  INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
+  INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
+  TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "로그아웃된 세션입니다."),
+  TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "토큰 정보가 일치하지 않습니다."),
+
+  /**
    * User
    */
   DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
