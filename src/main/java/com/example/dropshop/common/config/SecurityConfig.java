@@ -32,6 +32,9 @@ public class SecurityConfig {
                         // 인증 없이 접근 가능한 경로
                         .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/api/users/signup").permitAll()
+                        // 관리자 전용 경로
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // 판매자 전용 경로
                         .requestMatchers("/api/sellers/drops/**").hasRole("SELLER")
                         .requestMatchers("/api/sellers/products/**").hasRole("SELLER")
                         .requestMatchers("/api/sellers/images/**").hasRole("SELLER")

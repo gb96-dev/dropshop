@@ -15,7 +15,7 @@ VALUES (
   '기본 배송 정책을 입력하세요'
 )
 ON DUPLICATE KEY UPDATE
-  content = VALUES(content);
+  content = content;
 
 -- 초기 환불 정책 데이터
 INSERT INTO product_policies (policy_type, content)
@@ -24,5 +24,5 @@ VALUES (
   '기본 환불 정책을 입력하세요'
 )
 ON DUPLICATE KEY UPDATE
-  content = VALUES(content);
+  content = content;
 

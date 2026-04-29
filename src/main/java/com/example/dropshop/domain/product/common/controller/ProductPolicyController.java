@@ -5,6 +5,7 @@ import com.example.dropshop.domain.product.common.dto.ProductPolicyUpdateRequest
 import com.example.dropshop.domain.product.common.enums.ProductPolicyType;
 import com.example.dropshop.domain.product.common.service.ProductPolicyService;
 import jakarta.validation.Valid;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -95,7 +96,7 @@ public class ProductPolicyController {
   ) {
     log.info("정책 조회 요청 (type={})", policyType);
     try {
-      ProductPolicyType type = ProductPolicyType.valueOf(policyType.toUpperCase());
+      ProductPolicyType type = ProductPolicyType.valueOf(policyType.toUpperCase(Locale.ROOT));
       String content = policyService.getPolicyByType(type);
       ProductPolicyResponse response = ProductPolicyResponse.builder()
           .policyType(type.name())

@@ -20,6 +20,7 @@ import java.util.Comparator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * 상품 쓰기 도메인 서비스.
@@ -55,11 +56,11 @@ public class ProductCommandService {
         extractThumbnailUrl(request),
         request.getDescription(),
         request.getSpecification(),
-        request.getDeliveryInfo() != null
-            ? request.getDeliveryInfo()
+        StringUtils.hasText(request.getDeliveryInfo())
+            ? request.getDeliveryInfo().trim()
             : productPolicyService.getDeliveryInfo(),
-        request.getRefundPolicy() != null
-            ? request.getRefundPolicy()
+        StringUtils.hasText(request.getRefundPolicy())
+            ? request.getRefundPolicy().trim()
             : productPolicyService.getRefundPolicy()
     );
 
