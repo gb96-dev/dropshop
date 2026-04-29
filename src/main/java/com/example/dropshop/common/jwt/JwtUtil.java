@@ -66,6 +66,13 @@ public class JwtUtil {
         return parseClaims(token).get("role", String.class);
     }
 
+    // 토큰 남은 만료 시간 (밀리초)
+    public long getRemainingExpiration(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        long remaining = expiration.getTime() - System.currentTimeMillis();
+        return Math.max(remaining, 0);
+    }
+
     // 공통 파싱 메서드
     private Claims parseClaims(String token) {
         return Jwts.parser()
