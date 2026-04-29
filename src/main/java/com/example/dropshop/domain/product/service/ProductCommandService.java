@@ -1,6 +1,7 @@
 package com.example.dropshop.domain.product.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.product.common.service.ProductPolicyService;
 import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
 import com.example.dropshop.domain.product.dto.request.ProductImageCreateRequest;
 import com.example.dropshop.domain.product.dto.request.ProductImageUpdateRequest;
@@ -19,6 +20,7 @@ import java.util.Comparator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * 상품 쓰기 도메인 서비스.
@@ -28,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductCommandService {
 
   private final ProductRepository productRepository;
-  private final ProductPolicyProperties policyProperties;
+  private final ProductPolicyService productPolicyService;
   private final ProductValidator productValidator;
 
   /**
@@ -54,8 +56,12 @@ public class ProductCommandService {
         extractThumbnailUrl(request),
         request.getDescription(),
         request.getSpecification(),
-        policyProperties.getDeliveryInfo(),
-        policyProperties.getRefundPolicy()
+        StringUtils.hasText(request.getDeliveryInfo())
+            ? request.getDeliveryInfo().trim()
+            : productPolicyService.getDeliveryInfo(),
+        StringUtils.hasText(request.getRefundPolicy())
+            ? request.getRefundPolicy().trim()
+            : productPolicyService.getRefundPolicy()
     );
 
     request.getImages().stream()
