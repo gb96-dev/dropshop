@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -29,6 +30,7 @@ public class DataInitializer implements CommandLineRunner {
   private final QueueTokenRepository queueTokenRepository;
   private final UserRepository userRepository;
   private final QueueService queueService;
+  private final PasswordEncoder passwordEncoder;
 
   @Override
   public void run(String... args) throws Exception {
@@ -61,10 +63,10 @@ public class DataInitializer implements CommandLineRunner {
 
     dropsRepository.save(drops);
 
-    for (int i = 0; i < 100; i++){
+    for (int i = 1; i <= 100; i++){
       User user = User.signup(
           i + "@email.com",
-          "12345678",
+          passwordEncoder.encode("Abc12345678!"),
           "nickname" + i
       );
 
@@ -77,7 +79,7 @@ public class DataInitializer implements CommandLineRunner {
       int userId = i;
 
       executor.submit(() -> {
-        queueService.decideQueue(1L, userId + "@email.com");
+        queueService.decideQueue(1L, (long) userId, userId + "@email.com");
       });
     }
 

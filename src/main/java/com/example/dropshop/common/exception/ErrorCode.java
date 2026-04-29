@@ -24,6 +24,7 @@ public enum ErrorCode {
    */
   DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
+  USER_NOT_MATCH(HttpStatus.FORBIDDEN, "사용자가 일치하지 않습니다."),
   INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호는 영문, 숫자, 특수문자를 포함한 8~16자여야 합니다."),
   PASSWORD_MISMATCH(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 일치하지 않습니다."),
   ALREADY_WITHDRAWN(HttpStatus.BAD_REQUEST, "이미 탈퇴 처리된 사용자입니다."),
@@ -97,6 +98,7 @@ public enum ErrorCode {
   ORDER_DUPLICATE(HttpStatus.CONFLICT, "이미 존재하는 주문입니다."),
   ORDER_INVALID_STATUS(HttpStatus.BAD_REQUEST, "유효하지 않은 주문 상태 전이입니다."),
   ORDER_HOLD_EXPIRED(HttpStatus.BAD_REQUEST, "주문 홀드 시간이 만료되었습니다."),
+  CONCURRENT_REQUEST_LOCKED(HttpStatus.CONFLICT, "동일 리소스를 처리 중입니다. 잠시 후 다시 시도해 주세요."),
 
   /**
    * Payment.
