@@ -5,16 +5,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
-import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.entity.Order;
+import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
+import com.example.dropshop.domain.statistics.service.PopularProductRedisService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -29,17 +28,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
@@ -48,6 +36,9 @@ class OrderServiceTest {
 
   @Mock
   private ApplicationEventPublisher eventPublisher;
+
+  @Mock
+  private PopularProductRedisService popularProductRedisService;
 
   @InjectMocks
   private OrderService orderService;
@@ -391,5 +382,47 @@ class OrderServiceTest {
 
     // then
     verify(eventPublisher, never()).publishEvent(any());
+  }
+
+  @Test
+  @DisplayName("결제 완료 시 주문 상태가 PAID로 변경되고 Redis Z셋에 판매량이 누적된다")
+  void payOrder_success_updatesStatusAndRedis() {
+    // given
+    Order order = Order.create(userId, dropId);
+    ReflectionTestUtils.setField(order, "id", 1L);
+    order.addOrderItem(
+        OrderItem.create(order, productId,
+            priceSnapshot, salePriceSnapshot, discountAmountSnapshot, thumbnailUrlSnapshot)
+    );
+
+    // when
+    Order result = orderService.payOrder(order);
+
+    // then
+    assertThat(result.getStatus()).isEqualTo(OrderStatus.PAID);
+    verify(popularProductRedisService, times(1)).incrementScore(productId, 1);
+  }
+
+  @Test
+  @DisplayName("결제 완료 시 주문 아이템마다 Redis incrementScore가 호출된다")
+  void payOrder_multipleItems_callsRedisForEachItem() {
+    // given
+    Order order = Order.create(userId, dropId);
+    Long productId2 = 200L;
+    order.addOrderItem(
+        OrderItem.create(order, productId,
+            priceSnapshot, salePriceSnapshot, discountAmountSnapshot, thumbnailUrlSnapshot)
+    );
+    order.addOrderItem(
+        OrderItem.create(order, productId2,
+            priceSnapshot, salePriceSnapshot, discountAmountSnapshot, thumbnailUrlSnapshot)
+    );
+
+    // when
+    orderService.payOrder(order);
+
+    // then
+    verify(popularProductRedisService, times(1)).incrementScore(productId, 1);
+    verify(popularProductRedisService, times(1)).incrementScore(productId2, 1);
   }
 }
