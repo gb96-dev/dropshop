@@ -42,19 +42,18 @@ class SellerServiceTest {
 
     @BeforeEach
     void setUp() {
-        // User 엔티티의 @Builder를 사용하여 가짜 유저 생성
-        testUser = User.builder()
-                .id(1L)
-                .email("gb650@example.com")
-                .nickname("개발자본능")
-                .build();
+        // User.signup() 정적 팩토리 메서드를 사용하여 가짜 유저 생성
+        testUser = User.signup("test@test.com", "password123!", "테스트닉네임");
 
         // SellerApplyRequest DTO의 생성자를 사용하여 가짜 요청 생성
         applyRequest = new SellerApplyRequest(
+                "회사명",
+                "대표자",
                 "123-45-67890",
+                "010-1234-5678",
                 "드랍숍컴퍼니",
-                "https://image.com/logo.png",
-                "신한은행 110-123-456789"
+                "logo_url",
+                "계좌정보"
         );
     }
 

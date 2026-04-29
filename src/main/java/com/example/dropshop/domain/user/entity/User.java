@@ -41,7 +41,7 @@ public class User extends BaseEntity {
     /**
      * 빌더의 접근 레벨을 PRIVATE으로 설정하여 외부에서 직접 호출을 막습니다.
      */
-    @Builder(access = AccessLevel.PRIVATE)
+    @Builder(access = AccessLevel.PUBLIC)
     private User(String email, String password, String nickname, UserRole role) {
         this.email = email;
         this.password = password;
@@ -64,6 +64,10 @@ public class User extends BaseEntity {
 
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
+    }
+
+    public void promoteToSeller() {
+        this.role = UserRole.SELLER;
     }
 
     public void withdraw() {
