@@ -1,5 +1,9 @@
 package com.example.dropshop.domain.queue.service;
 
+import static com.example.dropshop.common.constant.kafka.MagicNumbers.FIVE;
+import static com.example.dropshop.common.constant.kafka.MagicNumbers.PROCESS_TIME;
+import static com.example.dropshop.common.constant.kafka.MagicNumbers.THRESHOLD;
+
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.exception.ServiceException;
 import com.example.dropshop.domain.drops.entity.Drops;
@@ -9,6 +13,7 @@ import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
 import com.example.dropshop.domain.queue.entity.Queue;
 import com.example.dropshop.domain.queue.entity.QueueToken;
 import com.example.dropshop.domain.queue.enums.QueueStatus;
+import com.example.dropshop.domain.queue.producer.QueueTokenProducer;
 import com.example.dropshop.domain.queue.repository.QueueRepository;
 import com.example.dropshop.domain.queue.repository.QueueTokenRepository;
 import com.example.dropshop.domain.user.entity.User;
@@ -33,9 +38,7 @@ public class QueueService {
   private final QueueTokenRepository queueTokenRepository;
   private final DropsRepository dropsRepository;
   private final UserRepository userRepository;
-
-  private static final Long THRESHOLD = 10L;
-  private static final Long PROCESS_TIME = 10L;
+  private final QueueTokenProducer queueTokenProducer;
 
   /**
    * 대기열 direct, queue 결정 메소드.
@@ -104,15 +107,15 @@ public class QueueService {
 
       QueueToken queueToken = queueTokenRepository.findByQueueId(queue.getId()).get();
 
-      int expiresInSeconds = (int) Duration.between(LocalDateTime.now(), queueToken.getCreatedAt().plusMinutes(5)).getSeconds();
+      int expiresInSeconds = (int) Duration.between(LocalDateTime.now(), queueToken.getCreatedAt().plusMinutes(FIVE)).getSeconds();
 
-      if (expiresInSeconds < 0) {
-        queue.expire();
+      if (expiresInSeconds <= 0) {
+//        queue.expire();
 
         return ThreadHoldResponse.expire(dropId, queue.getId());
       }
 
-      return ThreadHoldResponse.direct(dropId, queueToken.getQueueToken(), queueToken.getCreatedAt().plusMinutes(5), queue.getId());
+      return ThreadHoldResponse.direct(dropId, queueToken.getQueueToken(), queueToken.getCreatedAt().plusMinutes(FIVE), queue.getId());
     } else {
       // 3-3. 기존 큐의 상태가 없다면 해당 Drops의 전체 Queue의 수 Check
 
@@ -131,7 +134,14 @@ public class QueueService {
 
         QueueToken queueToken = queueTokenRepository.save(new QueueToken(token, queue));
 
-        return ThreadHoldResponse.direct(dropId, token, queueToken.getCreatedAt().plusMinutes(5), queue.getId());
+        ThreadHoldResponse direct = ThreadHoldResponse.newDirect(dropId, queueToken.getQueueToken(),
+            queueToken.getCreatedAt().plusMinutes(5), queue.getId());
+
+
+
+        queueTokenProducer.send(direct);
+
+        return direct;
       } else {
         // 3-3-2. 처리 허용 수 보다 크거나 같다면 큐 WAITING 저장, 대기 인원 수 계산, 예상 대기시간 계산, 큐 반환
 
