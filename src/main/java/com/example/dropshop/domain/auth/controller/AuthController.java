@@ -45,14 +45,23 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(HttpServletResponse response) {
-        // 쿠키 삭제 처리
+    public ApiResponse<Void> logout(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            HttpServletResponse response
+    ) {
+        // 쿠키 삭제
         ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .path("/")
                 .maxAge(0)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        // 액세스 토큰 블랙리스트 등록 + 리프레시 토큰 DB 삭제
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String accessToken = authHeader.substring(7);
+            authService.logout(accessToken);
+        }
 
         return ApiResponse.ok();
     }

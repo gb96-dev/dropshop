@@ -40,6 +40,9 @@ application.yml
 secret.yml
 **/src/main/generated
 
+# 로컬 환경에서 shedlock 테이블 자동 생성용 (Flyway 마이그레이션이 안 돌 때 임시 우회)
+src/main/resources/schema.sql
+
 # application.yml
 application.yml
 application-local.yml
