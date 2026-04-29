@@ -41,6 +41,16 @@ public class ProductCreateRequest {
   @NotBlank
   private String specification;
 
+  /**
+   * 배송 안내. 입력하지 않으면 공통 기본 배송 정책이 적용된다.
+   */
+  private String deliveryInfo;
+
+  /**
+   * 환불 정책. 입력하지 않으면 공통 기본 환불 정책이 적용된다.
+   */
+  private String refundPolicy;
+
   @Valid
   @NotEmpty
   @Size(max = 5)

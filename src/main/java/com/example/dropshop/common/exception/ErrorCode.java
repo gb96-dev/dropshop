@@ -62,8 +62,9 @@ public enum ErrorCode {
   PRODUCT_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "상품 이미지를 찾을 수 없습니다."),
   THUMBNAIL_DELETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "대표 이미지는 삭제할 수 없습니다."),
   IMAGE_MIN_REQUIRED(HttpStatus.BAD_REQUEST, "이미지는 최소 1개 이상 유지해야 합니다."),
-  INVALID_STOCK(HttpStatus.BAD_REQUEST, "상품 재고는 0보다 커야 합니다."),
-  VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "요청값 검증에 실패했습니다."),
+   INVALID_STOCK(HttpStatus.BAD_REQUEST, "상품 재고는 0보다 커야 합니다."),
+   PRODUCT_POLICY_NOT_FOUND(HttpStatus.NOT_FOUND, "상품 정책을 찾을 수 없습니다."),
+   VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "요청값 검증에 실패했습니다."),
 
   /**
    * Drop.
