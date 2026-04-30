@@ -37,9 +37,10 @@ public class EventKafkaProducer {
      * @throws KafkaPublishException 브로커 응답 대기 시간 초과 또는 발행 실패 시
      */
     public void publishUserLogin(UserLoginEvent event) {
+        String masked = maskEmail(event.getEmail());
         send(TOPIC_USER_LOGIN, event.getEmail(), event,
-                "로그인 이벤트 발행 실패 - email: " + event.getEmail());
-        log.info("[Kafka] 로그인 이벤트 발행 완료 - email: {}", event.getEmail());
+                "로그인 이벤트 발행 실패 - email: " + masked);
+        log.info("[Kafka] 로그인 이벤트 발행 완료 - email: {}", masked);
     }
 
     /**
@@ -48,9 +49,10 @@ public class EventKafkaProducer {
      * @throws KafkaPublishException 브로커 응답 대기 시간 초과 또는 발행 실패 시
      */
     public void publishUserSignup(UserSignupEvent event) {
+        String masked = maskEmail(event.getEmail());
         send(TOPIC_USER_SIGNUP, event.getEmail(), event,
-                "회원가입 이벤트 발행 실패 - email: " + event.getEmail());
-        log.info("[Kafka] 회원가입 이벤트 발행 완료 - email: {}", event.getEmail());
+                "회원가입 이벤트 발행 실패 - email: " + masked);
+        log.info("[Kafka] 회원가입 이벤트 발행 완료 - email: {}", masked);
     }
 
     /**
@@ -59,14 +61,15 @@ public class EventKafkaProducer {
      * @throws KafkaPublishException 브로커 응답 대기 시간 초과 또는 발행 실패 시
      */
     public void publishSellerApply(SellerAppliedEvent event) {
+        String masked = maskEmail(event.getEmail());
         send(TOPIC_SELLER_APPLY, event.getEmail(), event,
-                "판매자 신청 이벤트 발행 실패 - email: " + event.getEmail());
+                "판매자 신청 이벤트 발행 실패 - email: " + masked);
         log.info("[Kafka] 판매자 신청 이벤트 발행 완료 - email: {}, 업체: {}",
-                event.getEmail(), event.getCompanyName());
+                masked, event.getCompanyName());
     }
 
     // -------------------------------------------------------------------------
-    // private helper
+    // private helpers
     // -------------------------------------------------------------------------
 
     /**
@@ -89,5 +92,20 @@ public class EventKafkaProducer {
             log.error("[Kafka] {} - 스레드 인터럽트 발생", errorMessage, e);
             throw new KafkaPublishException(errorMessage + " (interrupted)", e);
         }
+    }
+
+    /**
+     * 이메일 주소를 마스킹한다. 예) test@example.com → te**@example.com
+     */
+    private static String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return "***";
+        }
+        String[] parts = email.split("@", 2);
+        String local = parts[0];
+        String masked = local.length() <= 2
+                ? local.charAt(0) + "**"
+                : local.substring(0, 2) + "**";
+        return masked + "@" + parts[1];
     }
 }

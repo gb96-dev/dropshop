@@ -15,14 +15,19 @@ import org.springframework.stereotype.Component;
 /**
  * 판매자 신청 이벤트를 소비하여 Redis에 대기 목록으로 저장한다.
  *
- * <p>Redis Key: seller:apply:pending (List 타입)
- * - 관리자가 신규 판매자 신청을 확인할 때 이 리스트를 조회한다.
+ * <p>Redis Key 구조:
+ * <ul>
+ *   <li>seller:apply:pending (List) - 관리자가 처리할 신청 대기 목록
+ *   <li>seller:apply:seen   (Set)  - 이미 처리된 사업자번호 집합 (Kafka 재전달 시 중복 방지)
+ * </ul>
  */
 @Slf4j
 @Component
 public class SellerApplyKafkaConsumer {
 
     private static final String SELLER_APPLY_PENDING_KEY = "seller:apply:pending";
+    /** 중복 처리 방지용 seen Set. SADD 반환값으로 최초 수신 여부를 판별한다. */
+    private static final String SELLER_APPLY_SEEN_SET = "seller:apply:seen";
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
@@ -42,17 +47,30 @@ public class SellerApplyKafkaConsumer {
             containerFactory = "sellerApplyKafkaListenerContainerFactory"
     )
     public void handleSellerApply(SellerAppliedEvent event) {
+        String businessNo = event.getBusinessNo();
+
+        // ── 중복 체크 ──────────────────────────────────────────────────────────
+        // SADD는 새 멤버를 추가하면 1, 이미 존재하면 0을 반환한다.
+        // Kafka at-least-once 재전달로 동일 메시지가 재수신될 경우 LPUSH를 건너뛴다.
+        Long added = stringRedisTemplate.opsForSet().add(SELLER_APPLY_SEEN_SET, businessNo);
+        if (added == null || added == 0L) {
+            log.warn("[Kafka Consumer] 중복 판매자 신청 이벤트 감지 - 스킵. 사업자번호: {}",
+                    maskBusinessNo(businessNo));
+            return;
+        }
+
+        // ── 최초 수신: 대기 목록에 추가 ──────────────────────────────────────
         try {
             String eventJson = objectMapper.writeValueAsString(event);
             stringRedisTemplate.opsForList().leftPush(SELLER_APPLY_PENDING_KEY, eventJson);
 
             log.info("[Kafka Consumer] 판매자 신청 이벤트 수신 - email: {}, 업체: {}, 사업자번호: {}",
-                    maskEmail(event.getEmail()), event.getCompanyName(), maskBusinessNo(event.getBusinessNo()));
+                    maskEmail(event.getEmail()), event.getCompanyName(), maskBusinessNo(businessNo));
         } catch (JsonProcessingException e) {
+            // 직렬화 실패 시 seen Set에서 제거해 재시도 가능하게 복원한다.
+            stringRedisTemplate.opsForSet().remove(SELLER_APPLY_SEEN_SET, businessNo);
             log.error("[Kafka Consumer] 판매자 신청 이벤트 직렬화 실패 - email: {}", maskEmail(event.getEmail()), e);
             // 예외를 전파해 DefaultErrorHandler → DeadLetterPublishingRecoverer가 DLT로 라우팅하도록 한다.
-            // 재직렬화 실패는 재시도해도 해결되지 않으므로 KafkaConsumerConfig에서
-            // addNotRetryableExceptions(DeserializationException.class)와 동일하게 처리된다.
             throw new SerializationException("판매자 신청 이벤트 Redis 직렬화 실패", e);
         }
     }

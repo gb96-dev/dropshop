@@ -5,6 +5,7 @@ import static com.example.dropshop.common.constant.kafka.topic.KafkaTopics.TOPIC
 import static com.example.dropshop.common.constant.kafka.topic.KafkaTopics.TOPIC_USER_SIGNUP;
 
 import org.apache.kafka.clients.admin.NewTopic;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
@@ -22,8 +23,12 @@ import org.springframework.kafka.config.TopicBuilder;
 @Configuration
 public class KafkaTopicConfig {
 
-    private static final int PARTITIONS = 3;
-    private static final short REPLICATION_FACTOR = 1;
+    @Value("${spring.kafka.topic.partitions:3}")
+    private int partitions;
+
+    /** 운영 환경에서는 단일 브로커 장애 시 데이터 유실 방지를 위해 2 이상으로 설정할 것. */
+    @Value("${spring.kafka.topic.replication-factor:1}")
+    private short replicationFactor;
 
     /**
      * 로그인 이벤트 토픽.
@@ -32,8 +37,8 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic userLoginTopic() {
         return TopicBuilder.name(TOPIC_USER_LOGIN)
-                .partitions(PARTITIONS)
-                .replicas(REPLICATION_FACTOR)
+                .partitions(partitions)
+                .replicas(replicationFactor)
                 .build();
     }
 
@@ -44,8 +49,8 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic userSignupTopic() {
         return TopicBuilder.name(TOPIC_USER_SIGNUP)
-                .partitions(PARTITIONS)
-                .replicas(REPLICATION_FACTOR)
+                .partitions(partitions)
+                .replicas(replicationFactor)
                 .build();
     }
 
@@ -56,8 +61,8 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic sellerApplyTopic() {
         return TopicBuilder.name(TOPIC_SELLER_APPLY)
-                .partitions(PARTITIONS)
-                .replicas(REPLICATION_FACTOR)
+                .partitions(partitions)
+                .replicas(replicationFactor)
                 .build();
     }
 
@@ -68,24 +73,24 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic userLoginDltTopic() {
         return TopicBuilder.name(TOPIC_USER_LOGIN + ".DLT")
-                .partitions(PARTITIONS)
-                .replicas(REPLICATION_FACTOR)
+                .partitions(partitions)
+                .replicas(replicationFactor)
                 .build();
     }
 
     @Bean
     public NewTopic userSignupDltTopic() {
         return TopicBuilder.name(TOPIC_USER_SIGNUP + ".DLT")
-                .partitions(PARTITIONS)
-                .replicas(REPLICATION_FACTOR)
+                .partitions(partitions)
+                .replicas(replicationFactor)
                 .build();
     }
 
     @Bean
     public NewTopic sellerApplyDltTopic() {
         return TopicBuilder.name(TOPIC_SELLER_APPLY + ".DLT")
-                .partitions(PARTITIONS)
-                .replicas(REPLICATION_FACTOR)
+                .partitions(partitions)
+                .replicas(replicationFactor)
                 .build();
     }
 }
