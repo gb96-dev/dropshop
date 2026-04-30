@@ -1,24 +1,23 @@
 package com.example.dropshop.domain.auth.service;
 
+import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.jwt.JwtUtil;
 import com.example.dropshop.domain.auth.dto.request.LoginRequest;
 import com.example.dropshop.domain.auth.dto.response.TokenResponse;
 import com.example.dropshop.domain.auth.entity.RefreshToken;
+import com.example.dropshop.domain.auth.exception.AuthException;
 import com.example.dropshop.domain.auth.repository.RefreshTokenRepository;
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.domain.user.entity.User;
 import com.example.dropshop.domain.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.example.dropshop.common.exception.ErrorCode;
-import com.example.dropshop.domain.auth.exception.AuthException;
-import com.example.dropshop.domain.auth.service.TokenBlacklistService;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

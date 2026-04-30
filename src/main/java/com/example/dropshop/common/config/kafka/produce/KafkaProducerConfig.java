@@ -1,8 +1,7 @@
 package com.example.dropshop.common.config.kafka.produce;
 
+import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -26,27 +25,33 @@ public class KafkaProducerConfig {
   @Value("${spring.kafka.bootstrap-servers}")
   private String bootstrapServers;
 
-  // PaymentCompletedEvent ProducerFactory
-
   @Bean
   public ProducerFactory<String, ThreadHoldResponse> eventProducerFactory() {
-    Map<String, Object> props = new HashMap<>();
+    return new DefaultKafkaProducerFactory<>(producerProperties());
+  }
 
-//    ObjectMapper mapper = new ObjectMapper();
-//    mapper.registerModule(new JavaTimeModule());
-//    mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-//
-//    JsonSerializer<Object> serializer = new JsonSerializer<>(mapper);
+  @Bean
+  public ProducerFactory<String, PaymentStatusChangedEvent> paymentEventProducerFactory() {
+    return new DefaultKafkaProducerFactory<>(producerProperties());
+  }
+
+  private Map<String, Object> producerProperties() {
+    Map<String, Object> props = new HashMap<>();
 
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
 
-    return new DefaultKafkaProducerFactory<>(props);
+    return props;
   }
 
   @Bean
   public KafkaTemplate<String, ThreadHoldResponse> paymentCompletedEventKafkaTemplate() {
     return new KafkaTemplate<>(eventProducerFactory());
+  }
+
+  @Bean
+  public KafkaTemplate<String, PaymentStatusChangedEvent> paymentEventKafkaTemplate() {
+    return new KafkaTemplate<>(paymentEventProducerFactory());
   }
 }

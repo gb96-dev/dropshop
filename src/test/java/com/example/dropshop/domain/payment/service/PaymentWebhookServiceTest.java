@@ -41,6 +41,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -65,6 +66,9 @@ class PaymentWebhookServiceTest {
 
   @Mock
   private TransactionTemplate transactionTemplate;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks
   private PaymentWebhookService paymentWebhookService;
@@ -114,6 +118,7 @@ class PaymentWebhookServiceTest {
     assertThat(result.getPortOneTransactionId()).isEqualTo("tx-webhook");
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
+    verify(eventPublisher, times(1)).publishEvent(any());
   }
 
   @Test
@@ -131,6 +136,7 @@ class PaymentWebhookServiceTest {
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     verify(orderFacadeService, never()).payOrderByPayment(any(Order.class));
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
+    verify(eventPublisher, never()).publishEvent(any());
   }
 
   @Test
@@ -144,6 +150,7 @@ class PaymentWebhookServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
+    verify(eventPublisher, times(1)).publishEvent(any());
   }
 
   @Test
