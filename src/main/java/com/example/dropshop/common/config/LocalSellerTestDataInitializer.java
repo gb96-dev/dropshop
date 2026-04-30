@@ -25,6 +25,9 @@ public class LocalSellerTestDataInitializer {
     private static final String TEST_BRAND_NAME = "Dropshop Test Brand";
     private static final String TEST_BRAND_LOGO = "https://cdn.example.com/test-brand-logo.png";
     private static final String TEST_ACCOUNT_INFO = "국민은행 123-456-789012";
+    private static final String TEST_COMPANY_NAME = "드랍샵 테스트 법인";
+    private static final String TEST_REPRESENTATIVE_NAME = "홍길동";
+    private static final String TEST_PHONE_NUMBER = "010-1234-5678";
 
     @Bean
     CommandLineRunner initLocalSellerTestData(
@@ -60,6 +63,9 @@ public class LocalSellerTestDataInitializer {
                     .brandName(TEST_BRAND_NAME)
                     .brandLogo(TEST_BRAND_LOGO)
                     .accountInfo(TEST_ACCOUNT_INFO)
+                    .companyName(TEST_COMPANY_NAME)
+                    .representativeName(TEST_REPRESENTATIVE_NAME)
+                    .phoneNumber(TEST_PHONE_NUMBER)
                     .build());
         }
 
