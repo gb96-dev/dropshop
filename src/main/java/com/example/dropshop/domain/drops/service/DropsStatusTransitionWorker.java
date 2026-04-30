@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 드랍 상태 전이 단건 처리 워커.
@@ -77,6 +79,17 @@ public class DropsStatusTransitionWorker {
         .cause("SCHEDULER")
         .occurredAt(LocalDateTime.now())
         .build();
+
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+          dropsStatusChangedEventProducer.send(event);
+        }
+      });
+      return;
+    }
+
     dropsStatusChangedEventProducer.send(event);
   }
 }
