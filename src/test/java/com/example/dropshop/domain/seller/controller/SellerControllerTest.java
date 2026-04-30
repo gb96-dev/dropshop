@@ -17,7 +17,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -53,15 +53,14 @@ class SellerControllerTest {
         HandlerMethodArgumentResolver mockAuthResolver = new HandlerMethodArgumentResolver() {
             @Override
             public boolean supportsParameter(MethodParameter parameter) {
-                return parameter.getParameterType().isAssignableFrom(UserDetails.class);
+                return parameter.getParameterType().equals(String.class)
+                        && parameter.hasParameterAnnotation(AuthenticationPrincipal.class);
             }
 
             @Override
             public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
                                           NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-                UserDetails mockUser = Mockito.mock(UserDetails.class);
-                given(mockUser.getUsername()).willReturn("test@example.com");
-                return mockUser;
+                return "test@example.com";
             }
         };
 
@@ -84,6 +83,9 @@ class SellerControllerTest {
 
         // CodeRabbit 지적 반영: brandLogoUrl -> brandLogo 로 수정
         String jsonContent = "{" +
+                "\"companyName\":\"테스트법인\"," +
+                "\"representativeName\":\"홍길동\"," +
+                "\"phoneNumber\":\"01012345678\"," +
                 "\"businessNo\":\"1234567890\"," +
                 "\"brandName\":\"드랍숍\"," +
                 "\"brandLogo\":\"logo.png\"," +
