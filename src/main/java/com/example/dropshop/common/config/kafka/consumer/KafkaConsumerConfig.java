@@ -17,13 +17,20 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.util.backoff.ExponentialBackOff;
 
 /**
  * 카프카 소비자 설정.
@@ -33,6 +40,14 @@ public class KafkaConsumerConfig {
 
   @Value("${spring.kafka.bootstrap-servers}")
   private String bootstrapServers;
+
+  /**
+   * DLT 발행에 사용할 KafkaTemplate.
+   * ProducerConfig와의 순환 참조 방지를 위해 @Lazy 적용.
+   */
+  @Lazy
+  @Autowired
+  private KafkaTemplate<String, Object> activityEventKafkaTemplate;
 
   private Map<String, Object> getConsumerConfig(String groupName) {
     Map<String, Object> props = new HashMap<>();
@@ -103,9 +118,25 @@ public class KafkaConsumerConfig {
     ConsumerFactory<String, T> consumerFactory = new DefaultKafkaConsumerFactory<>(
         props, new StringDeserializer(), deserializer);
 
+    // 실패한 메시지를 {topic}.DLT 토픽으로 발행하는 recoverer
+    DeadLetterPublishingRecoverer recoverer =
+        new DeadLetterPublishingRecoverer(activityEventKafkaTemplate);
+
+    // 최대 3회 재시도: 1초 → 2초 → 4초 지수 백오프
+    ExponentialBackOff backOff = new ExponentialBackOff(1_000L, 2.0);
+    backOff.setMaxAttempts(3);
+
+    DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
+    // 역직렬화/직렬화 실패는 재시도해도 의미 없으므로 즉시 DLT로 라우팅
+    errorHandler.addNotRetryableExceptions(
+        DeserializationException.class,
+        org.apache.kafka.common.errors.SerializationException.class
+    );
+
     ConcurrentKafkaListenerContainerFactory<String, T> factory =
         new ConcurrentKafkaListenerContainerFactory<>();
     factory.setConsumerFactory(consumerFactory);
+    factory.setCommonErrorHandler(errorHandler);
     return factory;
   }
 
