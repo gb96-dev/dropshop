@@ -2,9 +2,11 @@ package com.example.dropshop.domain.user.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.exception.ServiceException;
+import com.example.dropshop.common.kafka.producer.EventKafkaProducer;
 import com.example.dropshop.domain.user.dto.request.PasswordUpdateRequest;
 import com.example.dropshop.domain.user.dto.request.SignupRequest;
 import com.example.dropshop.domain.user.entity.User;
+import com.example.dropshop.domain.user.event.UserSignupEvent;
 import com.example.dropshop.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +19,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EventKafkaProducer eventKafkaProducer;
 
     @Transactional
     public void signup(SignupRequest request) {
@@ -27,6 +30,9 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = User.signup(request.getEmail(), encodedPassword, request.getNickname());
         userRepository.save(user);
+
+        // Kafka 회원가입 이벤트 발행
+        eventKafkaProducer.publishUserSignup(UserSignupEvent.of(user.getEmail()));
     }
 
     @Transactional

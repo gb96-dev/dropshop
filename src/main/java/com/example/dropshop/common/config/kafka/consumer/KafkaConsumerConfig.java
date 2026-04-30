@@ -2,8 +2,17 @@ package com.example.dropshop.common.config.kafka.consumer;
 
 import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.QUEUE_GROUP_NAME;
 import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.READY_QUEUE_GROUP_NAME;
+import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.USER_LOGIN_GROUP_NAME;
+import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.USER_SIGNUP_GROUP_NAME;
+import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.SELLER_APPLY_GROUP_NAME;
 
+import com.example.dropshop.domain.auth.event.UserLoginEvent;
+import com.example.dropshop.domain.user.event.UserSignupEvent;
+import com.example.dropshop.domain.seller.event.SellerAppliedEvent;
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -75,5 +84,55 @@ public class KafkaConsumerConfig {
     factory.setConsumerFactory(readyQueueTokenConsumerFactory());
 
     return factory;
+  }
+
+  // -------------------------------------------------------------------------
+  // LocalDateTime 지원 ObjectMapper를 사용하는 이벤트용 공통 헬퍼
+  // -------------------------------------------------------------------------
+
+  private <T> ConcurrentKafkaListenerContainerFactory<String, T> createActivityFactory(
+      Class<T> clazz, String groupId) {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+    JsonDeserializer<T> deserializer = new JsonDeserializer<>(clazz, mapper);
+    deserializer.addTrustedPackages("com.example.dropshop.*");
+
+    Map<String, Object> props = getConsumerConfig(groupId);
+    ConsumerFactory<String, T> consumerFactory = new DefaultKafkaConsumerFactory<>(
+        props, new StringDeserializer(), deserializer);
+
+    ConcurrentKafkaListenerContainerFactory<String, T> factory =
+        new ConcurrentKafkaListenerContainerFactory<>();
+    factory.setConsumerFactory(consumerFactory);
+    return factory;
+  }
+
+  // -------------------------------------------------------------------------
+  // UserLoginEvent Consumer
+  // -------------------------------------------------------------------------
+
+  @Bean
+  public ConcurrentKafkaListenerContainerFactory<String, UserLoginEvent> userLoginKafkaListenerContainerFactory() {
+    return createActivityFactory(UserLoginEvent.class, USER_LOGIN_GROUP_NAME);
+  }
+
+  // -------------------------------------------------------------------------
+  // UserSignupEvent Consumer
+  // -------------------------------------------------------------------------
+
+  @Bean
+  public ConcurrentKafkaListenerContainerFactory<String, UserSignupEvent> userSignupKafkaListenerContainerFactory() {
+    return createActivityFactory(UserSignupEvent.class, USER_SIGNUP_GROUP_NAME);
+  }
+
+  // -------------------------------------------------------------------------
+  // SellerAppliedEvent Consumer
+  // -------------------------------------------------------------------------
+
+  @Bean
+  public ConcurrentKafkaListenerContainerFactory<String, SellerAppliedEvent> sellerApplyKafkaListenerContainerFactory() {
+    return createActivityFactory(SellerAppliedEvent.class, SELLER_APPLY_GROUP_NAME);
   }
 }
