@@ -72,6 +72,12 @@ public class SellerApplyKafkaConsumer {
             log.error("[Kafka Consumer] 판매자 신청 이벤트 직렬화 실패 - email: {}", maskEmail(event.getEmail()), e);
             // 예외를 전파해 DefaultErrorHandler → DeadLetterPublishingRecoverer가 DLT로 라우팅하도록 한다.
             throw new SerializationException("판매자 신청 이벤트 Redis 직렬화 실패", e);
+        } catch (RuntimeException e) {
+            // LPUSH 등 Redis 런타임 오류 시에도 seen Set에서 제거해 재시도/DLT 경로를 보존한다.
+            // 제거하지 않으면 businessNo가 seen Set에 남아 동일 이벤트가 영구 차단된다.
+            stringRedisTemplate.opsForSet().remove(SELLER_APPLY_SEEN_SET, businessNo);
+            log.error("[Kafka Consumer] 판매자 신청 이벤트 처리 중 런타임 오류 - email: {}", maskEmail(event.getEmail()), e);
+            throw e;
         }
     }
 
