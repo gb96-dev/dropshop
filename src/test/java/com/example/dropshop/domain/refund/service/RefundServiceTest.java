@@ -135,7 +135,7 @@ class RefundServiceTest {
         new RefundCompletionWorker.RefundCompletionCommand(
             1L,
             1L,
-            "tx-123",
+            "payment-test-123",
             new BigDecimal("79000"),
             "단순 변심"
         );
@@ -152,7 +152,7 @@ class RefundServiceTest {
     assertThat(result.getStatus()).isEqualTo(RefundStatus.COMPLETED);
     assertThat(order.getStatus().name()).isEqualTo("REFUNDED");
     verify(portOneClient, times(1))
-        .cancelPayment("tx-123", new BigDecimal("79000"), "단순 변심");
+        .cancelPayment("payment-test-123", new BigDecimal("79000"), "단순 변심");
     verify(refundCompletionWorker, times(1)).finalizeRefundCompletion(1L, 1L);
     verify(redisLockService).executeWithLock(eq(LockKeys.refund(1L)), any());
   }
@@ -164,14 +164,14 @@ class RefundServiceTest {
         new RefundCompletionWorker.RefundCompletionCommand(
             1L,
             1L,
-            "tx-123",
+            "payment-test-123",
             new BigDecimal("79000"),
             "단순 변심"
         );
     given(refundCompletionWorker.prepareRefundCompletion(1L, "test@test.com")).willReturn(command);
     willThrow(new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR))
         .given(portOneClient)
-        .cancelPayment("tx-123", new BigDecimal("79000"), "단순 변심");
+        .cancelPayment("payment-test-123", new BigDecimal("79000"), "단순 변심");
 
     assertThatThrownBy(() -> refundService.completeRefund(1L, "test@test.com"))
         .isInstanceOf(RefundException.class)
