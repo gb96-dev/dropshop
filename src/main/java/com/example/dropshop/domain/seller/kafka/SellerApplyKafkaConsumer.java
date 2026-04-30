@@ -6,9 +6,11 @@ import com.example.dropshop.domain.seller.event.SellerAppliedEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.SerializationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +30,28 @@ public class SellerApplyKafkaConsumer {
     private static final String SELLER_APPLY_PENDING_KEY = "seller:apply:pending";
     /** 중복 처리 방지용 seen Set. SADD 반환값으로 최초 수신 여부를 판별한다. */
     private static final String SELLER_APPLY_SEEN_SET = "seller:apply:seen";
+
+    /**
+     * SADD와 LPUSH를 원자적으로 수행하는 Lua 스크립트.
+     *
+     * <p>KEYS[1] = SELLER_APPLY_SEEN_SET
+     * <p>KEYS[2] = SELLER_APPLY_PENDING_KEY
+     * <p>ARGV[1] = businessNo (dedupe 키)
+     * <p>ARGV[2] = eventJson (LPUSH 페이로드)
+     * <p>반환값: 1(신규 enqueue), 0(중복 스킵)
+     *
+     * <p>Redis Lua 스크립트는 서버 측에서 원자적으로 실행되므로
+     * SADD 성공 후 LPUSH 전에 프로세스가 죽어도 이벤트가 유실되지 않는다.
+     */
+    private static final RedisScript<Long> SELLER_APPLY_ENQUEUE_SCRIPT = RedisScript.of(
+            "local added = redis.call('SADD', KEYS[1], ARGV[1]) " +
+            "if added == 1 then " +
+            "  redis.call('LPUSH', KEYS[2], ARGV[2]) " +
+            "  return 1 " +
+            "end " +
+            "return 0",
+            Long.class
+    );
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
@@ -49,36 +73,34 @@ public class SellerApplyKafkaConsumer {
     public void handleSellerApply(SellerAppliedEvent event) {
         String businessNo = event.getBusinessNo();
 
-        // ── 중복 체크 ──────────────────────────────────────────────────────────
-        // SADD는 새 멤버를 추가하면 1, 이미 존재하면 0을 반환한다.
-        // Kafka at-least-once 재전달로 동일 메시지가 재수신될 경우 LPUSH를 건너뛴다.
-        Long added = stringRedisTemplate.opsForSet().add(SELLER_APPLY_SEEN_SET, businessNo);
-        if (added == null || added == 0L) {
+        // ── JSON 직렬화를 Redis 작업 전에 수행 ───────────────────────────────
+        // 직렬화 실패 시 Redis를 건드리기 전에 예외를 던져 seen Set 오염을 방지한다.
+        String eventJson;
+        try {
+            eventJson = objectMapper.writeValueAsString(event);
+        } catch (JsonProcessingException e) {
+            log.error("[Kafka Consumer] 판매자 신청 이벤트 직렬화 실패 - email: {}", maskEmail(event.getEmail()), e);
+            throw new SerializationException("판매자 신청 이벤트 직렬화 실패", e);
+        }
+
+        // ── SADD + LPUSH 원자 실행 (Lua 스크립트) ────────────────────────────
+        // Lua 스크립트는 Redis 서버에서 원자적으로 실행되므로
+        // SADD 성공 후 LPUSH 전에 프로세스가 죽어도 이벤트가 유실되지 않는다.
+        Long enqueued = stringRedisTemplate.execute(
+                SELLER_APPLY_ENQUEUE_SCRIPT,
+                List.of(SELLER_APPLY_SEEN_SET, SELLER_APPLY_PENDING_KEY),
+                businessNo,
+                eventJson
+        );
+
+        if (enqueued == null || enqueued == 0L) {
             log.warn("[Kafka Consumer] 중복 판매자 신청 이벤트 감지 - 스킵. 사업자번호: {}",
                     maskBusinessNo(businessNo));
             return;
         }
 
-        // ── 최초 수신: 대기 목록에 추가 ──────────────────────────────────────
-        try {
-            String eventJson = objectMapper.writeValueAsString(event);
-            stringRedisTemplate.opsForList().leftPush(SELLER_APPLY_PENDING_KEY, eventJson);
-
-            log.info("[Kafka Consumer] 판매자 신청 이벤트 수신 - email: {}, 업체: {}, 사업자번호: {}",
-                    maskEmail(event.getEmail()), event.getCompanyName(), maskBusinessNo(businessNo));
-        } catch (JsonProcessingException e) {
-            // 직렬화 실패 시 seen Set에서 제거해 재시도 가능하게 복원한다.
-            stringRedisTemplate.opsForSet().remove(SELLER_APPLY_SEEN_SET, businessNo);
-            log.error("[Kafka Consumer] 판매자 신청 이벤트 직렬화 실패 - email: {}", maskEmail(event.getEmail()), e);
-            // 예외를 전파해 DefaultErrorHandler → DeadLetterPublishingRecoverer가 DLT로 라우팅하도록 한다.
-            throw new SerializationException("판매자 신청 이벤트 Redis 직렬화 실패", e);
-        } catch (RuntimeException e) {
-            // LPUSH 등 Redis 런타임 오류 시에도 seen Set에서 제거해 재시도/DLT 경로를 보존한다.
-            // 제거하지 않으면 businessNo가 seen Set에 남아 동일 이벤트가 영구 차단된다.
-            stringRedisTemplate.opsForSet().remove(SELLER_APPLY_SEEN_SET, businessNo);
-            log.error("[Kafka Consumer] 판매자 신청 이벤트 처리 중 런타임 오류 - email: {}", maskEmail(event.getEmail()), e);
-            throw e;
-        }
+        log.info("[Kafka Consumer] 판매자 신청 이벤트 수신 - email: {}, 업체: {}, 사업자번호: {}",
+                maskEmail(event.getEmail()), event.getCompanyName(), maskBusinessNo(businessNo));
     }
 
     // -------------------------------------------------------------------------
