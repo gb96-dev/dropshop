@@ -8,6 +8,10 @@ import com.example.dropshop.common.kafka.exception.KafkaPublishException;
 import com.example.dropshop.domain.auth.event.UserLoginEvent;
 import com.example.dropshop.domain.seller.event.SellerAppliedEvent;
 import com.example.dropshop.domain.user.event.UserSignupEvent;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -38,7 +42,7 @@ public class EventKafkaProducer {
      */
     public void publishUserLogin(UserLoginEvent event) {
         String masked = maskEmail(event.getEmail());
-        send(TOPIC_USER_LOGIN, event.getEmail(), event,
+        send(TOPIC_USER_LOGIN, hashEmail(event.getEmail()), event,
                 "로그인 이벤트 발행 실패 - email: " + masked);
         log.info("[Kafka] 로그인 이벤트 발행 완료 - email: {}", masked);
     }
@@ -50,7 +54,7 @@ public class EventKafkaProducer {
      */
     public void publishUserSignup(UserSignupEvent event) {
         String masked = maskEmail(event.getEmail());
-        send(TOPIC_USER_SIGNUP, event.getEmail(), event,
+        send(TOPIC_USER_SIGNUP, hashEmail(event.getEmail()), event,
                 "회원가입 이벤트 발행 실패 - email: " + masked);
         log.info("[Kafka] 회원가입 이벤트 발행 완료 - email: {}", masked);
     }
@@ -62,7 +66,7 @@ public class EventKafkaProducer {
      */
     public void publishSellerApply(SellerAppliedEvent event) {
         String masked = maskEmail(event.getEmail());
-        send(TOPIC_SELLER_APPLY, event.getEmail(), event,
+        send(TOPIC_SELLER_APPLY, hashEmail(event.getEmail()), event,
                 "판매자 신청 이벤트 발행 실패 - email: " + masked);
         log.info("[Kafka] 판매자 신청 이벤트 발행 완료 - email: {}, 업체: {}",
                 masked, event.getCompanyName());
@@ -95,6 +99,24 @@ public class EventKafkaProducer {
     }
 
     /**
+     * 이메일을 SHA-256으로 해싱해 파티션 키로 사용한다.
+     * 원본 이메일을 Kafka 브로커/로그에 노출하지 않으면서 동일 유저의 메시지가
+     * 같은 파티션에 순서대로 도달하도록 결정론적 키를 보장한다.
+     */
+    private static String hashEmail(String email) {
+        if (email == null) {
+            return "unknown";
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(email.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm not available", e);
+        }
+    }
+
+    /**
      * 이메일 주소를 마스킹한다. 예) test@example.com → te**@example.com
      */
     private static String maskEmail(String email) {
@@ -103,9 +125,14 @@ public class EventKafkaProducer {
         }
         String[] parts = email.split("@", 2);
         String local = parts[0];
-        String masked = local.length() <= 2
-                ? local.charAt(0) + "**"
-                : local.substring(0, 2) + "**";
+        String masked;
+        if (local.isEmpty()) {
+            masked = "**";
+        } else if (local.length() <= 2) {
+            masked = local.charAt(0) + "**";
+        } else {
+            masked = local.substring(0, 2) + "**";
+        }
         return masked + "@" + parts[1];
     }
 }

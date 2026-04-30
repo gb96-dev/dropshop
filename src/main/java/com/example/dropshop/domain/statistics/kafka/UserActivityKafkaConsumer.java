@@ -6,9 +6,11 @@ import static com.example.dropshop.common.constant.kafka.topic.KafkaTopics.TOPIC
 import com.example.dropshop.domain.auth.event.UserLoginEvent;
 import com.example.dropshop.domain.user.event.UserSignupEvent;
 import java.time.Duration;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +38,26 @@ public class UserActivityKafkaConsumer {
     private static final String SIGNUP_SET_PREFIX = "stats:signup:seen:";
     /** 모든 통계 키 TTL: 당일 + 다음날까지 조회 가능하도록 48시간 유지. */
     private static final Duration STATS_KEY_TTL = Duration.ofDays(2);
+
+    /**
+     * 회원가입 dedupe + 카운터 증가 + TTL 갱신을 원자적으로 수행하는 Lua 스크립트.
+     *
+     * <p>KEYS[1] = seenKey (stats:signup:seen:YYYY-MM-DD)
+     * <p>KEYS[2] = counterKey (stats:signup:YYYY-MM-DD)
+     * <p>ARGV[1] = email
+     * <p>ARGV[2] = TTL (초 단위)
+     * <p>반환값: SADD 결과 — 1(최초 수신), 0(중복)
+     */
+    private static final RedisScript<Long> SIGNUP_DEDUP_SCRIPT = RedisScript.of(
+            "local added = redis.call('SADD', KEYS[1], ARGV[1]) " +
+            "if added == 1 then " +
+            "  redis.call('INCR', KEYS[2]) " +
+            "  redis.call('EXPIRE', KEYS[1], ARGV[2]) " +
+            "  redis.call('EXPIRE', KEYS[2], ARGV[2]) " +
+            "end " +
+            "return added",
+            Long.class
+    );
 
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -77,17 +99,19 @@ public class UserActivityKafkaConsumer {
         String seenKey    = SIGNUP_SET_PREFIX + eventDate;   // stats:signup:seen:YYYY-MM-DD
         String counterKey = SIGNUP_KEY_PREFIX + eventDate;   // stats:signup:YYYY-MM-DD
 
-        // SADD: 최초 수신이면 1, 이미 존재하면 0 반환
-        Long added = stringRedisTemplate.opsForSet().add(seenKey, event.getEmail());
+        // Lua 스크립트로 SADD → INCR → EXPIRE를 원자적으로 실행한다.
+        // SADD 성공 후 INCR/EXPIRE가 개별 실패하면 seen Set에 이메일이 남아
+        // 영구 under-counting이 발생하는 문제를 방지한다.
+        Long added = stringRedisTemplate.execute(
+                SIGNUP_DEDUP_SCRIPT,
+                List.of(seenKey, counterKey),
+                event.getEmail(),
+                String.valueOf(STATS_KEY_TTL.getSeconds())
+        );
         if (added == null || added == 0L) {
             log.warn("[Kafka Consumer] 중복 회원가입 이벤트 감지 - 스킵. Signup key: {}", counterKey);
             return;
         }
-
-        // 최초 수신: 카운터 증가 및 TTL 갱신
-        stringRedisTemplate.opsForValue().increment(counterKey);
-        stringRedisTemplate.expire(seenKey, STATS_KEY_TTL);
-        stringRedisTemplate.expire(counterKey, STATS_KEY_TTL);
 
         log.info("[Kafka Consumer] 회원가입 이벤트 수신 - Signup key: {}", counterKey);
     }

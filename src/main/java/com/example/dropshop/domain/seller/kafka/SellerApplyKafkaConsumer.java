@@ -88,8 +88,14 @@ public class SellerApplyKafkaConsumer {
             return "***";
         }
         String[] parts = email.split("@", 2);
+        if (parts.length != 2) {
+            return "***";
+        }
         String local = parts[0];
         String domain = parts[1];
+        if (local.isEmpty()) {
+            return "**@" + domain;
+        }
         if (local.length() <= 2) {
             return local.charAt(0) + "**@" + domain;
         }
