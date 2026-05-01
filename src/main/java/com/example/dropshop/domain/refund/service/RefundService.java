@@ -218,7 +218,7 @@ public class RefundService {
 
     try {
       portOneClient.cancelPayment(
-          command.portOneTransactionId(),
+          command.portOnePaymentId(),
           command.refundAmount(),
           command.refundReason()
       );

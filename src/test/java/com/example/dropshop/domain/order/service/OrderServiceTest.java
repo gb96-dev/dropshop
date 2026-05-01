@@ -1,5 +1,17 @@
 package com.example.dropshop.domain.order.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
@@ -7,6 +19,10 @@ import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,17 +35,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
@@ -222,6 +227,7 @@ class OrderServiceTest {
         ArgumentCaptor.forClass(StockRestoreEvent.class);
     verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
     assertThat(eventCaptor.getValue().getQuantity()).isEqualTo(1);
+    verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
   }
 
   @Test
@@ -276,6 +282,25 @@ class OrderServiceTest {
 
     orderService.cancelExpiredOrders();
 
+    verify(eventPublisher, never()).publishEvent(any());
+  }
+
+  @Test
+  @DisplayName("만료 주문 취소 - 락을 획득하지 못하면 해당 주문은 건너뛴다")
+  void cancelExpiredOrders_lockNotAcquired_skipsOrder() {
+    Order expiredOrder = createPendingOrder();
+    ReflectionTestUtils.setField(expiredOrder, "holdExpiredAt", LocalDateTime.now().minusMinutes(1));
+
+    given(orderRepository.findAllByStatusAndHoldExpiredAtBefore(
+        eq(OrderStatus.PENDING),
+        any(LocalDateTime.class)
+    )).willReturn(List.of(expiredOrder));
+    given(redisLockService.tryExecuteWithLock(eq(LockKeys.order(1L)), any())).willReturn(false);
+
+    orderService.cancelExpiredOrders();
+
+    assertThat(expiredOrder.getStatus()).isEqualTo(OrderStatus.PENDING);
+    verify(orderRepository, never()).findById(1L);
     verify(eventPublisher, never()).publishEvent(any());
   }
 

@@ -1,9 +1,8 @@
 package com.example.dropshop.common.config.kafka.produce;
 
+import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
+import com.example.dropshop.domain.drops.event.DropStatusChangedEvent;
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -27,23 +26,31 @@ public class KafkaProducerConfig {
   @Value("${spring.kafka.bootstrap-servers}")
   private String bootstrapServers;
 
-  // PaymentCompletedEvent ProducerFactory
-
   @Bean
   public ProducerFactory<String, ThreadHoldResponse> eventProducerFactory() {
+    return new DefaultKafkaProducerFactory<>(producerProperties());
+  }
+
+  @Bean
+  public ProducerFactory<String, PaymentStatusChangedEvent> paymentEventProducerFactory() {
+    return new DefaultKafkaProducerFactory<>(producerProperties());
+  }
+
+  private Map<String, Object> producerProperties() {
     Map<String, Object> props = new HashMap<>();
 
-//    ObjectMapper mapper = new ObjectMapper();
-//    mapper.registerModule(new JavaTimeModule());
-//    mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-//
-//    JsonSerializer<Object> serializer = new JsonSerializer<>(mapper);
-
+  private Map<String, Object> producerConfigs() {
+    Map<String, Object> props = new HashMap<>();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+    return props;
+  }
 
-    return new DefaultKafkaProducerFactory<>(props);
+    return props;
+  @Bean
+  public ProducerFactory<String, ThreadHoldResponse> eventProducerFactory() {
+    return new DefaultKafkaProducerFactory<>(producerConfigs());
   }
 
   @Bean
@@ -51,26 +58,15 @@ public class KafkaProducerConfig {
     return new KafkaTemplate<>(eventProducerFactory());
   }
 
-  /**
-   * LocalDateTime 직렬화 지원하는 이벤트용 ProducerFactory.
-   * user-login, user-signup, seller-apply 이벤트에 사용.
-   */
   @Bean
-  public ProducerFactory<String, Object> activityEventProducerFactory() {
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new JavaTimeModule());
-    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-    Map<String, Object> props = new HashMap<>();
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-
-    return new DefaultKafkaProducerFactory<>(props, new StringSerializer(), new JsonSerializer<>(mapper));
+  public KafkaTemplate<String, PaymentStatusChangedEvent> paymentEventKafkaTemplate() {
+    return new KafkaTemplate<>(paymentEventProducerFactory());
+  public ProducerFactory<String, DropStatusChangedEvent> dropsStatusChangedEventProducerFactory() {
+    return new DefaultKafkaProducerFactory<>(producerConfigs());
   }
 
   @Bean
-  public KafkaTemplate<String, Object> activityEventKafkaTemplate() {
-    return new KafkaTemplate<>(activityEventProducerFactory());
+  public KafkaTemplate<String, DropStatusChangedEvent> dropsStatusChangedKafkaTemplate() {
+    return new KafkaTemplate<>(dropsStatusChangedEventProducerFactory());
   }
 }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.common.config.PortOneProperties;
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
@@ -39,6 +41,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -63,6 +66,9 @@ class PaymentWebhookServiceTest {
 
   @Mock
   private TransactionTemplate transactionTemplate;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks
   private PaymentWebhookService paymentWebhookService;
@@ -111,6 +117,8 @@ class PaymentWebhookServiceTest {
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     assertThat(result.getPortOneTransactionId()).isEqualTo("tx-webhook");
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
+    verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
+    verify(eventPublisher, times(1)).publishEvent(any());
   }
 
   @Test
@@ -128,6 +136,7 @@ class PaymentWebhookServiceTest {
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     verify(orderFacadeService, never()).payOrderByPayment(any(Order.class));
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
+    verify(eventPublisher, never()).publishEvent(any());
   }
 
   @Test
@@ -141,6 +150,7 @@ class PaymentWebhookServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
+    verify(eventPublisher, times(1)).publishEvent(any());
   }
 
   @Test

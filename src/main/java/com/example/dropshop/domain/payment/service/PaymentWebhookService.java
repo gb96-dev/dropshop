@@ -9,6 +9,7 @@ import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.payment.client.PortOneClient;
+import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.payment.dto.request.PaymentWebhookRequest;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
@@ -16,6 +17,7 @@ import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.exception.PaymentException;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -32,6 +34,7 @@ public class PaymentWebhookService {
   private final PortOneProperties portOneProperties;
   private final RedisLockService redisLockService;
   private final TransactionTemplate transactionTemplate;
+  private final ApplicationEventPublisher eventPublisher;
 
   public Payment handleWebhook(String portOnePaymentId) {
     if (portOnePaymentId == null || portOnePaymentId.isBlank()) {
@@ -70,11 +73,13 @@ public class PaymentWebhookService {
       validateOrderNotExpired(order);
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
+      publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK");
       return;
     }
 
     if (isFailureStatus(portOnePayment.status())) {
       payment.fail();
+      publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK");
       return;
     }
 
@@ -127,5 +132,13 @@ public class PaymentWebhookService {
     PortOnePaymentResponse portOnePayment = portOneClient.getPayment(portOnePaymentId);
     applyWebhookResult(payment, order, portOnePayment);
     return payment;
+  }
+
+  private void publishPaymentStatusChanged(
+      Payment payment,
+      OrderStatus orderStatus,
+      String source
+  ) {
+    eventPublisher.publishEvent(new PaymentStatusChangedEvent(payment, orderStatus, source));
   }
 }

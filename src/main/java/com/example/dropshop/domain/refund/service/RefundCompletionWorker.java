@@ -39,7 +39,7 @@ public class RefundCompletionWorker {
 
     Payment payment = getPayment(refund.getPaymentId());
     validateRefundablePayment(payment);
-    validatePortOneTransactionId(payment);
+    validatePortOnePaymentId(payment);
 
     Order order = orderFacadeService.findOrderForPayment(payment.getOrderId(), email);
     validateRefundableOrder(order);
@@ -49,7 +49,7 @@ public class RefundCompletionWorker {
     return new RefundCompletionCommand(
         refund.getId(),
         order.getId(),
-        payment.getPortOneTransactionId(),
+        payment.getMerchantPaymentId(),
         refund.getRefundAmount(),
         refund.getRefundReason() == null ? "환불 요청" : refund.getRefundReason()
     );
@@ -104,8 +104,8 @@ public class RefundCompletionWorker {
     }
   }
 
-  private void validatePortOneTransactionId(Payment payment) {
-    if (payment.getPortOneTransactionId() == null || payment.getPortOneTransactionId().isBlank()) {
+  private void validatePortOnePaymentId(Payment payment) {
+    if (payment.getMerchantPaymentId() == null || payment.getMerchantPaymentId().isBlank()) {
       throw new PaymentException(ErrorCode.PAYMENT_TRANSACTION_ID_REQUIRED);
     }
   }
@@ -125,7 +125,7 @@ public class RefundCompletionWorker {
   public record RefundCompletionCommand(
       Long refundId,
       Long orderId,
-      String portOneTransactionId,
+      String portOnePaymentId,
       BigDecimal refundAmount,
       String refundReason
   ) {

@@ -1,13 +1,19 @@
 package com.example.dropshop.domain.drops.service;
 
 import com.example.dropshop.domain.drops.entity.Drops;
+import com.example.dropshop.domain.drops.enums.DropsStatus;
+import com.example.dropshop.domain.drops.event.DropStatusChangedEvent;
+import com.example.dropshop.domain.drops.producer.DropsStatusChangedEventProducer;
 import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 드랍 상태 전이 단건 처리 워커.
@@ -18,6 +24,7 @@ public class DropsStatusTransitionWorker {
 
   private final DropsService dropsService;
   private final ProductDomainFacadeService productDomainFacadeService;
+  private final DropsStatusChangedEventProducer dropsStatusChangedEventProducer;
 
   /**
    * 단일 예정 드랍을 ACTIVE로 전이한다.
@@ -32,8 +39,14 @@ public class DropsStatusTransitionWorker {
       return false;
     }
 
+    DropsStatus fromStatus = drops.getStatus();
     drops.activate();
     productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.ON_SALE);
+    publishStatusChangedEvent(
+        drops,
+        fromStatus,
+        DropsStatus.ACTIVE
+    );
     return true;
   }
 
@@ -50,9 +63,34 @@ public class DropsStatusTransitionWorker {
       return false;
     }
 
+    DropsStatus fromStatus = drops.getStatus();
     drops.finish();
     productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
+    publishStatusChangedEvent(drops, fromStatus, DropsStatus.FINISHED);
     return true;
+  }
+
+  private void publishStatusChangedEvent(Drops drops, DropsStatus fromStatus, DropsStatus toStatus) {
+    DropStatusChangedEvent event = DropStatusChangedEvent.builder()
+        .dropId(drops.getId())
+        .productId(drops.getProduct().getId())
+        .fromStatus(fromStatus)
+        .toStatus(toStatus)
+        .cause("SCHEDULER")
+        .occurredAt(LocalDateTime.now())
+        .build();
+
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+          dropsStatusChangedEventProducer.send(event);
+        }
+      });
+      return;
+    }
+
+    dropsStatusChangedEventProducer.send(event);
   }
 }
 
