@@ -14,6 +14,9 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
   kafka:
     bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    topic:
+      partitions: 3
+      replication-factor: 1  # 로컬/dev 기본값. 운영(3-브로커 클러스터)에서는 반드시 2 이상으로 재정의할 것.
 
 # PortOne 설정
 portone:

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PaymentEventProducer {
 
-  private final KafkaTemplate<String, PaymentStatusChangedEvent> paymentEventKafkaTemplate;
+  private final KafkaTemplate<String, Object> kafkaTemplate;
 
   /**
    * 결제 상태에 맞는 토픽으로 이벤트를 전송한다.
@@ -24,7 +24,7 @@ public class PaymentEventProducer {
    * @param event 결제 상태 변경 이벤트
    */
   public void send(PaymentStatusChangedEvent event) {
-    paymentEventKafkaTemplate.send(resolveTopic(event), event.eventKey(), event);
+    kafkaTemplate.send(resolveTopic(event), event.eventKey(), event);
   }
 
   private String resolveTopic(PaymentStatusChangedEvent event) {
