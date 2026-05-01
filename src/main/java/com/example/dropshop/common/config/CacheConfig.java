@@ -47,7 +47,9 @@ public class CacheConfig {
         .activateDefaultTyping(
             BasicPolymorphicTypeValidator.builder()
               .allowIfSubTypeIsArray()
+              .allowIfBaseType("java.util")
               .allowIfBaseType("com.example.dropshop.domain")
+              .allowIfBaseType("org.springframework.data.domain")
                 .build(),
             ObjectMapper.DefaultTyping.NON_FINAL
         );

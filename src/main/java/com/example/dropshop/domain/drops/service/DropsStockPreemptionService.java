@@ -56,6 +56,9 @@ public class DropsStockPreemptionService {
 
   /**
    * 주문 수량만큼 재고를 선점한다.
+   *
+   * <p>주문 핫패스에서는 KEY_MISSING 재초기화를 수행하지 않고 fail-close 처리한다.
+   * 재초기화는 ACTIVE 전환 선적재/복구 후 반영 경로에서만 수행해 기준 재고를 단일화한다.
    */
   public boolean tryReserve(Long dropId, int quantity) {
     validatePositiveQuantity(quantity);
@@ -69,13 +72,13 @@ public class DropsStockPreemptionService {
     if (reserveResult == RESERVE_RESULT_INSUFFICIENT) {
       return false;
     }
-    if (reserveResult != RESERVE_RESULT_KEY_MISSING) {
+
+    if (reserveResult == RESERVE_RESULT_KEY_MISSING) {
+      log.warn("Redis 재고 키 없음으로 주문 선점을 fail-close 처리합니다. dropId={}", dropId);
       return false;
     }
 
-    initializeStockKeyIfAbsent(dropId);
-    Long retryResult = executeReserve(dropId, quantity);
-    return retryResult != null && retryResult >= 0L;
+    return false;
   }
 
   /**

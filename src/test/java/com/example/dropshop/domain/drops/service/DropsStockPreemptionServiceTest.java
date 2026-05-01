@@ -122,47 +122,31 @@ class DropsStockPreemptionServiceTest {
   }
 
   // ─────────────────────────────────────────────────────────
-  // tryReserve: 키 미존재 → DB 초기화 후 재시도
+  // tryReserve: 키 미존재 → fail-close
   // ─────────────────────────────────────────────────────────
 
   @Test
-  @DisplayName("Redis 키가 없으면 DB에서 재고를 초기화한 뒤 재시도해 성공한다")
-  void tryReserve_keyMissing_initFromDb_thenSuccess() {
-    given(dropsService.findById(DROP_ID)).willReturn(drops);
-    given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-
-    // 1차: 키 없음(-2), 2차: 재시도 성공(9)
+  @DisplayName("Redis 키가 없으면 주문 선점은 fail-close 처리한다")
+  void tryReserve_keyMissing_failClose() {
     given(stringRedisTemplate.execute(any(RedisScript.class), anyList(), anyString()))
-        .willReturn(-2L)
-        .willReturn(9L);
+        .willReturn(-2L);
 
     boolean result = dropsStockPreemptionService.tryReserve(DROP_ID, 1);
 
-    assertThat(result).isTrue();
-    // DB 초기화 호출 확인
-    verify(dropsService).findById(DROP_ID);
-    verify(valueOperations).setIfAbsent(
-        eq("stock:drop:" + DROP_ID),
-        eq(String.valueOf(REMAIN_STOCK)),
-        any(Duration.class)
-    );
+    assertThat(result).isFalse();
+    verify(dropsService, never()).findById(DROP_ID);
   }
 
   @Test
-  @DisplayName("Redis 키 초기화 후 재시도에서도 재고가 부족하면 실패한다")
-  void tryReserve_keyMissing_initFromDb_thenFail() {
-    given(dropsService.findById(DROP_ID)).willReturn(drops);
-    given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-
-    // 1차: 키 없음(-2), 2차: 재고 부족(-1)
+  @DisplayName("정의되지 않은 음수 결과는 선점 실패로 처리한다")
+  void tryReserve_fail_whenUnexpectedNegativeResult() {
     given(stringRedisTemplate.execute(any(RedisScript.class), anyList(), anyString()))
-        .willReturn(-2L)
-        .willReturn(-1L);
+        .willReturn(-3L);
 
-    boolean result = dropsStockPreemptionService.tryReserve(DROP_ID, 100);
+    boolean result = dropsStockPreemptionService.tryReserve(DROP_ID, 1);
 
     assertThat(result).isFalse();
-    verify(dropsService).findById(DROP_ID);
+    verify(dropsService, never()).findById(DROP_ID);
   }
 
   // ─────────────────────────────────────────────────────────
