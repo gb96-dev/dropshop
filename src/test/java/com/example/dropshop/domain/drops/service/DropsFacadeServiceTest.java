@@ -3,12 +3,15 @@ package com.example.dropshop.domain.drops.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.common.lock.RedisLockService;
 import com.example.dropshop.domain.drops.dto.request.DropCreateRequest;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.entity.Drops;
@@ -21,12 +24,15 @@ import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,8 +50,23 @@ class DropsFacadeServiceTest {
   @Mock
   private OrderHistoryQueryService orderHistoryQueryService;
 
+  @Mock
+  private RedisLockService redisLockService;
+
+  @Mock
+  private DropsStockPreemptionService dropsStockPreemptionService;
+
   @InjectMocks
   private DropsFacadeService dropsFacadeService;
+
+  @BeforeEach
+  void setUp() {
+    lenient().when(redisLockService.executeWithLock(anyString(), any()))
+        .thenAnswer(invocation -> {
+          RedisLockService.LockCallback<?> callback = invocation.getArgument(1);
+          return callback.doInLock();
+        });
+  }
 
   @Test
   @DisplayName("판매자 드랍 생성 성공 시 상품 상태를 READY로 변경한다")
@@ -107,12 +128,54 @@ class DropsFacadeServiceTest {
     Drops drops = createActiveDrop(product, now);
     ReflectionTestUtils.setField(drops, "remainStock", 5L);
 
+    given(dropsStockPreemptionService.tryReserve(DEFAULT_DROP_ID, 1)).willReturn(true);
     given(dropsService.findById(DEFAULT_DROP_ID)).willReturn(drops);
 
     Drops result = dropsFacadeService.reserveStockForOrder(DEFAULT_DROP_ID, 1L, 1);
 
     assertThat(result.getRemainStock()).isEqualTo(4L);
+    verify(dropsStockPreemptionService, never()).compensateReservedStock(DEFAULT_DROP_ID, 1);
     verify(productDomainFacadeService, never()).updateStatusByDrop(any(Product.class), any(ProductStatus.class));
+  }
+
+  @Test
+  @DisplayName("Redis 선점에 실패하면 재고 차감 없이 예외를 던진다")
+  void reserveStockForOrder_redisReserveFail_throwsException() {
+    given(dropsStockPreemptionService.tryReserve(DEFAULT_DROP_ID, 1)).willReturn(false);
+
+    assertThatThrownBy(() -> dropsFacadeService.reserveStockForOrder(DEFAULT_DROP_ID, 1L, 1))
+        .isInstanceOf(DropsException.class)
+        .hasMessage(ErrorCode.INVALID_DROP_REMAIN_STOCK.getMessage());
+
+    verify(dropsService, never()).findById(DEFAULT_DROP_ID);
+    verify(dropsStockPreemptionService, never()).compensateReservedStock(DEFAULT_DROP_ID, 1);
+  }
+
+  @Test
+  @DisplayName("선점 후 예외가 발생하면 롤백 훅에서 Redis 보상을 수행한다")
+  void reserveStockForOrder_productMismatch_compensateRedisOnRollbackHook() {
+    LocalDateTime now = LocalDateTime.now();
+    Product product = createProduct(1L);
+    Drops drops = createActiveDrop(product, now);
+
+    given(dropsStockPreemptionService.tryReserve(DEFAULT_DROP_ID, 1)).willReturn(true);
+    given(dropsService.findById(DEFAULT_DROP_ID)).willReturn(drops);
+
+    TransactionSynchronizationManager.initSynchronization();
+    try {
+      assertThatThrownBy(() -> dropsFacadeService.reserveStockForOrder(DEFAULT_DROP_ID, 999L, 1))
+          .isInstanceOf(DropsException.class)
+          .hasMessage(ErrorCode.DROP_PRODUCT_MISMATCH.getMessage());
+
+      assertThat(TransactionSynchronizationManager.getSynchronizations()).hasSize(1);
+      for (TransactionSynchronization synchronization : TransactionSynchronizationManager.getSynchronizations()) {
+        synchronization.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK);
+      }
+    } finally {
+      TransactionSynchronizationManager.clearSynchronization();
+    }
+
+    verify(dropsStockPreemptionService).compensateReservedStock(DEFAULT_DROP_ID, 1);
   }
 
   @Test

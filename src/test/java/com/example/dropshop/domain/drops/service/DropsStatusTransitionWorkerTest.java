@@ -35,12 +35,17 @@ class DropsStatusTransitionWorkerTest {
   private ProductDomainFacadeService productDomainFacadeService;
 
   @Mock
+  private DropsStockPreemptionService dropsStockPreemptionService;
   private DropsStatusChangedEventProducer dropsStatusChangedEventProducer;
 
   @InjectMocks
   private DropsStatusTransitionWorker worker;
 
   @Test
+  @DisplayName("SCHEDULED -> ACTIVE 전이 성공 시 Redis 재고 키를 선적재한다")
+  void transitionScheduledDrop_preloadRedisKey() {
+    Drops scheduledDrop = createDrop(1L, DropsStatus.SCHEDULED);
+    given(dropsService.findById(1L)).willReturn(scheduledDrop);
   @DisplayName("SCHEDULED 드랍을 ACTIVE로 전이하면 상태 변경 이벤트를 발행한다")
   void transitionScheduledDrop_publishEvent() {
     Drops drops = createDrop(1L, DropsStatus.SCHEDULED);
@@ -49,6 +54,10 @@ class DropsStatusTransitionWorkerTest {
     boolean transitioned = worker.transitionScheduledDrop(1L);
 
     assertThat(transitioned).isTrue();
+    assertThat(scheduledDrop.isActive()).isTrue();
+    verify(productDomainFacadeService)
+        .updateStatusByDrop(scheduledDrop.getProduct(), ProductStatus.ON_SALE);
+    verify(dropsStockPreemptionService).preloadStockKey(1L);
     verify(productDomainFacadeService).updateStatusByDrop(eq(drops.getProduct()), eq(ProductStatus.ON_SALE));
 
     ArgumentCaptor<DropStatusChangedEvent> eventCaptor = ArgumentCaptor.forClass(DropStatusChangedEvent.class);
@@ -82,14 +91,21 @@ class DropsStatusTransitionWorkerTest {
   }
 
   @Test
+  @DisplayName("이미 ACTIVE/FINISHED인 드랍은 전이하지 않고 Redis 선적재도 하지 않는다")
+  void transitionScheduledDrop_skipWhenNotScheduled() {
+    Drops activeDrop = createDrop(2L, DropsStatus.ACTIVE);
+    given(dropsService.findById(2L)).willReturn(activeDrop);
   @DisplayName("전이 조건에 맞지 않으면 이벤트를 발행하지 않는다")
   void transitionScheduledDrop_notScheduled_skip() {
     Drops drops = createDrop(3L, DropsStatus.ACTIVE);
     given(dropsService.findById(3L)).willReturn(drops);
 
+    boolean transitioned = worker.transitionScheduledDrop(2L);
     boolean transitioned = worker.transitionScheduledDrop(3L);
 
     assertThat(transitioned).isFalse();
+    verify(productDomainFacadeService, never()).updateStatusByDrop(activeDrop.getProduct(), ProductStatus.ON_SALE);
+    verify(dropsStockPreemptionService, never()).preloadStockKey(2L);
     verify(productDomainFacadeService, never()).updateStatusByDrop(any(), any());
     verify(dropsStatusChangedEventProducer, never()).send(any());
   }
@@ -99,20 +115,36 @@ class DropsStatusTransitionWorkerTest {
         1L,
         "테스트 상품",
         "TEST",
+        new BigDecimal("100000"),
         new BigDecimal("10000"),
         0,
         10,
+        100,
         "https://example.com/thumb.jpg",
+        "상품 설명",
+        "상품 상세",
+        "배송 안내",
+        "환불 정책"
         "설명",
         "스펙",
         "배송",
         "환불"
     );
+    ReflectionTestUtils.setField(product, "id", 101L);
     ReflectionTestUtils.setField(product, "id", 100L + dropId);
 
+    Drops drops = Drops.create(
+        product,
+        LocalDateTime.now().minusHours(1),
+        LocalDateTime.now().plusHours(3),
+        10L,
+        1L,
+        false
+    );
     LocalDateTime now = LocalDateTime.now();
     Drops drops = Drops.create(product, now.minusHours(1), now.plusHours(1), 10L, 1L, false);
     ReflectionTestUtils.setField(drops, "id", dropId);
+    ReflectionTestUtils.setField(drops, "status", status);
 
     if (status == DropsStatus.ACTIVE) {
       drops.activate();
@@ -123,4 +155,5 @@ class DropsStatusTransitionWorkerTest {
     return drops;
   }
 }
+
 
