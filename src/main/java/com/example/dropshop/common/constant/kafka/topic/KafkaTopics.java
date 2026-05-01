@@ -7,4 +7,5 @@ public class KafkaTopics {
 
   public static final String TOPIC_QUEUE_TOKEN = "queue-token";
   public static final String TOPIC_READY_QUEUE_TOKEN = "ready-queue-token";
+  public static final String TOPIC_DROPS_STATUS_CHANGED = "drops.status.changed";
 }
