@@ -50,6 +50,8 @@ dropshop:
   product:
     max-image-count: 5
     purchasable-block-hours: 24
+  drops:
+    view-count-ttl-seconds: 600
 
 logging:
   level:

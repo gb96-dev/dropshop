@@ -5,12 +5,14 @@ import com.example.dropshop.domain.drops.dto.response.DropListItemResponse;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.service.DropsQueryService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,10 +57,19 @@ public class DropsQueryController {
    */
   @GetMapping("/{dropId}")
   public ResponseEntity<ApiResponse<DropResponse>> getDropDetail(
-      @PathVariable Long dropId
+      @AuthenticationPrincipal String userEmail,
+      @PathVariable Long dropId,
+      HttpServletRequest request
   ) {
-    DropResponse response = dropsQueryService.findPublicDropDetail(dropId);
+    String clientIp = extractClientIp(request);
+    String userAgent = request.getHeader("User-Agent");
+    DropResponse response = dropsQueryService.findPublicDropDetail(dropId, userEmail, clientIp, userAgent);
     return ResponseEntity.ok(ApiResponse.ok(response));
+  }
+
+  private String extractClientIp(HttpServletRequest request) {
+    // 조회수 식별은 위조 가능한 헤더보다 서버가 인지한 원격 주소를 우선 사용한다.
+    return request.getRemoteAddr();
   }
 
 }

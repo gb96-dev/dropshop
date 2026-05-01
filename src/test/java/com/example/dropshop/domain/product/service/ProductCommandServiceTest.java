@@ -51,15 +51,15 @@ class ProductCommandServiceTest {
   void setUp() {
     productCommandService =
         new ProductCommandService(productRepository, productPolicyService, productValidator);
-
-    // 기본 정책값 mock 설정
-    given(productPolicyService.getDeliveryInfo()).willReturn("기본 배송 정책");
-    given(productPolicyService.getRefundPolicy()).willReturn("기본 환불 정책");
   }
 
   @Test
   @DisplayName("상품 생성 성공")
   void createSellerProduct_success() {
+    // 이 테스트에서만 사용되는 정책 스텁
+    given(productPolicyService.getDeliveryInfo()).willReturn("기본 배송 정책");
+    given(productPolicyService.getRefundPolicy()).willReturn("기본 환불 정책");
+
     ProductCreateRequest request = createProductCreateRequest();
 
     given(productRepository.save(any(Product.class))).willAnswer(invocation -> {

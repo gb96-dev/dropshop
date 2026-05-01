@@ -19,6 +19,7 @@ public class DropListItemResponse {
   private final String status;
   private final LocalDateTime startAt;
   private final LocalDateTime endAt;
+  private final Long viewCount;
   private final Long soldCount;
   private final Long remainStock;
   private final Long purchaseLimit;
@@ -36,6 +37,7 @@ public class DropListItemResponse {
         .status(drops.getStatus().name())
         .startAt(drops.getStartAt())
         .endAt(drops.getEndAt())
+        .viewCount(drops.getViewCount())
         .soldCount(drops.getTotalStock() - drops.getRemainStock())
         .remainStock(drops.getRemainStock())
         .purchaseLimit(drops.getPurchaseLimit())

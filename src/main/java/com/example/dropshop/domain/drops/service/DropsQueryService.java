@@ -7,11 +7,19 @@ import com.example.dropshop.domain.drops.entity.Drops;
 import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.exception.DropsException;
 import com.example.dropshop.domain.drops.repository.DropsRepository;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.util.Base64;
 import java.util.EnumSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +32,19 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class DropsQueryService {
 
   private static final Set<DropsStatus> PUBLIC_VISIBLE_STATUSES =
       DropsConstants.PUBLIC_VISIBLE_STATUSES;
+  private static final String DROP_VIEW_KEY_PREFIX = "drop:view";
 
   private final DropsRepository dropsRepository;
+  private final StringRedisTemplate stringRedisTemplate;
+
+  @Value("${dropshop.drops.view-count-ttl-seconds:600}")
+  private long viewCountTtlSeconds;
 
   /**
    * 공개 드롭 목록을 조회한다.
@@ -57,11 +71,82 @@ public class DropsQueryService {
    * - SCHEDULED, ACTIVE, FINISHED만 공개 조회 가능
    * - useQueue 여부 표시 (규칙 4번: 선착순 드롭 구분)
    */
-  public DropResponse findPublicDropDetail(Long dropId) {
+  @Transactional
+  public DropResponse findPublicDropDetail(Long dropId, String userEmail, String clientIp, String userAgent) {
     Drops drops = dropsRepository.findOneByIdAndStatusIn(dropId, PUBLIC_VISIBLE_STATUSES)
         .orElseThrow(() -> new DropsException(ErrorCode.DROP_NOT_FOUND));
 
-    return DropResponse.from(drops);
+    long responseViewCount = drops.getViewCount();
+    if (shouldIncreaseViewCount(dropId, userEmail, clientIp, userAgent)) {
+      responseViewCount += 1;
+    }
+
+    return DropResponse.from(drops, responseViewCount);
+  }
+
+  private boolean shouldIncreaseViewCount(Long dropId, String userEmail, String clientIp, String userAgent) {
+    String viewIdentifier;
+    if (userEmail != null && !userEmail.isBlank()) {
+      viewIdentifier = userEmail;
+    } else if (clientIp != null && !clientIp.isBlank()) {
+      viewIdentifier = generateGuestIdentifier(clientIp, userAgent);
+    } else {
+      return false;
+    }
+
+    String viewKey = DROP_VIEW_KEY_PREFIX + ":" + dropId + ":" + viewIdentifier;
+
+    Boolean firstView;
+    try {
+      firstView = stringRedisTemplate.opsForValue().setIfAbsent(
+          viewKey,
+          "1",
+          Duration.ofSeconds(viewCountTtlSeconds)
+      );
+    } catch (Exception e) {
+      log.warn("조회수 중복 방지 키 처리 실패. dropId={}, userEmail={}", dropId, userEmail, e);
+      return false;
+    }
+
+    if (!Boolean.TRUE.equals(firstView)) {
+      return false;
+    }
+
+    try {
+      int updated = dropsRepository.incrementViewCount(dropId);
+      if (updated <= 0) {
+        rollbackViewKey(viewKey);
+        return false;
+      }
+      return true;
+    } catch (Exception e) {
+      rollbackViewKey(viewKey);
+      log.warn("조회수 증가 처리 실패. dropId={}, userEmail={}", dropId, userEmail, e);
+      return false;
+    }
+  }
+
+  private void rollbackViewKey(String viewKey) {
+    try {
+      stringRedisTemplate.delete(viewKey);
+    } catch (Exception e) {
+      log.warn("조회수 키 롤백 실패. viewKey={}", viewKey, e);
+    }
+  }
+
+  private String generateGuestIdentifier(String clientIp, String userAgent) {
+    String combined = clientIp + "|" + (userAgent != null ? userAgent : "");
+    MessageDigest md = getSha256Digest();
+    byte[] hash = md.digest(combined.getBytes(StandardCharsets.UTF_8));
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
+  }
+
+  private MessageDigest getSha256Digest() {
+    try {
+      return MessageDigest.getInstance("SHA-256");
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 algorithm is not available", e);
+    }
   }
 
   /**

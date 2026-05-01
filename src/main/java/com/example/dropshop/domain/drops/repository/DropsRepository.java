@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -92,4 +93,11 @@ public interface DropsRepository extends JpaRepository<Drops, Long> {
    * 특정 상품에 지정 상태의 드랍이 존재하는지 확인한다.
    */
   boolean existsByProductIdAndStatusIn(Long productId, Collection<DropsStatus> statuses);
+
+  /**
+   * 드랍 조회수를 원자적으로 1 증가시킨다.
+   */
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query("update Drops d set d.viewCount = d.viewCount + 1 where d.id = :dropId")
+  int incrementViewCount(@Param("dropId") Long dropId);
 }
