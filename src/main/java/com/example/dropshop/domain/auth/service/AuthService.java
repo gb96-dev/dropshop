@@ -6,6 +6,7 @@ import com.example.dropshop.common.kafka.producer.EventKafkaProducer;
 import com.example.dropshop.domain.auth.dto.request.LoginRequest;
 import com.example.dropshop.domain.auth.dto.response.TokenResponse;
 import com.example.dropshop.domain.auth.entity.RefreshToken;
+import com.example.dropshop.domain.auth.event.UserLoginEvent;
 import com.example.dropshop.domain.auth.exception.AuthException;
 import com.example.dropshop.domain.auth.repository.RefreshTokenRepository;
 import com.example.dropshop.domain.auth.service.TokenBlacklistService;

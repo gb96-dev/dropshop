@@ -3,8 +3,6 @@ package com.example.dropshop.domain.queue.listener;
 import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.READY_QUEUE_GROUP_NAME;
 import static com.example.dropshop.common.constant.kafka.topic.KafkaTopics.TOPIC_READY_QUEUE_TOKEN;
 
-import com.example.dropshop.common.exception.ErrorCode;
-import com.example.dropshop.common.exception.ServiceException;
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
 import com.example.dropshop.domain.queue.entity.Queue;
 import com.example.dropshop.domain.queue.entity.QueueToken;
@@ -36,7 +34,6 @@ public class ReadyQueueTokenListener {
     Queue queue = queueRepository.findByQueue(token).get();
 
     queue.expire();
-
     queueRepository.save(queue);
   }
 }
