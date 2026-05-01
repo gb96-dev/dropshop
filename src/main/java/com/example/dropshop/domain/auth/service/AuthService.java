@@ -2,6 +2,7 @@ package com.example.dropshop.domain.auth.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.jwt.JwtUtil;
+import com.example.dropshop.common.kafka.producer.EventKafkaProducer;
 import com.example.dropshop.domain.auth.dto.request.LoginRequest;
 import com.example.dropshop.domain.auth.dto.response.TokenResponse;
 import com.example.dropshop.domain.auth.entity.RefreshToken;
@@ -28,6 +29,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final TokenBlacklistService tokenBlacklistService;
+    private final EventKafkaProducer eventKafkaProducer;
 
     @Transactional
     public TokenResponse login(LoginRequest request) {
@@ -50,6 +52,9 @@ public class AuthService {
                         existing -> existing.updateToken(hashedToken),
                         () -> refreshTokenRepository.save(new RefreshToken(user.getEmail(), hashedToken))
                 );
+
+        // Kafka 로그인 이벤트 발행
+        eventKafkaProducer.publishUserLogin(UserLoginEvent.of(user.getEmail()));
 
         return new TokenResponse(accessToken, refreshToken);
     }
