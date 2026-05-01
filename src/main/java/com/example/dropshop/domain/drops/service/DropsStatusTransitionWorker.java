@@ -40,7 +40,7 @@ public class DropsStatusTransitionWorker {
       return false;
     }
 
-    DropsStatus fromStatus = drops.getStatus();
+    final DropsStatus fromStatus = drops.getStatus();
     drops.activate();
     productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.ON_SALE);
     registerAfterCommit(() -> dropsStockPreemptionService.preloadStockKey(dropId));
@@ -65,7 +65,7 @@ public class DropsStatusTransitionWorker {
       return false;
     }
 
-    DropsStatus fromStatus = drops.getStatus();
+    final DropsStatus fromStatus = drops.getStatus();
     drops.finish();
     productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
     publishStatusChangedEvent(drops, fromStatus, DropsStatus.FINISHED);
@@ -86,7 +86,11 @@ public class DropsStatusTransitionWorker {
     action.run();
   }
 
-  private void publishStatusChangedEvent(Drops drops, DropsStatus fromStatus, DropsStatus toStatus) {
+  private void publishStatusChangedEvent(
+      Drops drops,
+      DropsStatus fromStatus,
+      DropsStatus toStatus
+  ) {
     DropStatusChangedEvent event = DropStatusChangedEvent.builder()
         .dropId(drops.getId())
         .productId(drops.getProduct().getId())

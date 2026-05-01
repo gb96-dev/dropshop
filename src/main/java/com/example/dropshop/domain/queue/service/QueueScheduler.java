@@ -34,7 +34,7 @@ public class QueueScheduler {
   private final QueueRepository queueRepository;
   private final QueueTokenRepository queueTokenRepository;
   private final StringRedisTemplate stringRedisTemplate;
-  private final KafkaTemplate<String, ThreadHoldResponse> kafkaTemplate;
+  private final KafkaTemplate<String, Object> kafkaTemplate;
   private final ObjectMapper objectMapper;
 
   @Scheduled(fixedRate = 200) // 0.2 polling

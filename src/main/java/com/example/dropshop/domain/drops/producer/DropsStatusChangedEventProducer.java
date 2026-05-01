@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class DropsStatusChangedEventProducer {
 
-  private final KafkaTemplate<String, DropStatusChangedEvent> dropsStatusChangedKafkaTemplate;
+  private final KafkaTemplate<String, Object> kafkaTemplate;
 
   /**
    * 드랍 상태 변경 이벤트를 발행한다.
@@ -24,7 +24,7 @@ public class DropsStatusChangedEventProducer {
   public void send(DropStatusChangedEvent event) {
     String key = String.valueOf(event.getDropId());
     try {
-      dropsStatusChangedKafkaTemplate.send(TOPIC_DROPS_STATUS_CHANGED, key, event)
+      kafkaTemplate.send(TOPIC_DROPS_STATUS_CHANGED, key, event)
           .whenComplete((result, exception) -> {
             if (exception != null) {
               log.warn("드랍 상태 변경 이벤트 발행 실패. dropId={}, from={}, to={}",
