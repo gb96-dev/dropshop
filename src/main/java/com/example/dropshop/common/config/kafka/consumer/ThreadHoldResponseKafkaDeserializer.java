@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 
 /**
  * Kafka value deserializer for {@link ThreadHoldResponse} JSON payloads.
@@ -14,7 +15,9 @@ import org.apache.kafka.common.serialization.Deserializer;
 public class ThreadHoldResponseKafkaDeserializer implements Deserializer<ThreadHoldResponse> {
 
   private static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper().registerModule(new JavaTimeModule());
+      new ObjectMapper()
+        .registerModule(new JavaTimeModule())
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
   @Override
   public void configure(Map<String, ?> configs, boolean isKey) {

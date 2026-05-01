@@ -46,7 +46,8 @@ public class CacheConfig {
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         .activateDefaultTyping(
             BasicPolymorphicTypeValidator.builder()
-                .allowIfSubType(Object.class)
+              .allowIfSubTypeIsArray()
+              .allowIfBaseType("com.example.dropshop.domain")
                 .build(),
             ObjectMapper.DefaultTyping.NON_FINAL
         );

@@ -58,6 +58,7 @@ public class DropsStockPreemptionService {
    * 주문 수량만큼 재고를 선점한다.
    */
   public boolean tryReserve(Long dropId, int quantity) {
+    validatePositiveQuantity(quantity);
     Long reserveResult = executeReserve(dropId, quantity);
     if (reserveResult == null) {
       return false;
@@ -83,6 +84,7 @@ public class DropsStockPreemptionService {
    * <p>키가 없으면 덮어쓰지 않고 다음 요청의 lazy init에 맡긴다.
    */
   public void compensateReservedStock(Long dropId, int quantity) {
+    validatePositiveQuantity(quantity);
     Long increased = executeIncreaseIfExists(dropId, quantity);
     if (!Long.valueOf(1L).equals(increased)) {
       log.debug("Redis 보상 스킵: 키가 없거나 증가 실패. dropId={}, quantity={}", dropId, quantity);
@@ -95,6 +97,7 @@ public class DropsStockPreemptionService {
    * <p>키가 존재하면 INCRBY를 수행하고, 키가 없으면 DB 스냅샷으로 안전하게 선적재한다.
    */
   public void increaseStockAfterRestore(Long dropId, int quantity) {
+    validatePositiveQuantity(quantity);
     Long increased = executeIncreaseIfExists(dropId, quantity);
     if (Long.valueOf(1L).equals(increased)) {
       return;
@@ -151,6 +154,12 @@ public class DropsStockPreemptionService {
 
   private String stockKey(Long dropId) {
     return "stock:drop:" + dropId;
+  }
+
+  private void validatePositiveQuantity(int quantity) {
+    if (quantity <= 0) {
+      throw new IllegalArgumentException("quantity must be greater than 0");
+    }
   }
 }
 
