@@ -48,8 +48,9 @@ public class CacheConfig {
             BasicPolymorphicTypeValidator.builder()
               .allowIfSubTypeIsArray()
               .allowIfBaseType("java.util")
-              .allowIfBaseType("com.example.dropshop.domain")
-              .allowIfBaseType("org.springframework.data.domain")
+              .allowIfSubType("com.example.dropshop.")
+              .allowIfSubType("org.springframework.data.domain.")
+              .allowIfSubType("org.springframework.cache.support.")
                 .build(),
             ObjectMapper.DefaultTyping.NON_FINAL
         );
