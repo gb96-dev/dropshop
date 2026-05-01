@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.order.entity.Order;
@@ -32,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -53,6 +56,9 @@ class PaymentServiceTest {
 
   @Mock
   private TransactionTemplate transactionTemplate;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks
   private PaymentService paymentService;
@@ -90,7 +96,7 @@ class PaymentServiceTest {
   void preparePayment_success() {
     given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
     given(paymentRepository.existsByOrderId(1L)).willReturn(false);
-    given(paymentRepository.existsByMerchantPaymentId("payment-test-123")).willReturn(false);
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123")).willReturn(Optional.empty());
     given(paymentRepository.save(any(Payment.class))).willAnswer(invocation -> invocation.getArgument(0));
 
     Payment result = paymentService.preparePayment(
@@ -110,8 +116,10 @@ class PaymentServiceTest {
   @DisplayName("결제 준비 실패 - merchantPaymentId가 중복이면 예외가 발생한다")
   void preparePayment_merchantPaymentIdConflict_throwsException() {
     given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
-    given(paymentRepository.existsByOrderId(1L)).willReturn(false);
-    given(paymentRepository.existsByMerchantPaymentId("payment-test-123")).willReturn(true);
+    Payment existingPayment =
+        Payment.prepare(999L, "payment-test-123", PaymentMethod.TRANSFER, new BigDecimal("1000"));
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.of(existingPayment));
 
     assertThatThrownBy(() -> paymentService.preparePayment(
         "test@test.com",
@@ -122,6 +130,26 @@ class PaymentServiceTest {
     )).isInstanceOf(PaymentException.class);
 
     verify(paymentRepository, never()).save(any(Payment.class));
+  }
+
+  @Test
+  @DisplayName("결제 준비 재시도 - 같은 merchantPaymentId와 같은 요청이면 기존 결제를 반환한다")
+  void preparePayment_sameMerchantPaymentId_returnsExistingPayment() {
+    given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.of(payment));
+
+    Payment result = paymentService.preparePayment(
+        "test@test.com",
+        1L,
+        new BigDecimal("79000"),
+        "payment-test-123",
+        PaymentMethod.CARD
+    );
+
+    assertThat(result).isSameAs(payment);
+    verify(paymentRepository, never()).save(any(Payment.class));
+    verify(paymentRepository, never()).existsByOrderId(any());
   }
 
   @Test
@@ -141,6 +169,8 @@ class PaymentServiceTest {
     assertThat(result.getPortOneTransactionId()).isEqualTo("tx-123");
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
+    verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
+    verify(eventPublisher, times(1)).publishEvent(any());
   }
 
   @Test
@@ -158,6 +188,7 @@ class PaymentServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     verify(orderFacadeService, times(1)).cancelOrderByPaymentFailure(order);
+    verify(eventPublisher, times(1)).publishEvent(any());
   }
 
   @Test
@@ -174,6 +205,7 @@ class PaymentServiceTest {
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     verify(portOneClient, never()).getPayment(any());
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
+    verify(eventPublisher, never()).publishEvent(any());
   }
 
   @Test

@@ -1,5 +1,6 @@
 package com.example.dropshop.common.config.kafka.produce;
 
+import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.drops.event.DropStatusChangedEvent;
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
 import java.util.HashMap;
@@ -25,6 +26,19 @@ public class KafkaProducerConfig {
   @Value("${spring.kafka.bootstrap-servers}")
   private String bootstrapServers;
 
+  @Bean
+  public ProducerFactory<String, ThreadHoldResponse> eventProducerFactory() {
+    return new DefaultKafkaProducerFactory<>(producerProperties());
+  }
+
+  @Bean
+  public ProducerFactory<String, PaymentStatusChangedEvent> paymentEventProducerFactory() {
+    return new DefaultKafkaProducerFactory<>(producerProperties());
+  }
+
+  private Map<String, Object> producerProperties() {
+    Map<String, Object> props = new HashMap<>();
+
   private Map<String, Object> producerConfigs() {
     Map<String, Object> props = new HashMap<>();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -33,6 +47,7 @@ public class KafkaProducerConfig {
     return props;
   }
 
+    return props;
   @Bean
   public ProducerFactory<String, ThreadHoldResponse> eventProducerFactory() {
     return new DefaultKafkaProducerFactory<>(producerConfigs());
@@ -44,6 +59,8 @@ public class KafkaProducerConfig {
   }
 
   @Bean
+  public KafkaTemplate<String, PaymentStatusChangedEvent> paymentEventKafkaTemplate() {
+    return new KafkaTemplate<>(paymentEventProducerFactory());
   public ProducerFactory<String, DropStatusChangedEvent> dropsStatusChangedEventProducerFactory() {
     return new DefaultKafkaProducerFactory<>(producerConfigs());
   }

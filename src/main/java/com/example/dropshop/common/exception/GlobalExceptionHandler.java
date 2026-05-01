@@ -53,6 +53,22 @@ public class GlobalExceptionHandler {
   }
 
   /**
+   * 잘못된 요청값 또는 도메인 상태 예외를 처리한다.
+   */
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<ExceptionResponse> handleIllegalArgumentException(
+      IllegalArgumentException e,
+      HttpServletRequest request
+  ) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(ExceptionResponse.from(
+            HttpStatus.BAD_REQUEST.value(),
+            e.getMessage(),
+            request.getRequestURI()
+        ));
+  }
+
+  /**
    * 처리되지 않은 예외 공통 처리.
    */
   @ExceptionHandler(Exception.class)
