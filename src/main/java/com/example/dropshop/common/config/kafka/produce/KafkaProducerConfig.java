@@ -33,12 +33,12 @@ public class KafkaProducerConfig {
 
   @Bean
   public ProducerFactory<String, OrderStatusChangedEvent> orderEventProducerFactory() {
-    return new DefaultKafkaProducerFactory<>(producerProperties());
+    return new DefaultKafkaProducerFactory<>(producerConfigs());
   }
 
   @Bean
   public ProducerFactory<String, StockRestoreEvent> orderStockRestoreProducerFactory() {
-    return new DefaultKafkaProducerFactory<>(producerProperties());
+    return new DefaultKafkaProducerFactory<>(producerConfigs());
   }
 
   private Map<String, Object> producerConfigs() {

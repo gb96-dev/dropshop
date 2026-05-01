@@ -5,6 +5,9 @@ package com.example.dropshop.common.constant.kafka.topic;
  */
 public class KafkaTopics {
 
+  public static final String TOPIC_USER_LOGIN = "user-login";
+  public static final String TOPIC_USER_SIGNUP = "user-signup";
+  public static final String TOPIC_SELLER_APPLY = "seller-apply";
   public static final String TOPIC_QUEUE_TOKEN = "queue-token";
   public static final String TOPIC_READY_QUEUE_TOKEN = "ready-queue-token";
   public static final String TOPIC_PAYMENT_COMPLETED = "payment.completed";
