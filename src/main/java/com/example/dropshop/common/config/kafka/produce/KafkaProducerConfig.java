@@ -1,5 +1,7 @@
 package com.example.dropshop.common.config.kafka.produce;
 
+import com.example.dropshop.domain.order.event.OrderStatusChangedEvent;
+import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
 import java.util.HashMap;
@@ -35,6 +37,16 @@ public class KafkaProducerConfig {
     return new DefaultKafkaProducerFactory<>(producerProperties());
   }
 
+  @Bean
+  public ProducerFactory<String, OrderStatusChangedEvent> orderEventProducerFactory() {
+    return new DefaultKafkaProducerFactory<>(producerProperties());
+  }
+
+  @Bean
+  public ProducerFactory<String, StockRestoreEvent> orderStockRestoreProducerFactory() {
+    return new DefaultKafkaProducerFactory<>(producerProperties());
+  }
+
   private Map<String, Object> producerProperties() {
     Map<String, Object> props = new HashMap<>();
 
@@ -53,5 +65,15 @@ public class KafkaProducerConfig {
   @Bean
   public KafkaTemplate<String, PaymentStatusChangedEvent> paymentEventKafkaTemplate() {
     return new KafkaTemplate<>(paymentEventProducerFactory());
+  }
+
+  @Bean
+  public KafkaTemplate<String, OrderStatusChangedEvent> orderEventKafkaTemplate() {
+    return new KafkaTemplate<>(orderEventProducerFactory());
+  }
+
+  @Bean
+  public KafkaTemplate<String, StockRestoreEvent> orderStockRestoreKafkaTemplate() {
+    return new KafkaTemplate<>(orderStockRestoreProducerFactory());
   }
 }

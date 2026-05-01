@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
+import com.example.dropshop.domain.order.event.OrderStatusChangedEvent;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
@@ -182,10 +183,17 @@ class OrderServiceTest {
 
     assertThat(expiredOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
 
-    ArgumentCaptor<StockRestoreEvent> eventCaptor =
-        ArgumentCaptor.forClass(StockRestoreEvent.class);
-    verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
-    assertThat(eventCaptor.getValue().getDropId()).isEqualTo(dropId);
+    ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+    verify(eventPublisher, times(2)).publishEvent(eventCaptor.capture());
+    List<Object> events = eventCaptor.getAllValues();
+    assertThat(events).anySatisfy(event -> {
+      assertThat(event).isInstanceOf(OrderStatusChangedEvent.class);
+      assertThat(((OrderStatusChangedEvent) event).getOrderStatus()).isEqualTo(OrderStatus.CANCELLED);
+    });
+    assertThat(events).anySatisfy(event -> {
+      assertThat(event).isInstanceOf(StockRestoreEvent.class);
+      assertThat(((StockRestoreEvent) event).getDropId()).isEqualTo(dropId);
+    });
   }
 
   @Test
@@ -223,10 +231,17 @@ class OrderServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
 
-    ArgumentCaptor<StockRestoreEvent> eventCaptor =
-        ArgumentCaptor.forClass(StockRestoreEvent.class);
-    verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
-    assertThat(eventCaptor.getValue().getQuantity()).isEqualTo(1);
+    ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+    verify(eventPublisher, times(2)).publishEvent(eventCaptor.capture());
+    List<Object> events = eventCaptor.getAllValues();
+    assertThat(events).anySatisfy(event -> {
+      assertThat(event).isInstanceOf(OrderStatusChangedEvent.class);
+      assertThat(((OrderStatusChangedEvent) event).getOrderStatus()).isEqualTo(OrderStatus.CANCELLED);
+    });
+    assertThat(events).anySatisfy(event -> {
+      assertThat(event).isInstanceOf(StockRestoreEvent.class);
+      assertThat(((StockRestoreEvent) event).getQuantity()).isEqualTo(1);
+    });
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
   }
 
@@ -266,10 +281,32 @@ class OrderServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(OrderStatus.REFUNDED);
 
-    ArgumentCaptor<StockRestoreEvent> eventCaptor =
-        ArgumentCaptor.forClass(StockRestoreEvent.class);
+    ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+    verify(eventPublisher, times(2)).publishEvent(eventCaptor.capture());
+    List<Object> events = eventCaptor.getAllValues();
+    assertThat(events).anySatisfy(event -> {
+      assertThat(event).isInstanceOf(OrderStatusChangedEvent.class);
+      assertThat(((OrderStatusChangedEvent) event).getOrderStatus()).isEqualTo(OrderStatus.REFUNDED);
+    });
+    assertThat(events).anySatisfy(event -> {
+      assertThat(event).isInstanceOf(StockRestoreEvent.class);
+      assertThat(((StockRestoreEvent) event).getQuantity()).isEqualTo(1);
+    });
+  }
+
+  @Test
+  @DisplayName("결제 완료 시 주문 상태 변경 이벤트가 발행된다")
+  void payOrder_success() {
+    Order order = createPendingOrder();
+
+    Order result = orderService.payOrder(order);
+
+    assertThat(result.getStatus()).isEqualTo(OrderStatus.PAID);
+    ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
     verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
-    assertThat(eventCaptor.getValue().getQuantity()).isEqualTo(1);
+    assertThat(eventCaptor.getValue()).isInstanceOf(OrderStatusChangedEvent.class);
+    assertThat(((OrderStatusChangedEvent) eventCaptor.getValue()).getOrderStatus())
+        .isEqualTo(OrderStatus.PAID);
   }
 
   @Test

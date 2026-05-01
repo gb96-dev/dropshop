@@ -6,6 +6,7 @@ import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
+import com.example.dropshop.domain.order.event.OrderStatusChangedEvent;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
@@ -27,6 +28,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Service
 @RequiredArgsConstructor
 public class OrderService {
+
+  private static final String SOURCE_MANUAL_CANCEL = "MANUAL_CANCEL";
+  private static final String SOURCE_EXPIRED_SCHEDULER = "EXPIRED_SCHEDULER";
+  private static final String SOURCE_PAYMENT_FAILURE = "PAYMENT_FAILURE";
+  private static final String SOURCE_PAYMENT_COMPLETED = "PAYMENT_COMPLETED";
+  private static final String SOURCE_REFUND_COMPLETED = "REFUND_COMPLETED";
 
   private final OrderRepository orderRepository;
   private final ApplicationEventPublisher eventPublisher;
@@ -111,6 +118,7 @@ public class OrderService {
     order.getOrderItems().forEach(item ->
         popularProductRedisService.incrementScore(item.getProductId(), item.getQuantity())
     );
+    publishOrderStatusChanged(order, SOURCE_PAYMENT_COMPLETED);
     return order;
   }
 
@@ -123,7 +131,8 @@ public class OrderService {
   @Transactional
   public Order refundOrder(Order order) {
     order.refund();
-    restoreDropStock(order);
+    publishOrderStatusChanged(order, SOURCE_REFUND_COMPLETED);
+    restoreDropStock(order, SOURCE_REFUND_COMPLETED);
     return order;
   }
 
@@ -132,8 +141,13 @@ public class OrderService {
    */
   @Transactional
   public Order cancelOrderAndRestoreStock(Order order) {
+    return cancelOrderAndRestoreStock(order, SOURCE_PAYMENT_FAILURE);
+  }
+
+  private Order cancelOrderAndRestoreStock(Order order, String source) {
     order.cancel();
-    restoreDropStock(order);
+    publishOrderStatusChanged(order, source);
+    restoreDropStock(order, source);
     return order;
   }
 
@@ -149,17 +163,23 @@ public class OrderService {
         .forEach(this::cancelExpiredOrderSafely);
   }
 
-  private void restoreDropStock(Order order) {
+  private void restoreDropStock(Order order, String source) {
     int restoreQuantity = order.getOrderItems().stream()
         .mapToInt(OrderItem::getQuantity)
         .sum();
-    eventPublisher.publishEvent(new StockRestoreEvent(order.getDropId(), restoreQuantity));
+    eventPublisher.publishEvent(new StockRestoreEvent(
+        order.getId(),
+        order.getDropId(),
+        restoreQuantity,
+        order.getStatus(),
+        source
+    ));
   }
 
   private Order cancelOrderInternal(Long orderId, Long userId) {
     Order order = orderRepository.findByIdAndUserId(orderId, userId)
         .orElseThrow(() -> new OrderException(ErrorCode.ORDER_NOT_FOUND));
-    return cancelOrderAndRestoreStock(order);
+    return cancelOrderAndRestoreStock(order, SOURCE_MANUAL_CANCEL);
   }
 
   private void cancelExpiredOrderSafely(Long orderId) {
@@ -180,7 +200,11 @@ public class OrderService {
       return;
     }
 
-    cancelOrderAndRestoreStock(order);
+    cancelOrderAndRestoreStock(order, SOURCE_EXPIRED_SCHEDULER);
+  }
+
+  private void publishOrderStatusChanged(Order order, String source) {
+    eventPublisher.publishEvent(new OrderStatusChangedEvent(order, source));
   }
 
 }
