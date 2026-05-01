@@ -24,6 +24,7 @@ public class DropsStatusTransitionWorker {
 
   private final DropsService dropsService;
   private final ProductDomainFacadeService productDomainFacadeService;
+  private final DropsStockPreemptionService dropsStockPreemptionService;
   private final DropsStatusChangedEventProducer dropsStatusChangedEventProducer;
 
   /**
@@ -42,6 +43,7 @@ public class DropsStatusTransitionWorker {
     DropsStatus fromStatus = drops.getStatus();
     drops.activate();
     productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.ON_SALE);
+    registerAfterCommit(() -> dropsStockPreemptionService.preloadStockKey(dropId));
     publishStatusChangedEvent(
         drops,
         fromStatus,
@@ -68,6 +70,20 @@ public class DropsStatusTransitionWorker {
     productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.OUT_OF_STOCK);
     publishStatusChangedEvent(drops, fromStatus, DropsStatus.FINISHED);
     return true;
+  }
+
+  private void registerAfterCommit(Runnable action) {
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+          action.run();
+        }
+      });
+      return;
+    }
+
+    action.run();
   }
 
   private void publishStatusChangedEvent(Drops drops, DropsStatus fromStatus, DropsStatus toStatus) {

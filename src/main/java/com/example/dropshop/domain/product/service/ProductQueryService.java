@@ -1,5 +1,6 @@
 package com.example.dropshop.domain.product.service;
 
+import com.example.dropshop.common.config.CacheNames;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.drops.entity.Drops;
 import com.example.dropshop.domain.drops.service.DropsFacadeService;
@@ -21,6 +22,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -49,7 +51,14 @@ public class ProductQueryService {
 
   /**
    * 공개 상품 목록을 조회한다.
+   *
+   * <p>동일 파라미터(status, sort, page, size)로 반복 요청 시 Redis 캐시에서 반환한다.
+   * TTL: 30초 / 상품·드랍 변경 시 {@code product:list} 캐시 전체 무효화.
    */
+  @Cacheable(
+      value = CacheNames.PRODUCT_LIST,
+      key = "'status=' + #status + ':sort=' + #sort + ':page=' + #pageable.pageNumber + ':size=' + #pageable.pageSize"
+  )
   @Transactional(readOnly = true)
   public Page<ProductListItemResponse> findPublicProducts(
       String status,
@@ -73,7 +82,11 @@ public class ProductQueryService {
 
   /**
    * 공개 상품 상세를 조회한다.
+   *
+   * <p>상품 ID 기준으로 Redis 캐시에서 반환한다.
+   * TTL: 60초 / 상품 수정·이미지 변경·드랍 변경 시 해당 상품 캐시 무효화.
    */
+  @Cacheable(value = CacheNames.PRODUCT_DETAIL, key = "#productId")
   @Transactional(readOnly = true)
   public ProductDetailResponse findPublicProductDetail(Long productId) {
     Product product = productRepository.findDetailById(productId)
