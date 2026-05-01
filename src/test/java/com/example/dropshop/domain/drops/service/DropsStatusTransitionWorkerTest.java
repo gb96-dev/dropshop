@@ -35,24 +35,32 @@ class DropsStatusTransitionWorkerTest {
   private ProductDomainFacadeService productDomainFacadeService;
 
   @Mock
+  private DropsStockPreemptionService dropsStockPreemptionService;
+
+  @Mock
   private DropsStatusChangedEventProducer dropsStatusChangedEventProducer;
 
   @InjectMocks
   private DropsStatusTransitionWorker worker;
 
   @Test
-  @DisplayName("SCHEDULED 드랍을 ACTIVE로 전이하면 상태 변경 이벤트를 발행한다")
-  void transitionScheduledDrop_publishEvent() {
+  @DisplayName("SCHEDULED 드랍을 ACTIVE로 전이하면 상태 이벤트를 발행하고 Redis 키를 선적재한다")
+  void transitionScheduledDrop_publishEventAndPreloadKey() {
     Drops drops = createDrop(1L, DropsStatus.SCHEDULED);
     given(dropsService.findById(1L)).willReturn(drops);
 
     boolean transitioned = worker.transitionScheduledDrop(1L);
 
     assertThat(transitioned).isTrue();
-    verify(productDomainFacadeService).updateStatusByDrop(eq(drops.getProduct()), eq(ProductStatus.ON_SALE));
+    assertThat(drops.isActive()).isTrue();
+    verify(productDomainFacadeService)
+        .updateStatusByDrop(eq(drops.getProduct()), eq(ProductStatus.ON_SALE));
+    verify(dropsStockPreemptionService).preloadStockKey(1L);
 
-    ArgumentCaptor<DropStatusChangedEvent> eventCaptor = ArgumentCaptor.forClass(DropStatusChangedEvent.class);
+    ArgumentCaptor<DropStatusChangedEvent> eventCaptor =
+        ArgumentCaptor.forClass(DropStatusChangedEvent.class);
     verify(dropsStatusChangedEventProducer).send(eventCaptor.capture());
+
     DropStatusChangedEvent event = eventCaptor.getValue();
     assertThat(event.getDropId()).isEqualTo(1L);
     assertThat(event.getProductId()).isEqualTo(drops.getProduct().getId());
@@ -70,10 +78,13 @@ class DropsStatusTransitionWorkerTest {
     boolean transitioned = worker.transitionActiveDrop(2L);
 
     assertThat(transitioned).isTrue();
-    verify(productDomainFacadeService).updateStatusByDrop(eq(drops.getProduct()), eq(ProductStatus.OUT_OF_STOCK));
+    verify(productDomainFacadeService)
+        .updateStatusByDrop(eq(drops.getProduct()), eq(ProductStatus.OUT_OF_STOCK));
 
-    ArgumentCaptor<DropStatusChangedEvent> eventCaptor = ArgumentCaptor.forClass(DropStatusChangedEvent.class);
+    ArgumentCaptor<DropStatusChangedEvent> eventCaptor =
+        ArgumentCaptor.forClass(DropStatusChangedEvent.class);
     verify(dropsStatusChangedEventProducer).send(eventCaptor.capture());
+
     DropStatusChangedEvent event = eventCaptor.getValue();
     assertThat(event.getDropId()).isEqualTo(2L);
     assertThat(event.getFromStatus()).isEqualTo(DropsStatus.ACTIVE);
@@ -82,12 +93,26 @@ class DropsStatusTransitionWorkerTest {
   }
 
   @Test
-  @DisplayName("전이 조건에 맞지 않으면 이벤트를 발행하지 않는다")
+  @DisplayName("전이 조건에 맞지 않으면 전이/이벤트/선적재를 모두 수행하지 않는다")
   void transitionScheduledDrop_notScheduled_skip() {
-    Drops drops = createDrop(3L, DropsStatus.ACTIVE);
-    given(dropsService.findById(3L)).willReturn(drops);
+    Drops activeDrop = createDrop(3L, DropsStatus.ACTIVE);
+    given(dropsService.findById(3L)).willReturn(activeDrop);
 
     boolean transitioned = worker.transitionScheduledDrop(3L);
+
+    assertThat(transitioned).isFalse();
+    verify(productDomainFacadeService, never()).updateStatusByDrop(any(), any());
+    verify(dropsStockPreemptionService, never()).preloadStockKey(3L);
+    verify(dropsStatusChangedEventProducer, never()).send(any());
+  }
+
+  @Test
+  @DisplayName("ACTIVE가 아닌 드랍은 FINISHED 전이와 이벤트 발행을 수행하지 않는다")
+  void transitionActiveDrop_notActive_skip() {
+    Drops scheduledDrop = createDrop(4L, DropsStatus.SCHEDULED);
+    given(dropsService.findById(4L)).willReturn(scheduledDrop);
+
+    boolean transitioned = worker.transitionActiveDrop(4L);
 
     assertThat(transitioned).isFalse();
     verify(productDomainFacadeService, never()).updateStatusByDrop(any(), any());
@@ -99,28 +124,24 @@ class DropsStatusTransitionWorkerTest {
         1L,
         "테스트 상품",
         "TEST",
-        new BigDecimal("10000"),
-        0,
+        new BigDecimal("100000"),
         10,
+        100,
         "https://example.com/thumb.jpg",
-        "설명",
-        "스펙",
-        "배송",
-        "환불"
+        "상품 설명",
+        "상품 상세",
+        "배송 안내",
+        "환불 정책"
     );
     ReflectionTestUtils.setField(product, "id", 100L + dropId);
 
     LocalDateTime now = LocalDateTime.now();
     Drops drops = Drops.create(product, now.minusHours(1), now.plusHours(1), 10L, 1L, false);
     ReflectionTestUtils.setField(drops, "id", dropId);
-
-    if (status == DropsStatus.ACTIVE) {
-      drops.activate();
-    } else if (status == DropsStatus.FINISHED) {
-      drops.finish();
-    }
+    ReflectionTestUtils.setField(drops, "status", status);
 
     return drops;
   }
 }
+
 

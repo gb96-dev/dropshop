@@ -19,4 +19,8 @@ public final class LockKeys {
   public static String refund(Long refundId) {
     return "lock:refund:" + refundId;
   }
+
+  public static String dropStock(Long dropId) {
+    return "lock:drop:stock:" + dropId;
+  }
 }

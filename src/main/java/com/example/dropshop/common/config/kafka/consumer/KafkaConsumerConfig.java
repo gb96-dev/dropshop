@@ -55,14 +55,13 @@ public class KafkaConsumerConfig {
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     props.put(ConsumerConfig.GROUP_ID_CONFIG, groupName);
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+    props.put(
+        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+        ThreadHoldResponseKafkaDeserializer.class
+    );
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     return props;
-  }
-
-  private JsonDeserializer<ThreadHoldResponse> getJsonDeserializerWithThreadHoldResponse() {
-    return new JsonDeserializer<>(ThreadHoldResponse.class);
   }
 
   @Bean
@@ -70,7 +69,7 @@ public class KafkaConsumerConfig {
     return new DefaultKafkaConsumerFactory<>(
         getConsumerConfig(QUEUE_GROUP_NAME),
         new StringDeserializer(),
-        getJsonDeserializerWithThreadHoldResponse()
+        new ThreadHoldResponseKafkaDeserializer()
     );
   }
 
@@ -88,7 +87,7 @@ public class KafkaConsumerConfig {
     return new DefaultKafkaConsumerFactory<>(
         getConsumerConfig(READY_QUEUE_GROUP_NAME),
         new StringDeserializer(),
-        getJsonDeserializerWithThreadHoldResponse()
+        new ThreadHoldResponseKafkaDeserializer()
     );
   }
 

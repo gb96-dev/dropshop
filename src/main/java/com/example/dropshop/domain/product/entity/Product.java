@@ -17,6 +17,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -118,6 +119,13 @@ public class Product extends BaseEntity {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)
   private ProductStatus status;
+
+  /**
+   * 낙관적 락 버전 필드.
+   * 이미지/상태/가격 동시 수정 시 lost update(덮어쓰기)를 방지한다.
+   */
+  @Version
+  private Long version;
 
   /**
    * 상품 이미지 목록 (최대 {@value MAX_IMAGE_COUNT}개).

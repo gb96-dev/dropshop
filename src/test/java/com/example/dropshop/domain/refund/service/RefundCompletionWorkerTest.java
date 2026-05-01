@@ -82,21 +82,21 @@ class RefundCompletionWorkerTest {
         refundCompletionWorker.prepareRefundCompletion(1L, "test@test.com");
 
     assertThat(refund.getStatus()).isEqualTo(RefundStatus.PROCESSING);
-    assertThat(command.portOneTransactionId()).isEqualTo("tx-123");
+    assertThat(command.portOnePaymentId()).isEqualTo("payment-test-123");
     assertThat(command.refundReason()).isEqualTo("단순 변심");
   }
 
   @Test
-  @DisplayName("환불 완료 준비 시 portOneTransactionId가 없으면 예외가 발생한다")
-  void prepareRefundCompletion_withoutPortOneTransactionId_throwsException() {
-    Payment paymentWithoutPortOneTransactionId =
+  @DisplayName("환불 완료 준비 시 portOnePaymentId가 없으면 예외가 발생한다")
+  void prepareRefundCompletion_withoutPortOnePaymentId_throwsException() {
+    Payment paymentWithoutPortOnePaymentId =
         Payment.prepare(1L, "payment-test-123", PaymentMethod.CARD, new BigDecimal("79000"));
-    ReflectionTestUtils.setField(paymentWithoutPortOneTransactionId, "id", 1L);
-    paymentWithoutPortOneTransactionId.complete("tx-123");
-    ReflectionTestUtils.setField(paymentWithoutPortOneTransactionId, "portOneTransactionId", " ");
+    ReflectionTestUtils.setField(paymentWithoutPortOnePaymentId, "id", 1L);
+    paymentWithoutPortOnePaymentId.complete("tx-123");
+    ReflectionTestUtils.setField(paymentWithoutPortOnePaymentId, "merchantPaymentId", " ");
 
     given(refundRepository.findById(1L)).willReturn(Optional.of(refund));
-    given(paymentRepository.findById(1L)).willReturn(Optional.of(paymentWithoutPortOneTransactionId));
+    given(paymentRepository.findById(1L)).willReturn(Optional.of(paymentWithoutPortOnePaymentId));
 
     assertThatThrownBy(() -> refundCompletionWorker.prepareRefundCompletion(1L, "test@test.com"))
         .isInstanceOf(PaymentException.class)

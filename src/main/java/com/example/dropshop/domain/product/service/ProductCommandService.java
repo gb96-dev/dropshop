@@ -1,5 +1,6 @@
 package com.example.dropshop.domain.product.service;
 
+import com.example.dropshop.common.config.CacheNames;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.product.common.service.ProductPolicyService;
 import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
@@ -18,6 +19,8 @@ import com.example.dropshop.domain.product.validator.ProductValidator;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -82,6 +85,10 @@ public class ProductCommandService {
   /**
    * 판매자 상품 정보를 수정한다.
    */
+  @Caching(evict = {
+      @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
+      @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#productId")
+  })
   @Transactional
   public ProductCreateResponse updateSellerProduct(
       Long productId,
@@ -134,6 +141,10 @@ public class ProductCommandService {
   /**
    * 판매자 상품 상태를 수동 변경한다.
    */
+  @Caching(evict = {
+      @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
+      @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#productId")
+  })
   @Transactional
   public ProductCreateResponse changeSellerProductStatus(
       Long productId,
@@ -157,6 +168,10 @@ public class ProductCommandService {
   /**
    * 판매자 상품을 삭제한다.
    */
+  @Caching(evict = {
+      @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
+      @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#productId")
+  })
   @Transactional
   public void deleteSellerProduct(
       Long productId,
@@ -179,6 +194,10 @@ public class ProductCommandService {
   /**
    * 판매자 상품 이미지를 추가한다.
    */
+  @Caching(evict = {
+      @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
+      @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#productId")
+  })
   @Transactional
   public ProductImageResponse createSellerProductImage(
       Long productId,
@@ -210,6 +229,7 @@ public class ProductCommandService {
   /**
    * 판매자 상품 이미지를 수정한다.
    */
+  @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#productId")
   @Transactional
   public ProductImageResponse updateSellerProductImage(
       Long productId,
@@ -243,6 +263,7 @@ public class ProductCommandService {
   /**
    * 판매자 상품 이미지를 삭제한다.
    */
+  @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#productId")
   @Transactional
   public void deleteSellerProductImage(
       Long productId,
