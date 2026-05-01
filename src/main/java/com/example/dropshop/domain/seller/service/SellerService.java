@@ -1,9 +1,11 @@
 package com.example.dropshop.domain.seller.service;
 
+import com.example.dropshop.common.kafka.producer.EventKafkaProducer;
 import com.example.dropshop.domain.seller.dto.request.SellerApplyRequest;
 import com.example.dropshop.domain.seller.dto.request.SellerUpdateRequest;
 import com.example.dropshop.domain.seller.dto.response.SellerResponse;
 import com.example.dropshop.domain.seller.entity.Seller;
+import com.example.dropshop.domain.seller.event.SellerAppliedEvent;
 import com.example.dropshop.domain.seller.repository.SellerRepository;
 import com.example.dropshop.domain.user.entity.User;
 import com.example.dropshop.domain.user.repository.UserRepository;
@@ -18,6 +20,7 @@ public class SellerService {
 
     private final SellerRepository sellerRepository;
     private final UserRepository userRepository;
+    private final EventKafkaProducer eventKafkaProducer;
 
     @Transactional
     public SellerResponse applySeller(String email, SellerApplyRequest request) {
@@ -47,7 +50,13 @@ public class SellerService {
                 .accountInfo(request.getAccountInfo())
                 .build();
 
-        return new SellerResponse(sellerRepository.save(seller));
+        SellerResponse response = new SellerResponse(sellerRepository.save(seller));
+
+        // Kafka 판매자 신청 이벤트 발행
+        eventKafkaProducer.publishSellerApply(
+                SellerAppliedEvent.of(email, request.getCompanyName(), request.getBusinessNo()));
+
+        return response;
     }
 
     public SellerResponse getMySellerStatus(String email) {
