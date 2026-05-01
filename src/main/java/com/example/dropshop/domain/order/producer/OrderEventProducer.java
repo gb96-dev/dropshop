@@ -37,12 +37,13 @@ public class OrderEventProducer {
   }
 
   private String resolveStatusTopic(OrderStatusChangedEvent event) {
-    if (event.getOrderStatus() == OrderStatus.PAID) {
-      return TOPIC_ORDER_PAID;
-    }
-    if (event.getOrderStatus() == OrderStatus.CANCELLED) {
-      return TOPIC_ORDER_CANCELLED;
-    }
-    return TOPIC_ORDER_REFUNDED;
+    return switch (event.getOrderStatus()) {
+      case PAID -> TOPIC_ORDER_PAID;
+      case CANCELLED -> TOPIC_ORDER_CANCELLED;
+      case REFUNDED -> TOPIC_ORDER_REFUNDED;
+      default -> throw new IllegalStateException(
+          "Unsupported order status for Kafka event: " + event.getOrderStatus()
+      );
+    };
   }
 }
