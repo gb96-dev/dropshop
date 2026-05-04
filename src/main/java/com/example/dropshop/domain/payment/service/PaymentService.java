@@ -182,7 +182,7 @@ public class PaymentService {
     if ("PAID".equals(portOnePayment.status())) {
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
-      publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API");
+      publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API", order.getUserId());
       return;
     }
 
@@ -191,7 +191,7 @@ public class PaymentService {
       if (order.getStatus() == OrderStatus.PENDING) {
         orderFacadeService.cancelOrderByPaymentFailure(order);
       }
-      publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API");
+      publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API", order.getUserId());
       return;
     }
 
@@ -253,8 +253,9 @@ public class PaymentService {
   private void publishPaymentStatusChanged(
       Payment payment,
       OrderStatus orderStatus,
-      String source
+      String source,
+      Long buyerUserId
   ) {
-    eventPublisher.publishEvent(new PaymentStatusChangedEvent(payment, orderStatus, source));
+    eventPublisher.publishEvent(new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
   }
 }

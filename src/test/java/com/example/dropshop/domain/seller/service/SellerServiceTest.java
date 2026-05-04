@@ -42,7 +42,7 @@ class SellerServiceTest {
 
     @BeforeEach
     void setUp() {
-        // User.signup() 정적 팩토리 메서드를 사용하여 가짜 유저 생성
+        // User 엔티티의 @Builder를 사용하여 가짜 유저 생성
         testUser = User.signup("test@test.com", "password123!", "테스트닉네임");
 
         // SellerApplyRequest DTO의 생성자를 사용하여 가짜 요청 생성

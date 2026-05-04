@@ -24,6 +24,8 @@ public class PaymentStatusChangedEvent {
   private final OrderStatus orderStatus;
   private final String source;
   private final String occurredAt;
+  /** 구매자 userId — 월별 순 구매자 수(HyperLogLog) 집계에 사용한다. */
+  private final Long buyerUserId;
 
   /**
    * 결제 상태 변경 이벤트를 생성한다.
@@ -31,8 +33,9 @@ public class PaymentStatusChangedEvent {
    * @param payment 결제 엔티티
    * @param orderStatus 변경 이후 주문 상태
    * @param source 이벤트 발생 출처
+   * @param buyerUserId 구매자 userId
    */
-  public PaymentStatusChangedEvent(Payment payment, OrderStatus orderStatus, String source) {
+  public PaymentStatusChangedEvent(Payment payment, OrderStatus orderStatus, String source, Long buyerUserId) {
     this.paymentId = payment.getId();
     this.orderId = payment.getOrderId();
     this.merchantPaymentId = payment.getMerchantPaymentId();
@@ -43,6 +46,7 @@ public class PaymentStatusChangedEvent {
     this.orderStatus = orderStatus;
     this.source = source;
     this.occurredAt = LocalDateTime.now().toString();
+    this.buyerUserId = buyerUserId;
   }
 
   /**

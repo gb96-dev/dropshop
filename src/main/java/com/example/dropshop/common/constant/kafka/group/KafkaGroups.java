@@ -14,4 +14,7 @@ public class KafkaGroups {
 
   // 판매자 신청 이벤트 그룹
   public static final String SELLER_APPLY_GROUP_NAME = "seller-apply-group";
+
+  // 결제 통계 이벤트 그룹
+  public static final String PAYMENT_STATS_GROUP_NAME = "payment-stats-group";
 }
