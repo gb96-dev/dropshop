@@ -8,6 +8,7 @@ import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
+import com.example.dropshop.domain.payment.outbox.PaymentOutboxPublisher;
 import com.example.dropshop.domain.payment.client.PortOneClient;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
@@ -18,7 +19,6 @@ import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import java.math.BigDecimal;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -34,7 +34,7 @@ public class PaymentService {
   private final PortOneClient portOneClient;
   private final RedisLockService redisLockService;
   private final TransactionTemplate transactionTemplate;
-  private final ApplicationEventPublisher eventPublisher;
+  private final PaymentOutboxPublisher paymentOutboxPublisher;
 
   public record PaymentConfirmResult(Payment payment, OrderStatus orderStatus) {
   }
@@ -250,12 +250,18 @@ public class PaymentService {
     return "FAILED".equals(status) || "CANCELLED".equals(status);
   }
 
+  /**
+   * 결제 상태 변경 이벤트를 아웃박스 테이블에 저장한다.
+   *
+   * <p>현재 DB 트랜잭션에 참여하므로 결제 상태 변경과 이벤트 저장이 원자적으로 커밋된다.
+   * Kafka 발행은 {@link PaymentOutboxPublisher#publishPending()} 스케줄러가 담당한다.
+   */
   private void publishPaymentStatusChanged(
       Payment payment,
       OrderStatus orderStatus,
       String source,
       Long buyerUserId
   ) {
-    eventPublisher.publishEvent(new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
+    paymentOutboxPublisher.save(new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
   }
 }
