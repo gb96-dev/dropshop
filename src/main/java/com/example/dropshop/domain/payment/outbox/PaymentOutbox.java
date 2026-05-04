@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -53,6 +54,13 @@ public class PaymentOutbox extends BaseEntity {
     private int attempts;
 
     /**
+     * 다음 재시도 허용 시각. null이면 즉시 처리 가능(PENDING 초기 상태).
+     * FAILED 전이 시 지수 백오프로 계산한 미래 시각이 설정된다.
+     */
+    @Column
+    private LocalDateTime nextAttemptAt;
+
+    /**
      * 아웃박스 레코드를 생성한다.
      *
      * @param topic      Kafka 토픽
@@ -76,16 +84,22 @@ public class PaymentOutbox extends BaseEntity {
 
     /**
      * Kafka 발행 실패 시 시도 횟수를 증가시키고 FAILED로 전이한다.
+     *
+     * <p>지수 백오프로 다음 재시도 시각을 계산한다: 2^attempts 분 후.
+     * 예) 1차 실패 → 2분 후, 2차 → 4분 후, 3차 → 8분 후, 4차 → 16분 후
      */
     public void markFailed() {
         this.attempts++;
         this.status = PaymentOutboxStatus.FAILED;
+        long backoffMinutes = (long) Math.pow(2, this.attempts);
+        this.nextAttemptAt = LocalDateTime.now().plusMinutes(backoffMinutes);
     }
 
     /**
-     * FAILED 상태를 PENDING으로 되돌려 재시도를 허용한다.
+     * FAILED 상태를 PENDING으로 되돌려 즉시 재시도를 허용한다.
      */
     public void resetToPending() {
         this.status = PaymentOutboxStatus.PENDING;
+        this.nextAttemptAt = null;
     }
 }

@@ -8,7 +8,9 @@ import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.payment.producer.PaymentEventProducer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -22,9 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
  * <h2>아웃박스 패턴 흐름</h2>
  * <ol>
  *   <li>결제 트랜잭션 내에서 {@link #save}를 호출해 이벤트를 DB에 PENDING 상태로 저장한다.</li>
- *   <li>스케줄러({@link #publishPending})가 5초마다 PENDING 레코드를 읽어
+ *   <li>스케줄러({@link #publishPending})가 5초마다 PENDING 및 재시도 가능한 FAILED 레코드를 읽어
  *       {@link PaymentEventProducer}를 통해 Kafka로 발행한다.</li>
- *   <li>발행 성공 시 SENT로, 실패 시 FAILED로 상태를 전이한다.</li>
+ *   <li>발행 성공 시 SENT로, 실패 시 FAILED로 전이하며 지수 백오프로 다음 재시도 시각을 설정한다.</li>
+ *   <li>최대 {@code MAX_ATTEMPTS}(5회) 초과 시 더 이상 재시도하지 않는다.</li>
  * </ol>
  *
  * <p>ShedLock으로 다중 인스턴스 환경에서 중복 발행을 방지한다.
@@ -35,6 +38,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentOutboxPublisher {
 
     private static final int BATCH_SIZE = 50;
+
+    /** FAILED 레코드의 최대 재시도 횟수. 초과 시 더 이상 선택하지 않는다. */
+    private static final int MAX_ATTEMPTS = 5;
+
+    /** 재시도 대상 상태 목록 (PENDING + 재시도 가능한 FAILED). */
+    private static final Set<PaymentOutboxStatus> RETRYABLE_STATUSES =
+            Set.of(PaymentOutboxStatus.PENDING, PaymentOutboxStatus.FAILED);
 
     private final PaymentOutboxRepository outboxRepository;
     private final PaymentEventProducer paymentEventProducer;
@@ -67,10 +77,13 @@ public class PaymentOutboxPublisher {
     }
 
     /**
-     * PENDING 상태의 아웃박스 메시지를 Kafka로 발행한다.
+     * PENDING 및 재시도 가능한 FAILED 아웃박스 메시지를 Kafka로 발행한다.
      *
      * <p>5초 간격으로 실행되며 ShedLock으로 다중 인스턴스 중복 실행을 방지한다.
-     * 최대 {@value #BATCH_SIZE}건씩 처리한다.
+     * 최대 {@value #BATCH_SIZE}건씩 처리하며, {@value #MAX_ATTEMPTS}회 초과 실패한
+     * 레코드는 선택 대상에서 제외된다(수동 처리 또는 별도 DLT 모니터링 대상).
+     *
+     * <p>FAILED 레코드는 지수 백오프(2^attempts 분)가 지난 경우에만 재시도한다.
      */
     @Scheduled(fixedDelay = 5000)
     @SchedulerLock(
@@ -80,18 +93,18 @@ public class PaymentOutboxPublisher {
     )
     @Transactional
     public void publishPending() {
-        List<PaymentOutbox> pending = outboxRepository
-                .findTop50ByStatusOrderByCreatedAtAsc(PaymentOutboxStatus.PENDING);
+        List<PaymentOutbox> candidates = outboxRepository
+                .findRetryable(RETRYABLE_STATUSES, LocalDateTime.now(), MAX_ATTEMPTS);
 
-        if (pending.isEmpty()) {
+        if (candidates.isEmpty()) {
             return;
         }
 
-        log.info("[Outbox] PENDING 아웃박스 발행 시작 - 건수: {}", pending.size());
+        log.info("[Outbox] 발행 대상 아웃박스 처리 시작 - 건수: {}", candidates.size());
         int successCount = 0;
         int failCount = 0;
 
-        for (PaymentOutbox outbox : pending) {
+        for (PaymentOutbox outbox : candidates) {
             try {
                 PaymentStatusChangedEvent event =
                         objectMapper.readValue(outbox.getPayload(), PaymentStatusChangedEvent.class);
@@ -99,9 +112,11 @@ public class PaymentOutboxPublisher {
                 outbox.markSent();
                 successCount++;
             } catch (Exception e) {
-                log.error("[Outbox] 결제 이벤트 발행 실패 - outboxId: {}, attempts: {}, cause: {}",
-                        outbox.getId(), outbox.getAttempts(), e.getMessage(), e);
-                outbox.markFailed();
+                log.error("[Outbox] 결제 이벤트 발행 실패 - outboxId: {}, attempts: {}/{}, 다음 재시도: {}, cause: {}",
+                        outbox.getId(), outbox.getAttempts() + 1, MAX_ATTEMPTS,
+                        LocalDateTime.now().plusMinutes((long) Math.pow(2, outbox.getAttempts() + 1)),
+                        e.getMessage(), e);
+                outbox.markFailed(); // attempts 증가 + nextAttemptAt 지수 백오프 설정
                 failCount++;
             }
         }
