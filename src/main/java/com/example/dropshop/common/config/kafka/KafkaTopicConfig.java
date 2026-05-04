@@ -1,5 +1,6 @@
 package com.example.dropshop.common.config.kafka;
 
+import static com.example.dropshop.common.constant.kafka.topic.KafkaTopics.TOPIC_PAYMENT_COMPLETED;
 import static com.example.dropshop.common.constant.kafka.topic.KafkaTopics.TOPIC_SELLER_APPLY;
 import static com.example.dropshop.common.constant.kafka.topic.KafkaTopics.TOPIC_USER_LOGIN;
 import static com.example.dropshop.common.constant.kafka.topic.KafkaTopics.TOPIC_USER_SIGNUP;
@@ -89,6 +90,18 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic sellerApplyDltTopic() {
         return TopicBuilder.name(TOPIC_SELLER_APPLY + ".DLT")
+                .partitions(partitions)
+                .replicas(replicationFactor)
+                .build();
+    }
+
+    /**
+     * 결제 완료 이벤트 DLT.
+     * Consumer: PaymentStatisticsKafkaConsumer#handlePaymentCompleted
+     */
+    @Bean
+    public NewTopic paymentCompletedDltTopic() {
+        return TopicBuilder.name(TOPIC_PAYMENT_COMPLETED + ".DLT")
                 .partitions(partitions)
                 .replicas(replicationFactor)
                 .build();
