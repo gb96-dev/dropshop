@@ -2,6 +2,7 @@ package com.example.dropshop.domain.drops.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -83,16 +84,18 @@ class DropsQueryControllerTest {
         .endAt(LocalDateTime.of(2026, 4, 26, 12, 0))
         .totalStock(30L)
         .remainStock(25L)
+        .viewCount(10L)
         .purchaseLimit(1L)
         .useQueue(true)
         .build();
 
-    given(dropsQueryService.findPublicDropDetail(10L)).willReturn(response);
+    given(dropsQueryService.findPublicDropDetail(eq(10L), isNull(), any(), any())).willReturn(response);
 
     mockMvc.perform(get("/api/drops/{dropId}", 10L))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.dropId").value(10L))
+        .andExpect(jsonPath("$.data.viewCount").value(10L))
         .andExpect(jsonPath("$.data.useQueue").value(true));
   }
 }

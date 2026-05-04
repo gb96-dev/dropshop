@@ -61,6 +61,9 @@ public class Drops extends BaseEntity {
   @Column(name = "use_queue", nullable = false)
   private boolean useQueue;
 
+  @Column(name = "view_count", nullable = false)
+  private Long viewCount;
+
   @Version
   private Long version;
 
@@ -82,6 +85,7 @@ public class Drops extends BaseEntity {
     this.purchaseLimit = purchaseLimit;
     this.useQueue = useQueue;
     this.status = DropsStatus.SCHEDULED;
+    this.viewCount = 0L;
 
     validateDateRange(startAt, endAt);
     validateStock(totalStock, remainStock);
@@ -186,6 +190,13 @@ public class Drops extends BaseEntity {
     if (this.remainStock > this.totalStock) {
       throw new DropsException(ErrorCode.INVALID_DROP_REMAIN_STOCK);
     }
+  }
+
+  /**
+   * 조회수를 1 증가시킨다.
+   */
+  public void increaseViewCount() {
+    this.viewCount += 1;
   }
 
   private void validateDateRange(LocalDateTime startAt, LocalDateTime endAt) {

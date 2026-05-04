@@ -19,6 +19,7 @@ public class DropResponse {
   private final LocalDateTime endAt;
   private final Long totalStock;
   private final Long remainStock;
+  private final Long viewCount;
   private final Long purchaseLimit;
   private final boolean useQueue;
   private final LocalDateTime createdAt;
@@ -28,6 +29,13 @@ public class DropResponse {
    * 드랍 엔티티를 응답 DTO로 변환한다.
    */
   public static DropResponse from(Drops drops) {
+    return from(drops, drops.getViewCount());
+  }
+
+  /**
+   * 드랍 엔티티를 응답 DTO로 변환한다.
+   */
+  public static DropResponse from(Drops drops, Long viewCount) {
     return DropResponse.builder()
         .dropId(drops.getId())
         .productId(drops.getProduct().getId())
@@ -36,6 +44,7 @@ public class DropResponse {
         .endAt(drops.getEndAt())
         .totalStock(drops.getTotalStock())
         .remainStock(drops.getRemainStock())
+        .viewCount(viewCount)
         .purchaseLimit(drops.getPurchaseLimit())
         .useQueue(drops.isUseQueue())
         .createdAt(drops.getCreatedAt())
