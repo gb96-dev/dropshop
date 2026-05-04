@@ -4,6 +4,8 @@ import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
@@ -28,7 +30,7 @@ public class PaymentStatusChangedEvent {
   private final Long buyerUserId;
 
   /**
-   * 결제 상태 변경 이벤트를 생성한다.
+   * 결제 상태 변경 이벤트를 생성한다. (도메인 로직용)
    *
    * @param payment 결제 엔티티
    * @param orderStatus 변경 이후 주문 상태
@@ -46,6 +48,36 @@ public class PaymentStatusChangedEvent {
     this.orderStatus = orderStatus;
     this.source = source;
     this.occurredAt = LocalDateTime.now().toString();
+    this.buyerUserId = buyerUserId;
+  }
+
+  /**
+   * Jackson 역직렬화용 생성자. 아웃박스 payload JSON → 이벤트 객체 복원에 사용한다.
+   */
+  @JsonCreator
+  public PaymentStatusChangedEvent(
+      @JsonProperty("paymentId")           Long paymentId,
+      @JsonProperty("orderId")             Long orderId,
+      @JsonProperty("merchantPaymentId")   String merchantPaymentId,
+      @JsonProperty("portOneTransactionId") String portOneTransactionId,
+      @JsonProperty("amount")              BigDecimal amount,
+      @JsonProperty("paymentMethod")       PaymentMethod paymentMethod,
+      @JsonProperty("paymentStatus")       PaymentStatus paymentStatus,
+      @JsonProperty("orderStatus")         OrderStatus orderStatus,
+      @JsonProperty("source")              String source,
+      @JsonProperty("occurredAt")          String occurredAt,
+      @JsonProperty("buyerUserId")         Long buyerUserId
+  ) {
+    this.paymentId = paymentId;
+    this.orderId = orderId;
+    this.merchantPaymentId = merchantPaymentId;
+    this.portOneTransactionId = portOneTransactionId;
+    this.amount = amount;
+    this.paymentMethod = paymentMethod;
+    this.paymentStatus = paymentStatus;
+    this.orderStatus = orderStatus;
+    this.source = source;
+    this.occurredAt = occurredAt;
     this.buyerUserId = buyerUserId;
   }
 
