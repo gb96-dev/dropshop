@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 다른 도메인에서 주문 이력 존재 여부만 조회할 때 사용하는 서비스다.
+ * 주문 이력 존재 여부 조회 서비스.
  */
 @Service
 @RequiredArgsConstructor
@@ -14,6 +14,12 @@ public class OrderHistoryQueryService {
 
   private final OrderRepository orderRepository;
 
+  /**
+   * 드랍의 주문 이력 존재 여부 확인.
+   *
+   * @param dropId 드랍 ID
+   * @return 주문 이력 존재 여부
+   */
   @Transactional(readOnly = true)
   public boolean existsOrderHistoryForDrop(Long dropId) {
     return orderRepository.existsByDropId(dropId);
