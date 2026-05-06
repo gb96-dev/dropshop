@@ -55,6 +55,10 @@ public class NotificationKafkaConsumer {
       containerFactory = "notificationPaymentKafkaListenerContainerFactory"
   )
   public void handlePaymentFailed(PaymentStatusChangedEvent event) {
+    if (event.getPaymentStatus() != PaymentStatus.FAILED) {
+      log.warn("[NotificationConsumer] FAILED 아닌 이벤트 수신 - 스킵. status: {}", event.getPaymentStatus());
+      return;
+    }
     Long userId = event.getBuyerUserId();
     if (userId == null) {
       log.warn("[NotificationConsumer] buyerUserId 없음 - 스킵. paymentId: {}", event.getPaymentId());
