@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.dropshop.domain.auth.service.TokenBlacklistService;
+import com.example.dropshop.common.security.SellerAuthResolver;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.payment.dto.request.PaymentConfirmRequest;
 import com.example.dropshop.domain.payment.dto.request.PaymentPrepareRequest;
@@ -53,6 +54,9 @@ class PaymentControllerTest {
 
   @MockitoBean
   private TokenBlacklistService tokenBlacklistService;
+
+  @MockitoBean
+  private SellerAuthResolver sellerAuthResolver;
 
   @Test
   @DisplayName("결제 준비 성공")

@@ -1,6 +1,7 @@
 package com.example.dropshop.domain.user.controller;
 
 import com.example.dropshop.domain.auth.service.TokenBlacklistService;
+import com.example.dropshop.common.security.SellerAuthResolver;
 import com.example.dropshop.domain.user.dto.request.PasswordUpdateRequest;
 import com.example.dropshop.domain.user.dto.request.SignupRequest;
 import com.example.dropshop.domain.user.service.UserService;
@@ -32,6 +33,9 @@ class UserControllerTest {
 
     @MockitoBean
     private TokenBlacklistService tokenBlacklistService;
+
+    @MockitoBean
+    private SellerAuthResolver sellerAuthResolver;
 
     @Autowired
     private ObjectMapper objectMapper;

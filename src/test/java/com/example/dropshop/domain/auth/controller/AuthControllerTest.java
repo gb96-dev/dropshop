@@ -4,6 +4,7 @@ import com.example.dropshop.domain.auth.dto.request.LoginRequest;
 import com.example.dropshop.domain.auth.dto.response.TokenResponse;
 import com.example.dropshop.domain.auth.service.AuthService;
 import com.example.dropshop.domain.auth.service.TokenBlacklistService;
+import com.example.dropshop.common.security.SellerAuthResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private TokenBlacklistService tokenBlacklistService;
+
+    @MockitoBean
+    private SellerAuthResolver sellerAuthResolver;
 
     @Autowired
     private ObjectMapper objectMapper;

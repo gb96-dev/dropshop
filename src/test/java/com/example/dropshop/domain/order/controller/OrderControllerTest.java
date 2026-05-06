@@ -18,6 +18,7 @@ import com.example.dropshop.domain.order.dto.response.OrderListItemResponse;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.auth.service.TokenBlacklistService;
+import com.example.dropshop.common.security.SellerAuthResolver;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import java.math.BigDecimal;
@@ -55,6 +56,9 @@ class OrderControllerTest {
 
   @MockitoBean
   private TokenBlacklistService tokenBlacklistService;
+
+  @MockitoBean
+  private SellerAuthResolver sellerAuthResolver;
 
   @Test
   @DisplayName("주문 생성 성공")

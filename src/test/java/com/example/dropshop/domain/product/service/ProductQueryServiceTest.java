@@ -73,7 +73,7 @@ class ProductQueryServiceTest {
     Drops latestDrop = createDrop(product, dropStartAt);
     Page<Product> page = new PageImpl<Product>(List.of(product), PageRequest.of(0, 10), 1);
 
-    given(productRepository.findAllByStatusIn(anyCollection(), any(Pageable.class)))
+    given(productRepository.findPublicProducts(anyCollection(), any(), any(LocalDateTime.class), any(Pageable.class)))
         .willReturn(page);
     given(dropsFacadeService.findLatestDropsByProductIds(List.of(11L)))
         .willReturn(Map.of(11L, latestDrop));

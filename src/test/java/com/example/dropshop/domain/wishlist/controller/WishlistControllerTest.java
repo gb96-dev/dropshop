@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.dropshop.common.config.SecurityConfig;
 import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.common.jwt.JwtUtil;
+import com.example.dropshop.common.security.SellerAuthResolver;
 import com.example.dropshop.domain.wishlist.dto.request.WishlistRequest;
 import com.example.dropshop.domain.wishlist.dto.response.WishlistResponse;
 import com.example.dropshop.domain.wishlist.facade.WishlistsFacadeService;
@@ -51,6 +52,9 @@ class WishlistControllerTest {
 
   @MockitoBean
   private TokenBlacklistService tokenBlacklistService;
+
+  @MockitoBean
+  private SellerAuthResolver sellerAuthResolver;
 
   @Autowired
   private ObjectMapper objectMapper;

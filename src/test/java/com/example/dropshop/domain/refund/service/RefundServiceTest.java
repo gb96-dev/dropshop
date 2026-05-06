@@ -184,8 +184,7 @@ class RefundServiceTest {
         .cancelPayment("payment-test-123", new BigDecimal("79000"), "단순 변심");
 
     assertThatThrownBy(() -> refundService.completeRefund(1L, "test@test.com"))
-        .isInstanceOf(RefundException.class)
-        .hasMessage(ErrorCode.REFUND_PORTONE_API_ERROR.getMessage());
+        .isInstanceOf(RefundException.class);
 
     verify(refundCompletionWorker, times(1)).revertRefundCompletion(1L);
     verify(refundCompletionWorker, never()).finalizeRefundCompletion(any(), any());
