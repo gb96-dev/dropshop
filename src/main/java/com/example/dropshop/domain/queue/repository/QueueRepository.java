@@ -16,7 +16,7 @@ import org.springframework.data.repository.query.Param;
  */
 public interface QueueRepository extends JpaRepository<Queue, Integer> {
 
-  List<Queue> findByDropIdAndUserId(Long dropId, Long userId);
+  Optional<Queue> findByDropIdAndUserId(Long dropId, Long userId);
 
   long countByDropIdAndStatusIn(Long dropId, List<QueueStatus> status);
 
