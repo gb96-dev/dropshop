@@ -1,16 +1,13 @@
 spring:
+  config:
+    import: optional:file:./application-local.yml
   main:
     allow-circular-references: true
-  datasource:
-    url: jdbc:mysql://localhost:3306/dropshop?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: 1234
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -40,7 +37,7 @@ cloud:
       access-key: "dummy_key"
       secret-key: "dummy_secret"
 
-# ✅ 이미지 업로드 관련
+# 이미지 업로드 관련
 product:
   image-upload:
     bucket: "dummy-bucket"
@@ -67,9 +64,8 @@ management:
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG
+    org.hibernate.SQL: INFO
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-
 
 server:
   port: 8080
