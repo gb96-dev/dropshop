@@ -12,12 +12,13 @@
 
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
-import { Trend, Rate } from 'k6/metrics';
+import { Trend, Rate, Counter } from 'k6/metrics';
 import { BASE_URL, THRESHOLDS } from './config.js';
 
-const listDuration   = new Trend('product_list_duration');
-const detailDuration = new Trend('product_detail_duration');
-const failRate       = new Rate('product_fail_rate');
+const listDuration    = new Trend('product_list_duration');
+const detailDuration  = new Trend('product_detail_duration');
+const failRate        = new Rate('product_fail_rate');
+const detail404Count  = new Counter('product_detail_404_count');
 
 export const options = {
   thresholds: {
@@ -60,8 +61,9 @@ export default function () {
     detailDuration.add(res.timings.duration);
 
     const ok = check(res, {
-      '상품 상세 200': (r) => r.status === 200 || r.status === 404,
+      '상품 상세 200': (r) => r.status === 200,
     });
+    if (res.status === 404) detail404Count.add(1);
     failRate.add(!ok);
   });
 
