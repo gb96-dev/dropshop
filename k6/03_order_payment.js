@@ -107,11 +107,17 @@ export default function () {
 
     if (ok) {
       orderCount.add(1);
-      try { orderId = JSON.parse(res.body).data?.orderId; } catch { orderId = null; }
+      try {
+        orderId = JSON.parse(res.body).data?.orderId;
+      } catch {
+        orderId = null;
+        failRate.add(1);
+      }
     }
   });
 
   if (!orderId) {
+    failRate.add(1);
     sleep(1);
     return;
   }
