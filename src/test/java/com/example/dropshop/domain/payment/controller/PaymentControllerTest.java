@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
+import com.example.dropshop.common.security.SellerAuthResolver;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.payment.dto.request.PaymentConfirmRequest;
 import com.example.dropshop.domain.payment.dto.request.PaymentPrepareRequest;
@@ -33,7 +35,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(PaymentController.class)
 class PaymentControllerTest {
@@ -41,14 +43,19 @@ class PaymentControllerTest {
   @Autowired
   private MockMvc mockMvc;
 
-  @Autowired
-  private ObjectMapper objectMapper;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @MockitoBean
   private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
   @MockitoBean
   private PaymentFacadeService paymentFacadeService;
+
+  @MockitoBean
+  private TokenBlacklistService tokenBlacklistService;
+
+  @MockitoBean
+  private SellerAuthResolver sellerAuthResolver;
 
   @Test
   @DisplayName("결제 준비 성공")

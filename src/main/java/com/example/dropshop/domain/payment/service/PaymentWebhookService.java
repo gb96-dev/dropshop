@@ -73,13 +73,13 @@ public class PaymentWebhookService {
       validateOrderNotExpired(order);
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
-      publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK");
+      publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK", order.getUserId());
       return;
     }
 
     if (isFailureStatus(portOnePayment.status())) {
       payment.fail();
-      publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK");
+      publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK", order.getUserId());
       return;
     }
 
@@ -137,8 +137,9 @@ public class PaymentWebhookService {
   private void publishPaymentStatusChanged(
       Payment payment,
       OrderStatus orderStatus,
-      String source
+      String source,
+      Long buyerUserId
   ) {
-    eventPublisher.publishEvent(new PaymentStatusChangedEvent(payment, orderStatus, source));
+    eventPublisher.publishEvent(new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
   }
 }

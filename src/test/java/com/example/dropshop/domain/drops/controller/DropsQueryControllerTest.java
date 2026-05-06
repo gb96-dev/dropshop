@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.domain.drops.dto.response.DropListItemResponse;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.enums.DropsStatus;
@@ -36,6 +37,9 @@ class DropsQueryControllerTest {
 
   @MockitoBean
   private DropsQueryService dropsQueryService;
+
+  @MockitoBean
+  private TokenBlacklistService tokenBlacklistService;
 
   @Test
   @DisplayName("공개 드롭 목록 조회 성공")
