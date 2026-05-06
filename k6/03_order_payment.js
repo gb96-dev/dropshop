@@ -54,9 +54,13 @@ const TEST_USERS = [
 ];
 
 // 테스트 드랍/상품 설정 (실제 DB 값으로 교체 필요)
-const DROP_ID    = __ENV.DROP_ID    || '1';
-const PRODUCT_ID = __ENV.PRODUCT_ID || '1';
-const AMOUNT     = __ENV.AMOUNT     || '10000';
+const DROP_ID    = parseInt(__ENV.DROP_ID    || '1');
+const PRODUCT_ID = parseInt(__ENV.PRODUCT_ID || '1');
+const AMOUNT     = parseFloat(__ENV.AMOUNT   || '10000');
+
+if (isNaN(DROP_ID)    || DROP_ID    <= 0) throw new Error(`유효하지 않은 DROP_ID: ${__ENV.DROP_ID}`);
+if (isNaN(PRODUCT_ID) || PRODUCT_ID <= 0) throw new Error(`유효하지 않은 PRODUCT_ID: ${__ENV.PRODUCT_ID}`);
+if (isNaN(AMOUNT)     || AMOUNT     <= 0) throw new Error(`유효하지 않은 AMOUNT: ${__ENV.AMOUNT}`);
 
 export default function () {
   const user = TEST_USERS[Math.floor(Math.random() * TEST_USERS.length)];
@@ -88,8 +92,8 @@ export default function () {
     const res = http.post(
       `${BASE_URL}/api/orders`,
       JSON.stringify({
-        dropId: parseInt(DROP_ID),
-        items: [{ productId: parseInt(PRODUCT_ID), quantity: 1 }],
+        dropId: DROP_ID,
+        items: [{ productId: PRODUCT_ID, quantity: 1 }],
         merchantOrderId,
       }),
       { headers: { ...JSON_HEADERS, ...authHeader(token) } }
@@ -121,7 +125,7 @@ export default function () {
       `${BASE_URL}/api/payments/prepare`,
       JSON.stringify({
         orderId,
-        amount: parseInt(AMOUNT),
+        amount: AMOUNT,
         merchantPaymentId,
         paymentMethod: 'CARD',
       }),
