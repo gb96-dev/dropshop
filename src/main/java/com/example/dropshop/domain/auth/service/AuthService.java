@@ -10,6 +10,7 @@ import com.example.dropshop.domain.auth.event.UserLoginEvent;
 import com.example.dropshop.domain.auth.exception.AuthException;
 import com.example.dropshop.domain.auth.repository.RefreshTokenRepository;
 import com.example.dropshop.domain.auth.service.TokenBlacklistService;
+import com.example.dropshop.domain.auth.sse.SseEmitterService;
 import com.example.dropshop.domain.user.entity.User;
 import com.example.dropshop.domain.user.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +32,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenBlacklistService tokenBlacklistService;
     private final EventKafkaProducer eventKafkaProducer;
+    private final SseEmitterService sseEmitterService;
 
     @Transactional
     public TokenResponse login(LoginRequest request) {
@@ -50,7 +52,11 @@ public class AuthService {
         String hashedToken = hashToken(refreshToken);
         refreshTokenRepository.findByEmail(user.getEmail())
                 .ifPresentOrElse(
-                        existing -> existing.updateToken(hashedToken),
+                        existing -> {
+                            // 기존 세션이 있으면 SSE로 강제 로그아웃 알림 후 토큰 교체
+                            sseEmitterService.sendForceLogout(user.getEmail());
+                            existing.updateToken(hashedToken);
+                        },
                         () -> refreshTokenRepository.save(new RefreshToken(user.getEmail(), hashedToken))
                 );
 
