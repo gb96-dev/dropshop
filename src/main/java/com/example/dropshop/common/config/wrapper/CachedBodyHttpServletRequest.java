@@ -1,5 +1,7 @@
 package com.example.dropshop.common.config.wrapper;
 
+import static com.example.dropshop.common.constant.kafka.MagicNumbers.CACHE_LIMIT;
+
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +24,7 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
    */
   public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
     super(request);
-    this.cachedBody = request.getInputStream().readAllBytes();
+    this.cachedBody = request.getInputStream().readNBytes(CACHE_LIMIT);
   }
 
   @Override

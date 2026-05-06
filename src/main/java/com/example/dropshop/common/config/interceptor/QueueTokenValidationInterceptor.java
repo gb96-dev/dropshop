@@ -49,7 +49,7 @@ public class QueueTokenValidationInterceptor implements HandlerInterceptor {
         () -> new ServiceException(ErrorCode.USER_NOT_FOUND)
     ).getId();
 
-    if (uri.startsWith("/api/drops/") && method.equals("GET")) {
+    if ("GET".equals(method) && ("/api/drops".equals(uri) || uri.startsWith("/api/drops/"))) {
 
       Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(
           HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE
@@ -57,10 +57,14 @@ public class QueueTokenValidationInterceptor implements HandlerInterceptor {
 
       Long dropId = Long.valueOf(pathVariables.get("dropId"));
 
-      return queueTokenValidationService.validationQueueTokenWithDrop(dropId, userId);
+      if (!queueTokenValidationService.validationQueueTokenWithDrop(dropId, userId)) {
+          response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid queue status");
+          return false;
+      }
+      return true;
     }
 
-    if (uri.startsWith("/api/orders/") && method.equals("POST")) {
+    if ("POST".equals(method) && ("/api/orders".equals(uri) || uri.startsWith("/api/orders/"))) {
 
       ContentCachingRequestWrapper wrappedRequest = (ContentCachingRequestWrapper) request;
 
