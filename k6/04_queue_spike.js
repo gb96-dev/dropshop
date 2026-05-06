@@ -2,7 +2,7 @@
  * 시나리오 4: 드랍 오픈 순간 대기열 스파이크 테스트
  *
  * 목적: 드랍 오픈 직후 동시 요청이 몰릴 때 대기열 시스템의 처리량 측정
- *       - POST /api/queues?dropId={id}&userId={id}
+ *       - POST /api/queues?dropId={id}
  *       - Redis 기반 대기열 처리 성능 확인
  *       - 스파이크(급격한 트래픽 증가) 상황 시뮬레이션
  *
@@ -30,14 +30,14 @@ export const options = {
     queue_fail_rate: ['rate<0.01'],
   },
   scenarios: {
-    // 드랍 오픈 순간 스파이크: 0 → 200 VU 즉시 증가
+    // 드랍 오픈 순간 스파이크 (로컬 환경: Windows 소켓 제한 고려)
     spike: {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '5s',  target: 200 }, // 즉시 스파이크
-        { duration: '30s', target: 200 }, // 유지
-        { duration: '10s', target: 0   }, // 감소
+        { duration: '5s',  target: 20 }, // 즉시 스파이크
+        { duration: '30s', target: 20 }, // 유지
+        { duration: '10s', target: 0  }, // 감소
       ],
     },
   },
@@ -47,11 +47,11 @@ const DROP_ID = parseInt(__ENV.DROP_ID || '1');
 
 // 테스트 유저 목록 (DB 미리 생성 필요)
 const TEST_USERS = [
-  { email: 'user1@test.com', password: 'Password1!', id: 1 },
-  { email: 'user2@test.com', password: 'Password1!', id: 2 },
-  { email: 'user3@test.com', password: 'Password1!', id: 3 },
-  { email: 'user4@test.com', password: 'Password1!', id: 4 },
-  { email: 'user5@test.com', password: 'Password1!', id: 5 },
+  { email: 'user1@test.com', password: 'password' },
+  { email: 'user2@test.com', password: 'password' },
+  { email: 'user3@test.com', password: 'password' },
+  { email: 'user4@test.com', password: 'password' },
+  { email: 'user5@test.com', password: 'password' },
 ];
 
 // 로그인 토큰 캐시 (setup에서 미리 발급)
@@ -64,7 +64,7 @@ export function setup() {
       { headers: JSON_HEADERS }
     );
     if (res.status === 200) {
-      try { tokens[user.id] = JSON.parse(res.body).data; } catch {}
+      try { tokens[user.email] = JSON.parse(res.body).data; } catch {}
     }
   }
   return { tokens };
@@ -72,7 +72,7 @@ export function setup() {
 
 export default function ({ tokens }) {
   const user = TEST_USERS[Math.floor(Math.random() * TEST_USERS.length)];
-  const token = tokens[user.id];
+  const token = tokens[user.email];
 
   if (!token) {
     failRate.add(1);
@@ -80,7 +80,7 @@ export default function ({ tokens }) {
   }
 
   const res = http.post(
-    `${BASE_URL}/api/queues?dropId=${DROP_ID}&userId=${user.id}`,
+    `${BASE_URL}/api/queues?dropId=${DROP_ID}`,
     null,
     { headers: { ...authHeader(token) } }
   );
@@ -97,10 +97,10 @@ export default function ({ tokens }) {
     try {
       const body = JSON.parse(res.body);
       const result = body.data?.result;
-      if (result === 'PASS')  passCount.add(1);
-      if (result === 'QUEUE') waitCount.add(1);
+      if (result === 'DIRECT') passCount.add(1);
+      if (result === 'QUEUE')  waitCount.add(1);
     } catch {}
   }
 
-  sleep(0.1); // 스파이크 테스트는 sleep 짧게
+  sleep(0.5); // 로컬 Windows 환경에서 소켓 고갈 방지
 }

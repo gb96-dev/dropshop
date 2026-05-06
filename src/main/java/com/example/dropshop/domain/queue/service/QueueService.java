@@ -21,7 +21,6 @@ import com.example.dropshop.domain.user.repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,14 +45,12 @@ public class QueueService {
    * @param userEmail 유저 이메일.
    */
   @Transactional
-  public ThreadHoldResponse decideQueue(Long dropId, Long userId, String userEmail) {
+  public ThreadHoldResponse decideQueue(Long dropId, String userEmail) {
     User user = userRepository.findByEmail(userEmail).orElseThrow(
         () -> new ServiceException(ErrorCode.USER_NOT_FOUND)
     );
 
-    if (!Objects.equals(userId, user.getId())){
-      throw new ServiceException(ErrorCode.USER_NOT_MATCH);
-    }
+    Long userId = user.getId();
 
     // 1. Drops의 Live 여부 확인
 

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.time.Duration;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +31,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  *
  * <p><b>주의:</b> 재고 수량은 실시간 정합성이 핵심이므로 캐시 대상에서 제외한다.
  */
+@Slf4j
 @Configuration
 @EnableCaching
 public class CacheConfig {
@@ -88,7 +90,10 @@ public class CacheConfig {
         try {
           return mapper.readValue(bytes, Object.class);
         } catch (IOException e) {
-          throw new SerializationException("Redis 캐시 역직렬화 실패", e);
+          // 역직렬화 실패 시 캐시 미스로 처리하여 DB 재조회
+          // (PageImpl, @Builder DTO 등 기본 생성자 없는 타입 이슈)
+          log.warn("Redis 캐시 역직렬화 실패, 캐시 미스로 처리: {}", e.getMessage());
+          return null;
         }
       }
     };

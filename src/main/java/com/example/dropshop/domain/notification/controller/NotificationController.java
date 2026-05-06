@@ -6,7 +6,6 @@ import com.example.dropshop.domain.notification.service.NotificationService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,7 +26,7 @@ public class NotificationController {
   private final NotificationService notificationService;
 
   @GetMapping
-  public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getNotifications(
+  public ResponseEntity<ApiResponse<ApiResponse.PageResponse<NotificationResponse>>> getNotifications(
       @AuthenticationPrincipal String email,
       @RequestParam(defaultValue = "0") @Min(0) int page,
       @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {

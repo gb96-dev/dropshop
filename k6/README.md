@@ -16,7 +16,7 @@ docker pull grafana/k6
 
 ### DB 테스트 데이터 생성
 아래 유저들이 DB에 존재해야 한다:
-- user1@test.com ~ user5@test.com (비밀번호: Password1!)
+- user1@test.com ~ user5@test.com (비밀번호: password)
 
 상품/드랍 데이터도 최소 1개 이상 필요하다.
 

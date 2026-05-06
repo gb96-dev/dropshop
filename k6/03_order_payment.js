@@ -48,9 +48,9 @@ export const options = {
 
 // 테스트 유저 (DB 미리 생성 필요)
 const TEST_USERS = [
-  { email: 'user1@test.com', password: 'Password1!' },
-  { email: 'user2@test.com', password: 'Password1!' },
-  { email: 'user3@test.com', password: 'Password1!' },
+  { email: 'user1@test.com', password: 'password' },
+  { email: 'user2@test.com', password: 'password' },
+  { email: 'user3@test.com', password: 'password' },
 ];
 
 // 테스트 드랍/상품 설정 (실제 DB 값으로 교체 필요)
@@ -93,8 +93,8 @@ export default function () {
       `${BASE_URL}/api/orders`,
       JSON.stringify({
         dropId: DROP_ID,
-        items: [{ productId: PRODUCT_ID, quantity: 1 }],
-        merchantOrderId,
+        productId: PRODUCT_ID,
+        queueToken: 'test-queue-token',
       }),
       { headers: { ...JSON_HEADERS, ...authHeader(token) } }
     );

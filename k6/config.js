@@ -5,7 +5,7 @@
  *   import { BASE_URL, THRESHOLDS, authHeader } from './config.js';
  */
 
-export const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+export const BASE_URL = __ENV.BASE_URL || 'http://localhost:8081';
 
 /**
  * 공통 성능 임계값
