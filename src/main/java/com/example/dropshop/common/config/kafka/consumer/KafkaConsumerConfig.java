@@ -5,10 +5,12 @@ import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.READY
 import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.USER_LOGIN_GROUP_NAME;
 import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.USER_SIGNUP_GROUP_NAME;
 import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.SELLER_APPLY_GROUP_NAME;
+import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.PAYMENT_STATS_GROUP_NAME;
 
 import com.example.dropshop.domain.auth.event.UserLoginEvent;
 import com.example.dropshop.domain.user.event.UserSignupEvent;
 import com.example.dropshop.domain.seller.event.SellerAppliedEvent;
+import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -164,5 +166,14 @@ public class KafkaConsumerConfig {
   @Bean
   public ConcurrentKafkaListenerContainerFactory<String, SellerAppliedEvent> sellerApplyKafkaListenerContainerFactory() {
     return createActivityFactory(SellerAppliedEvent.class, SELLER_APPLY_GROUP_NAME);
+  }
+
+  // -------------------------------------------------------------------------
+  // PaymentStatusChangedEvent Consumer (결제 통계)
+  // -------------------------------------------------------------------------
+
+  @Bean
+  public ConcurrentKafkaListenerContainerFactory<String, PaymentStatusChangedEvent> paymentCompletedKafkaListenerContainerFactory() {
+    return createActivityFactory(PaymentStatusChangedEvent.class, PAYMENT_STATS_GROUP_NAME);
   }
 }
