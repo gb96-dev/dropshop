@@ -58,7 +58,7 @@ public class NotificationService {
   @Transactional
   public int markAllAsRead(String email) {
     Long userId = findUserId(email);
-    int count = notificationRepository.markAllAsRead(userId);
+    int count = notificationRepository.markAllAsRead(userId, NotificationStatus.READ, NotificationStatus.UNREAD);
     log.info("[Notification] 전체 읽음 처리 - userId: {}, count: {}", userId, count);
     return count;
   }
