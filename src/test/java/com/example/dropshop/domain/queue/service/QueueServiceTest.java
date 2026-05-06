@@ -19,6 +19,7 @@ import com.example.dropshop.domain.queue.entity.Queue;
 import com.example.dropshop.domain.queue.entity.QueueToken;
 import com.example.dropshop.domain.queue.enums.QueueStatus;
 import com.example.dropshop.domain.queue.enums.ThreadHoldResult;
+import com.example.dropshop.domain.queue.producer.QueueTokenProducer;
 import com.example.dropshop.domain.queue.repository.QueueRepository;
 import com.example.dropshop.domain.queue.repository.QueueTokenRepository;
 import com.example.dropshop.domain.user.entity.User;
@@ -46,6 +47,9 @@ class QueueServiceTest {
 
   @Mock
   private UserRepository userRepository;
+
+  @Mock
+  private QueueTokenProducer queueTokenProducer;
 
   @InjectMocks
   private QueueService queueService;

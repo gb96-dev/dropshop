@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.dropshop.common.config.SecurityConfig;
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.common.jwt.JwtUtil;
 import com.example.dropshop.domain.wishlist.dto.request.WishlistRequest;
 import com.example.dropshop.domain.wishlist.dto.response.WishlistResponse;
@@ -31,7 +32,7 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(WishlistController.class)
 class WishlistControllerTest {
@@ -47,6 +48,9 @@ class WishlistControllerTest {
 
   @MockitoBean
   private JwtUtil jwtUtil;
+
+  @MockitoBean
+  private TokenBlacklistService tokenBlacklistService;
 
   @Autowired
   private ObjectMapper objectMapper;

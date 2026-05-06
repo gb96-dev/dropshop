@@ -1,9 +1,12 @@
 package com.example.dropshop.domain.auth.service;
 
 import com.example.dropshop.common.jwt.JwtUtil;
+import com.example.dropshop.common.kafka.producer.EventKafkaProducer;
 import com.example.dropshop.domain.auth.dto.request.LoginRequest;
 import com.example.dropshop.domain.auth.dto.response.TokenResponse;
 import com.example.dropshop.domain.auth.repository.RefreshTokenRepository;
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
+import com.example.dropshop.domain.auth.sse.SseEmitterService;
 import com.example.dropshop.domain.user.entity.User;
 import com.example.dropshop.domain.user.enums.UserRole;
 import com.example.dropshop.domain.user.repository.UserRepository;
@@ -39,6 +42,15 @@ class AuthServiceTest {
 
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
+
+    @Mock
+    private EventKafkaProducer eventKafkaProducer;
+
+    @Mock
+    private SseEmitterService sseEmitterService;
 
     @Test
     @DisplayName("로그인 성공 테스트")

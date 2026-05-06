@@ -17,6 +17,7 @@ import com.example.dropshop.domain.order.dto.response.OrderDetailResponse;
 import com.example.dropshop.domain.order.dto.response.OrderListItemResponse;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import java.math.BigDecimal;
@@ -35,7 +36,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(OrderController.class)
 class OrderControllerTest {
@@ -51,6 +52,9 @@ class OrderControllerTest {
 
   @MockitoBean
   private OrderFacadeService orderFacadeService;
+
+  @MockitoBean
+  private TokenBlacklistService tokenBlacklistService;
 
   @Test
   @DisplayName("주문 생성 성공")

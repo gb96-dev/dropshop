@@ -4,6 +4,7 @@ import com.example.dropshop.domain.seller.dto.request.SellerApplyRequest;
 import com.example.dropshop.domain.seller.dto.response.SellerResponse;
 import com.example.dropshop.domain.seller.entity.Seller;
 import com.example.dropshop.domain.seller.enums.SellerStatus;
+import com.example.dropshop.common.kafka.producer.EventKafkaProducer;
 import com.example.dropshop.domain.seller.repository.SellerRepository;
 import com.example.dropshop.domain.user.entity.User;
 import com.example.dropshop.domain.user.repository.UserRepository;
@@ -33,6 +34,9 @@ class SellerServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private EventKafkaProducer eventKafkaProducer;
 
     @InjectMocks
     private SellerService sellerService;
