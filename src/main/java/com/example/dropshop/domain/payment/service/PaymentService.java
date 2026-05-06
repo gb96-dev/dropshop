@@ -7,6 +7,8 @@ import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
+import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
+import com.example.dropshop.domain.payment.outbox.PaymentOutboxPublisher;
 import com.example.dropshop.domain.payment.client.PortOneClient;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
@@ -36,6 +38,7 @@ public class PaymentService {
   private final TransactionTemplate transactionTemplate;
   private final ApplicationEventPublisher eventPublisher;
   private final PaymentVerificationService paymentVerificationService;
+  private final PaymentOutboxPublisher paymentOutboxPublisher;
 
   /**
    * 결제 확정 결과.
@@ -196,7 +199,7 @@ public class PaymentService {
     if (paymentVerificationService.isPaidStatus(portOnePayment.status())) {
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
-      publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API");
+      publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API", order.getUserId());
       return;
     }
 
@@ -205,7 +208,7 @@ public class PaymentService {
       if (order.getStatus() == OrderStatus.PENDING) {
         orderFacadeService.cancelOrderByPaymentFailure(order);
       }
-      publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API");
+      publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API", order.getUserId());
       return;
     }
 
@@ -229,6 +232,6 @@ public class PaymentService {
       OrderStatus orderStatus,
       String source
   ) {
-    eventPublisher.publishEvent(new PaymentStatusChangedEvent(payment, orderStatus, source));
+    paymentOutboxPublisher.save(new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
   }
 }
