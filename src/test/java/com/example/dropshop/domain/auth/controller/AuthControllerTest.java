@@ -36,8 +36,7 @@ class AuthControllerTest {
     @MockitoBean
     private SellerAuthResolver sellerAuthResolver;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     @DisplayName("로그인 API 성공 - 쿠키 설정 확인")

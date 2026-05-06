@@ -37,8 +37,7 @@ class UserControllerTest {
     @MockitoBean
     private SellerAuthResolver sellerAuthResolver;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     @DisplayName("비밀번호 변경 성공")

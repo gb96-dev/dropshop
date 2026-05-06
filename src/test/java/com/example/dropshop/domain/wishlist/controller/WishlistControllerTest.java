@@ -56,8 +56,7 @@ class WishlistControllerTest {
   @MockitoBean
   private SellerAuthResolver sellerAuthResolver;
 
-  @Autowired
-  private ObjectMapper objectMapper;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Test
   @DisplayName("찜 생성 API - 성공")
