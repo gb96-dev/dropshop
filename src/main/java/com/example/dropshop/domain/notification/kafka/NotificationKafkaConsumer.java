@@ -76,7 +76,7 @@ public class NotificationKafkaConsumer {
   private Long resolveProductId(Long orderId) {
     if (orderId == null) return null;
     try {
-      return orderItemRepository.findFirstByOrderId(orderId)
+      return orderItemRepository.findFirstByOrder_IdOrderByIdAsc(orderId)
           .map(OrderItem::getProductId)
           .orElse(null);
     } catch (Exception e) {
