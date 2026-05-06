@@ -20,7 +20,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
- * 알람 Entity.
+ * 알림 엔티티.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -51,7 +51,7 @@ public class Notification {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private NotificationStatus status; // UNREAD, READ
+  private NotificationStatus status;
 
   @Column
   private Long productId;
@@ -62,13 +62,6 @@ public class Notification {
 
   private LocalDateTime readAt;
 
-  /**
-   * 알림 생성자 (String 타입 기반 — 레거시 호환).
-   * @param userId 유저 아이디.
-   * @param type 알림 타입 description.
-   * @param message 알림 메시지 내용.
-   * @param productId 상품 아이디 (null 허용).
-   */
   public Notification(Long userId, String type, String message, Long productId) {
     this.userId = userId;
     this.type = NotificationType.from(type);
