@@ -66,7 +66,7 @@ k6 run -e DROP_ID=1 k6/04_queue_spike.js
 | `vus`               | 동시 접속자 수                |
 | `iterations`        | 총 실행 횟수                  |
 
-## 결과 출력 (HTML 리포트)
+## 결과 출력 (JSON)
 ```bash
 k6 run --out json=result.json k6/03_order_payment.js
 ```
