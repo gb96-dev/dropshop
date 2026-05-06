@@ -14,9 +14,9 @@ import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.payment.exception.PaymentException;
+import com.example.dropshop.domain.payment.outbox.PaymentOutboxPublisher;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -33,8 +33,8 @@ public class PaymentWebhookService {
   private final PortOneProperties portOneProperties;
   private final RedisLockService redisLockService;
   private final TransactionTemplate transactionTemplate;
-  private final ApplicationEventPublisher eventPublisher;
   private final PaymentVerificationService paymentVerificationService;
+  private final PaymentOutboxPublisher paymentOutboxPublisher;
 
   /**
    * PortOne 결제 식별자로 웹훅 동기화 처리.
@@ -85,13 +85,13 @@ public class PaymentWebhookService {
       paymentVerificationService.validateOrderNotExpired(order);
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
-      publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK");
+      publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK", order.getUserId());
       return;
     }
 
     if (paymentVerificationService.isFailureStatus(portOnePayment.status())) {
       payment.fail();
-      publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK");
+      publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK", order.getUserId());
       return;
     }
 
@@ -115,8 +115,9 @@ public class PaymentWebhookService {
   private void publishPaymentStatusChanged(
       Payment payment,
       OrderStatus orderStatus,
-      String source
+      String source,
+      Long buyerUserId
   ) {
-    eventPublisher.publishEvent(new PaymentStatusChangedEvent(payment, orderStatus, source));
+    paymentOutboxPublisher.save(new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
   }
 }
