@@ -122,7 +122,7 @@ public class SseEmitterService {
               .data(data)
       );
 
-      emitter.complete();
+      // emitter.complete();
     } catch (IOException ex) {
       emitterRepository.deleteById(emitterId);
 
