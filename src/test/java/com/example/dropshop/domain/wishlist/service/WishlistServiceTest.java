@@ -66,7 +66,7 @@ class WishlistServiceTest {
         .willReturn(false);
 
     Wishlist saved = new Wishlist(USER_ID, DROP_ID);
-    given(wishlistRepository.save(any()))
+    given(wishlistRepository.saveAndFlush(any()))
         .willReturn(saved);
 
     when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
@@ -75,7 +75,7 @@ class WishlistServiceTest {
     wishlistService.create(USER_ID, request);
 
     // then
-    verify(wishlistRepository, times(1)).save(any());
+    verify(wishlistRepository, times(1)).saveAndFlush(any());
 
     verify(zSetOperations, times(1))
         .add(startsWith(WISHLIST_USER_KEY), eq(DROP_ID), anyDouble());
@@ -93,7 +93,7 @@ class WishlistServiceTest {
     assertThatThrownBy(() -> wishlistService.create(USER_ID, request))
         .isInstanceOf(ServiceException.class);
 
-    verify(wishlistRepository, never()).save(any());
+    verify(wishlistRepository, never()).saveAndFlush(any());
     verify(zSetOperations, never()).add(anyString(), anyLong(), anyDouble());
   }
 
@@ -143,7 +143,7 @@ class WishlistServiceTest {
         .willReturn(false);
 
     Wishlist saved = new Wishlist(USER_ID, DROP_ID2);
-    given(wishlistRepository.save(any(Wishlist.class)))
+    given(wishlistRepository.saveAndFlush(any(Wishlist.class)))
         .willReturn(saved);
 
     when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
@@ -154,7 +154,7 @@ class WishlistServiceTest {
     wishlistService.create(USER_ID, request);
 
     // then
-    verify(wishlistRepository).save(captor.capture());
+    verify(wishlistRepository).saveAndFlush(captor.capture());
 
     Wishlist captured = captor.getValue();
 

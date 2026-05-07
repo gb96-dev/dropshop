@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.domain.drops.dto.response.DropListItemResponse;
 import com.example.dropshop.domain.drops.service.DropsQueryService;
 import java.time.LocalDateTime;
@@ -33,6 +34,9 @@ class ProductDropsQueryControllerTest {
 
   @MockitoBean
   private DropsQueryService dropsQueryService;
+
+  @MockitoBean
+  private TokenBlacklistService tokenBlacklistService;
 
   @Test
   @DisplayName("상품별 드롭 이력 조회 성공")

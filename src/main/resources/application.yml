@@ -1,26 +1,20 @@
 spring:
-  config:
-    import: optional:file:./application-local.yml
   main:
     allow-circular-references: true
-  datasource:
-    url: jdbc:mysql://localhost:3306/dropshop?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: 12345678
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
   kafka:
-    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
     topic:
-      partitions: 3
-      replication-factor: 1
+      partitions: ${SPRING_KAFKA_TOPIC_PARTITIONS:3}
+      replication-factor: ${SPRING_KAFKA_TOPIC_REPLICATION_FACTOR:1}  # 운영에서는 2~3 권장
 
 # PortOne 설정
 portone:
@@ -41,7 +35,7 @@ cloud:
       access-key: "dummy_key"
       secret-key: "dummy_secret"
 
-# ✅ 이미지 업로드 관련
+# 이미지 업로드 관련
 product:
   image-upload:
     bucket: "dummy-bucket"
@@ -50,11 +44,26 @@ product:
     cdn-base-url: "http://localhost:8080"
     presigned-expiration-seconds: 300
 
+dropshop:
+  product:
+    max-image-count: 5
+    purchasable-block-hours: 24
+  drops:
+    view-count-ttl-seconds: 600
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
-    org.hibernate.SQL: DEBUG
+    org.hibernate.SQL: INFO
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
-
 server:
-  port: 8081
+  port: 8080

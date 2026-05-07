@@ -73,7 +73,7 @@ class ProductQueryServiceTest {
     Drops latestDrop = createDrop(product, dropStartAt);
     Page<Product> page = new PageImpl<Product>(List.of(product), PageRequest.of(0, 10), 1);
 
-    given(productRepository.findAllByStatusIn(anyCollection(), any(Pageable.class)))
+    given(productRepository.findPublicProducts(anyCollection(), any(), any(LocalDateTime.class), any(Pageable.class)))
         .willReturn(page);
     given(dropsFacadeService.findLatestDropsByProductIds(List.of(11L)))
         .willReturn(Map.of(11L, latestDrop));
@@ -117,14 +117,15 @@ class ProductQueryServiceTest {
   void findPublicProducts_dropImminent_callsCustomQuery() {
     Page<Product> page = new PageImpl<Product>(List.of(), PageRequest.of(0, 10), 0);
 
-    given(productRepository.findPublicProductsOrderByDropImminent(anyCollection(), any(LocalDateTime.class),
+    given(productRepository.findPublicProducts(anyCollection(), any(), any(LocalDateTime.class),
         any(Pageable.class))).willReturn(page);
     given(dropsFacadeService.findLatestDropsByProductIds(List.of())).willReturn(Map.of());
 
     productQueryService.findPublicProducts("READY", "DROP_IMMINENT", PageRequest.of(0, 10));
 
-    verify(productRepository).findPublicProductsOrderByDropImminent(
+    verify(productRepository).findPublicProducts(
         anyCollection(),
+        any(),
         any(LocalDateTime.class),
         any(Pageable.class)
     );

@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * PortOne 웹훅 동기화 서비스.
+ * PortOne 웹훅 동기화를 처리한다.
  */
 @Service
 @RequiredArgsConstructor
