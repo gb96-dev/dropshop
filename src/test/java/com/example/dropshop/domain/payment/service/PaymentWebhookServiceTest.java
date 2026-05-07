@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -68,8 +69,8 @@ class PaymentWebhookServiceTest {
   @Mock
   private TransactionTemplate transactionTemplate;
 
-  @Mock
-  private PaymentVerificationService paymentVerificationService;
+  @Spy
+  private PaymentVerificationService paymentVerificationService = new PaymentVerificationService();
 
   @Mock
   private PaymentOutboxPublisher paymentOutboxPublisher;
@@ -122,7 +123,7 @@ class PaymentWebhookServiceTest {
     assertThat(result.getPortOneTransactionId()).isEqualTo("tx-webhook");
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
-    verify(eventPublisher, times(1)).publishEvent(any(PaymentStatusChangedEvent.class));
+    verify(paymentOutboxPublisher, times(1)).save(any(PaymentStatusChangedEvent.class));
   }
 
   @Test
