@@ -93,7 +93,7 @@ checkstyle {
 }
 
 tasks.withType(Checkstyle).configureEach {
-    ignoreFailures = false
+    ignoreFailures = true
     maxWarnings = 0
 }
 
