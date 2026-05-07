@@ -6,7 +6,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
@@ -69,3 +69,13 @@ logging:
 
 server:
   port: 8080
+
+openai:
+  api-key: "dummy"
+  embedding-model: "text-embedding-3-small"
+  chat-model: "gpt-4o-mini"
+
+pinecone:
+  api-key: "dummy"
+  host: "https://dummy.pinecone.io"
+  index-name: "dropshop-products"
