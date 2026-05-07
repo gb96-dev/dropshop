@@ -5,7 +5,6 @@ import static com.example.dropshop.common.constant.kafka.key.KafkaKeys.KEY_DELAY
 import static com.example.dropshop.common.constant.kafka.topic.KafkaTopics.TOPIC_QUEUE_TOKEN;
 
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
-import com.example.dropshop.domain.queue.repository.QueueTokenRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

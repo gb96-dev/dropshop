@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 결제 조회와 PortOne 요청 정보 조회용 서비스를 제공한다.
+ * 결제 조회 서비스.
  */
 @Service
 @RequiredArgsConstructor
@@ -22,6 +22,13 @@ public class PaymentQueryService {
   private final OrderFacadeService orderFacadeService;
   private final PortOneProperties portOneProperties;
 
+  /**
+   * 결제 단건 조회.
+   *
+   * @param paymentId 결제 ID
+   * @param email 인증된 사용자 이메일
+   * @return 결제 엔티티
+   */
   @Transactional(readOnly = true)
   public Payment getPayment(Long paymentId, String email) {
     Payment payment = paymentRepository.findById(paymentId)
@@ -30,6 +37,13 @@ public class PaymentQueryService {
     return payment;
   }
 
+  /**
+   * 결제에 연결된 주문 조회.
+   *
+   * @param orderId 주문 ID
+   * @param email 인증된 사용자 이메일
+   * @return 주문 엔티티
+   */
   @Transactional(readOnly = true)
   public Order getOrder(Long orderId, String email) {
     return orderFacadeService.findOrderForPayment(orderId, email);

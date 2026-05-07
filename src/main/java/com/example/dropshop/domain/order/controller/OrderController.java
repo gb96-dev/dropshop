@@ -36,6 +36,7 @@ public class OrderController {
   /**
    * 주문 생성.
    *
+   * @param email 인증된 사용자 이메일
    * @param request 주문 생성 요청
    * @return 생성된 주문 응답
    */
@@ -55,6 +56,7 @@ public class OrderController {
   /**
    * 주문 단건 조회.
    *
+   * @param email 인증된 사용자 이메일
    * @param orderId 주문 ID
    * @return 주문 상세 응답
    */
@@ -70,6 +72,7 @@ public class OrderController {
   /**
    * 주문 목록 조회.
    *
+   * @param email 인증된 사용자 이메일
    * @param page 페이지 번호
    * @param size 페이지 크기
    * @return 주문 목록 응답
@@ -91,6 +94,7 @@ public class OrderController {
   /**
    * 주문 수동 취소.
    *
+   * @param email 인증된 사용자 이메일
    * @param orderId 주문 ID
    * @return 취소된 주문 응답
    */

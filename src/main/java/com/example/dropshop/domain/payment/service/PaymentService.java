@@ -1,20 +1,20 @@
 package com.example.dropshop.domain.payment.service;
 
+import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
-import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
-import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
-import com.example.dropshop.domain.payment.outbox.PaymentOutboxPublisher;
 import com.example.dropshop.domain.payment.client.PortOneClient;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
+import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.payment.exception.PaymentException;
+import com.example.dropshop.domain.payment.outbox.PaymentOutboxPublisher;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * 결제 생성, 조회, 검증, 확정 로직을 처리하는 도메인 서비스다.
+ * 결제 생성, 검증, 확정 로직을 처리하는 도메인 서비스.
  */
 @Service
 @RequiredArgsConstructor
@@ -34,14 +34,22 @@ public class PaymentService {
   private final PortOneClient portOneClient;
   private final RedisLockService redisLockService;
   private final TransactionTemplate transactionTemplate;
+  private final PaymentVerificationService paymentVerificationService;
   private final PaymentOutboxPublisher paymentOutboxPublisher;
 
+  /**
+   * 결제 확정 결과.
+   *
+   * @param payment 결제 엔티티
+   * @param orderStatus 주문 상태
+   */
   public record PaymentConfirmResult(Payment payment, OrderStatus orderStatus) {
   }
 
   /**
    * 주문에 대한 결제를 준비한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param orderId 주문 ID
    * @param amount 결제 금액
    * @param merchantPaymentId 중복 요청 방지 키이자 가맹점 결제 식별자
@@ -73,6 +81,7 @@ public class PaymentService {
    * PortOne 결제 결과를 검증하고 내부 결제를 확정한다.
    *
    * @param paymentId 결제 ID
+   * @param email 인증된 사용자 이메일
    * @param portOnePaymentId PortOne 결제 식별자
    * @return 상태가 반영된 결제 엔티티
    * @throws PaymentException PortOne 응답 검증 또는 결제 확정에 실패한 경우
@@ -84,6 +93,11 @@ public class PaymentService {
 
   /**
    * PortOne 결제 결과를 검증하고 주문 상태까지 함께 반환한다.
+   *
+   * @param paymentId 결제 ID
+   * @param email 인증된 사용자 이메일
+   * @param portOnePaymentId PortOne 결제 식별자
+   * @return 결제와 주문 상태
    */
   public PaymentConfirmResult confirmPaymentWithOrderStatus(
       Long paymentId,
@@ -111,8 +125,8 @@ public class PaymentService {
   ) {
     Order order = orderFacadeService.findOrderForPayment(orderId, email);
 
-    validateOrderPending(order);
-    validateOrderNotExpired(order);
+    paymentVerificationService.validatePendingOrder(order);
+    paymentVerificationService.validateOrderNotExpired(order);
     validatePaymentAmount(order, amount);
 
     Optional<Payment> existingPayment = paymentRepository.findByMerchantPaymentId(merchantPaymentId);
@@ -134,14 +148,14 @@ public class PaymentService {
     Payment payment = findAccessiblePayment(paymentId, email);
     Order order = orderFacadeService.findOrderForPayment(payment.getOrderId(), email);
 
-    validatePortOnePaymentId(payment, portOnePaymentId);
+    paymentVerificationService.validatePortOnePaymentId(payment, portOnePaymentId);
 
     if (payment.getStatus() != PaymentStatus.PENDING) {
       return new PaymentConfirmResult(payment, order.getStatus());
     }
 
-    validateOrderPending(order);
-    validateOrderNotExpired(order);
+    paymentVerificationService.validatePendingOrder(order);
+    paymentVerificationService.validateOrderNotExpired(order);
 
     PortOnePaymentResponse portOnePayment = portOneClient.getPayment(portOnePaymentId);
     applyConfirmationResult(payment, order, portOnePayment);
@@ -177,16 +191,16 @@ public class PaymentService {
       Order order,
       PortOnePaymentResponse portOnePayment
   ) {
-    validatePortOneResponse(payment, portOnePayment);
+    paymentVerificationService.validatePortOneResponse(payment, portOnePayment);
 
-    if ("PAID".equals(portOnePayment.status())) {
+    if (paymentVerificationService.isPaidStatus(portOnePayment.status())) {
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
       publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API", order.getUserId());
       return;
     }
 
-    if (isFailureStatus(portOnePayment.status())) {
+    if (paymentVerificationService.isFailureStatus(portOnePayment.status())) {
       payment.fail();
       if (order.getStatus() == OrderStatus.PENDING) {
         orderFacadeService.cancelOrderByPaymentFailure(order);
@@ -196,18 +210,6 @@ public class PaymentService {
     }
 
     throw new PaymentException(ErrorCode.PAYMENT_PORTONE_NOT_PAID);
-  }
-
-  private void validateOrderPending(Order order) {
-    if (order.getStatus() != OrderStatus.PENDING) {
-      throw new OrderException(ErrorCode.ORDER_INVALID_STATUS);
-    }
-  }
-
-  private void validateOrderNotExpired(Order order) {
-    if (order.isHoldExpired()) {
-      throw new OrderException(ErrorCode.ORDER_HOLD_EXPIRED);
-    }
   }
 
   private void validatePaymentAmount(Order order, BigDecimal amount) {
@@ -222,40 +224,6 @@ public class PaymentService {
     }
   }
 
-  private void validatePortOnePaymentId(Payment payment, String portOnePaymentId) {
-    if (!payment.getMerchantPaymentId().equals(portOnePaymentId)) {
-      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_MISMATCH);
-    }
-  }
-
-  private void validatePortOneResponse(Payment payment, PortOnePaymentResponse portOnePayment) {
-    if (portOnePayment == null) {
-      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR);
-    }
-    if (!payment.getMerchantPaymentId().equals(portOnePayment.id())) {
-      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_MISMATCH);
-    }
-    if (portOnePayment.amount() == null || portOnePayment.amount().total() == null) {
-      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR);
-    }
-    if (payment.getAmount().compareTo(portOnePayment.amount().total()) != 0) {
-      throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
-    }
-    if (portOnePayment.status() == null || portOnePayment.status().isBlank()) {
-      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR);
-    }
-  }
-
-  private boolean isFailureStatus(String status) {
-    return "FAILED".equals(status) || "CANCELLED".equals(status);
-  }
-
-  /**
-   * 결제 상태 변경 이벤트를 아웃박스 테이블에 저장한다.
-   *
-   * <p>현재 DB 트랜잭션에 참여하므로 결제 상태 변경과 이벤트 저장이 원자적으로 커밋된다.
-   * Kafka 발행은 {@link PaymentOutboxPublisher#publishPending()} 스케줄러가 담당한다.
-   */
   private void publishPaymentStatusChanged(
       Payment payment,
       OrderStatus orderStatus,

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 환불 요청, 조회, 상태 변경을 처리하는 REST 컨트롤러.
+ * 환불 REST 컨트롤러.
  */
 @RestController
 @RequestMapping("/api/refunds")
@@ -29,6 +29,7 @@ public class RefundController {
   /**
    * 환불 요청을 생성한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param request 환불 생성 요청
    * @return 생성된 환불 응답
    */
@@ -46,6 +47,7 @@ public class RefundController {
   /**
    * 환불 단건을 조회한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param refundId 환불 ID
    * @return 환불 응답
    */
@@ -62,6 +64,7 @@ public class RefundController {
   /**
    * 결제에 연결된 환불 목록을 조회한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param paymentId 결제 ID
    * @return 환불 목록 응답
    */
@@ -78,6 +81,7 @@ public class RefundController {
   /**
    * 환불을 승인한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param refundId 환불 ID
    * @return 승인된 환불 응답
    */
@@ -92,6 +96,7 @@ public class RefundController {
   /**
    * 환불을 완료한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param refundId 환불 ID
    * @return 완료된 환불 응답
    */
@@ -106,6 +111,7 @@ public class RefundController {
   /**
    * 환불을 거절한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param refundId 환불 ID
    * @return 거절된 환불 응답
    */
