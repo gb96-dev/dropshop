@@ -17,4 +17,7 @@ public class KafkaGroups {
 
   // 결제 통계 이벤트 그룹
   public static final String PAYMENT_STATS_GROUP_NAME = "payment-stats-group";
+
+  // 알림 이벤트 그룹
+  public static final String NOTIFICATION_PAYMENT_GROUP_NAME = "notification-payment-group";
 }
