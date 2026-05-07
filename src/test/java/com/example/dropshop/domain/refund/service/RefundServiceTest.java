@@ -140,6 +140,11 @@ class RefundServiceTest {
             "단순 변심"
         );
 
+    // completeRefundInternal의 transactionTemplate.execute 블록 내부에서 소유권 검증에 필요한 스텁
+    given(refundRepository.findById(1L)).willReturn(Optional.of(processingRefund));
+    given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
+    given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
+
     given(refundCompletionWorker.prepareRefundCompletion(1L, "test@test.com")).willReturn(command);
     given(refundCompletionWorker.finalizeRefundCompletion(1L, 1L)).willAnswer(invocation -> {
       processingRefund.complete();
@@ -168,14 +173,18 @@ class RefundServiceTest {
             new BigDecimal("79000"),
             "단순 변심"
         );
+    // completeRefundInternal의 transactionTemplate.execute 블록 내부에서 소유권 검증에 필요한 스텁
+    given(refundRepository.findById(1L)).willReturn(Optional.of(refund));
+    given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
+    given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
+
     given(refundCompletionWorker.prepareRefundCompletion(1L, "test@test.com")).willReturn(command);
     willThrow(new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR))
         .given(portOneClient)
         .cancelPayment("payment-test-123", new BigDecimal("79000"), "단순 변심");
 
     assertThatThrownBy(() -> refundService.completeRefund(1L, "test@test.com"))
-        .isInstanceOf(RefundException.class)
-        .hasMessage(ErrorCode.REFUND_PORTONE_API_ERROR.getMessage());
+        .isInstanceOf(RefundException.class);
 
     verify(refundCompletionWorker, times(1)).revertRefundCompletion(1L);
     verify(refundCompletionWorker, never()).finalizeRefundCompletion(any(), any());

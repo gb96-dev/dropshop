@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.0.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'checkstyle'
 }
 
 group = 'com.example'
@@ -19,46 +20,80 @@ repositories {
 }
 
 dependencies {
+    // --- BOM ---
     implementation platform('software.amazon.awssdk:bom:2.31.13')
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // --- Spring Boot ---
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    compileOnly 'org.projectlombok:lombok'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // --- JPA / DB ---
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'com.mysql:mysql-connector-j'
-    annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-    testCompileOnly 'org.projectlombok:lombok'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testAnnotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.security:spring-security-test'
-    testRuntimeOnly 'com.h2database:h2'
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // --- QueryDSL ---
     implementation 'io.github.openfeign.querydsl:querydsl-jpa:7.1'
     annotationProcessor 'io.github.openfeign.querydsl:querydsl-apt:7.1:jakarta'
     annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
     annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // --- Flyway (DB 마이그레이션) ---
+    implementation 'org.flywaydb:flyway-core'
+    runtimeOnly 'org.flywaydb:flyway-mysql'
+
+    // --- Redis / Cache ---
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    // --- Kafka ---
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // --- JWT ---
     implementation "io.jsonwebtoken:jjwt-api:0.12.5"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.12.5"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.12.5"
+
+    // --- AWS S3 ---
     implementation 'software.amazon.awssdk:s3'
     implementation 'software.amazon.awssdk:auth'
     implementation 'software.amazon.awssdk:regions'
-    implementation 'software.amazon.awssdk:s3'
+
+    // --- ShedLock (분산 스케줄러 락) ---
     implementation 'net.javacrumbs.shedlock:shedlock-spring:5.16.0'
     implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.16.0'
-    implementation 'org.flywaydb:flyway-core'
-    runtimeOnly 'org.flywaydb:flyway-mysql'
-    implementation 'org.springframework.kafka:spring-kafka'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
-    implementation 'org.springframework.boot:spring-boot-starter-cache'
 
+    // --- Jackson ---
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // --- Lombok ---
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // --- Test ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+checkstyle {
+    toolVersion = '10.17.0'
+    config = resources.text.fromFile("config/checkstyle/google_checks.xml")
+}
+
+tasks.withType(Checkstyle).configureEach {
+    ignoreFailures = false
+    maxWarnings = 0
+}
+

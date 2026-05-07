@@ -20,6 +20,7 @@ import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
+import com.example.dropshop.domain.statistics.service.PopularProductRedisService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -51,6 +52,9 @@ class OrderServiceTest {
 
   @Mock
   private TransactionTemplate transactionTemplate;
+
+  @Mock
+  private PopularProductRedisService popularProductRedisService;
 
   @InjectMocks
   private OrderService orderService;

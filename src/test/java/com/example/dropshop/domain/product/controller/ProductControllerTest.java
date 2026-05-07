@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.common.exception.ServiceException;
 import com.example.dropshop.common.security.SellerAuthContext;
 import com.example.dropshop.common.security.SellerAuthResolver;
@@ -42,6 +43,9 @@ class ProductControllerTest {
 
   @MockitoBean
   private SellerAuthResolver sellerAuthResolver;
+
+  @MockitoBean
+  private TokenBlacklistService tokenBlacklistService;
 
   @Test
   @DisplayName("상품 등록 성공 - @AuthenticationPrincipal email 사용")

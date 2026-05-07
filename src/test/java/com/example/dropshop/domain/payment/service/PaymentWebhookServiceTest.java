@@ -23,6 +23,7 @@ import com.example.dropshop.domain.payment.client.PortOneClient;
 import com.example.dropshop.domain.payment.dto.request.PaymentWebhookRequest;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
+import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.exception.PaymentException;
@@ -118,7 +119,7 @@ class PaymentWebhookServiceTest {
     assertThat(result.getPortOneTransactionId()).isEqualTo("tx-webhook");
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
-    verify(eventPublisher, times(1)).publishEvent(any());
+    verify(eventPublisher, times(1)).publishEvent(any(PaymentStatusChangedEvent.class));
   }
 
   @Test
@@ -128,9 +129,6 @@ class PaymentWebhookServiceTest {
     order.pay();
 
     given(paymentRepository.findByMerchantPaymentId("payment-test-123")).willReturn(Optional.of(payment));
-    given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
-    given(portOneClient.getPayment("payment-test-123")).willReturn(portOnePayment("PAID", "tx-123", "79000"));
-
     Payment result = paymentWebhookService.handleWebhook("payment-test-123");
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
@@ -150,7 +148,7 @@ class PaymentWebhookServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
-    verify(eventPublisher, times(1)).publishEvent(any());
+    verify(eventPublisher, times(1)).publishEvent(any(PaymentStatusChangedEvent.class));
   }
 
   @Test

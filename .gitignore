@@ -57,6 +57,7 @@ application-local.yml
 !secret.yml.example
 !src/main/resources/application.yml
 !src/main/resources/*.sample.yml
+!src/test/resources/application.yml
 
 # Local PortOne frontend test pages
 /src/main/java/com/example/dropshop/common/config/TestDataInitializer.java

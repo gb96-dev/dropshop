@@ -122,7 +122,7 @@ class DropsQueryServiceTest {
 
     assertThat(result.getViewCount()).isEqualTo(1L);
     verify(dropsRepository).incrementViewCount(10L);
-    verify(stringRedisTemplate, never()).delete(any());
+    verify(stringRedisTemplate, never()).delete(anyString());
   }
 
   @Test
@@ -142,7 +142,7 @@ class DropsQueryServiceTest {
 
     assertThat(result.getViewCount()).isEqualTo(0L);
     verify(dropsRepository, never()).incrementViewCount(10L);
-    verify(stringRedisTemplate, never()).delete(any());
+    verify(stringRedisTemplate, never()).delete(anyString());
   }
 
   @Test
@@ -162,7 +162,7 @@ class DropsQueryServiceTest {
     DropResponse result = dropsQueryService.findPublicDropDetail(10L, "user@test.com", "127.0.0.1", "Mozilla/5.0");
 
     assertThat(result.getViewCount()).isEqualTo(0L);
-    verify(stringRedisTemplate).delete(any());
+    verify(stringRedisTemplate).delete(anyString());
   }
 
   @Test
@@ -182,7 +182,7 @@ class DropsQueryServiceTest {
     DropResponse result = dropsQueryService.findPublicDropDetail(10L, "user@test.com", "127.0.0.1", "Mozilla/5.0");
 
     assertThat(result.getViewCount()).isEqualTo(0L);
-    verify(stringRedisTemplate).delete(any());
+    verify(stringRedisTemplate).delete(anyString());
   }
 
   @Test

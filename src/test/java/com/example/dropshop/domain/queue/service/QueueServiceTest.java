@@ -19,6 +19,7 @@ import com.example.dropshop.domain.queue.entity.Queue;
 import com.example.dropshop.domain.queue.entity.QueueToken;
 import com.example.dropshop.domain.queue.enums.QueueStatus;
 import com.example.dropshop.domain.queue.enums.ThreadHoldResult;
+import com.example.dropshop.domain.queue.producer.QueueTokenProducer;
 import com.example.dropshop.domain.queue.repository.QueueRepository;
 import com.example.dropshop.domain.queue.repository.QueueTokenRepository;
 import com.example.dropshop.domain.user.entity.User;
@@ -47,6 +48,9 @@ class QueueServiceTest {
   @Mock
   private UserRepository userRepository;
 
+  @Mock
+  private QueueTokenProducer queueTokenProducer;
+
   @InjectMocks
   private QueueService queueService;
 
@@ -62,6 +66,8 @@ class QueueServiceTest {
     given(userRepository.findByEmail(anyString()))
         .willReturn(Optional.of(mockUser));
 
+    given(mockUser.getId()).willReturn(USER_ID);
+
     given(dropsRepository.findById(1L)).willReturn(Optional.empty());
 
     // when && then
@@ -76,6 +82,8 @@ class QueueServiceTest {
 
     given(userRepository.findByEmail(anyString()))
         .willReturn(Optional.of(mockUser));
+
+    given(mockUser.getId()).willReturn(USER_ID);
 
     Drops drop = mock(Drops.class);
 
@@ -95,6 +103,8 @@ class QueueServiceTest {
 
     given(userRepository.findByEmail(anyString()))
         .willReturn(Optional.of(mockUser));
+
+    given(mockUser.getId()).willReturn(USER_ID);
 
     Queue queue = mock(Queue.class);
 
@@ -138,6 +148,8 @@ class QueueServiceTest {
     given(userRepository.findByEmail(anyString()))
         .willReturn(Optional.of(mockUser));
 
+    given(mockUser.getId()).willReturn(USER_ID);
+
     Queue queue = mock(Queue.class);
 
     Drops activeDrop = mock(Drops.class);
@@ -174,6 +186,8 @@ class QueueServiceTest {
 
     given(userRepository.findByEmail(anyString()))
         .willReturn(Optional.of(mockUser));
+
+    given(mockUser.getId()).willReturn(USER_ID);
 
     Queue queue = mock(Queue.class);
     QueueToken token = mock(QueueToken.class);
@@ -213,6 +227,8 @@ class QueueServiceTest {
     given(userRepository.findByEmail(anyString()))
         .willReturn(Optional.of(mockUser));
 
+    given(mockUser.getId()).willReturn(USER_ID);
+
     Drops activeDrop = mock(Drops.class);
 
     given(activeDrop.getStatus()).willReturn(DropsStatus.ACTIVE);
@@ -247,7 +263,9 @@ class QueueServiceTest {
 
     given(userRepository.findByEmail(anyString()))
         .willReturn(Optional.of(mockUser));
-    
+
+    given(mockUser.getId()).willReturn(USER_ID);
+
     Drops activeDrop = mock(Drops.class);
 
     given(activeDrop.getStatus()).willReturn(DropsStatus.ACTIVE);
