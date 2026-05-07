@@ -17,38 +17,44 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtUtil jwtUtil;
-    private final TokenBlacklistService tokenBlacklistService;
+  private final JwtUtil jwtUtil;
+  private final TokenBlacklistService tokenBlacklistService;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 미사용
-                .authorizeHttpRequests(auth -> auth
-                        // 인증 없이 접근 가능한 경로
-                        .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
-                        .requestMatchers("/api/users/signup").permitAll()
-                        // 관리자 전용 경로
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        // 판매자 전용 경로
-                        .requestMatchers("/api/sellers/drops/**").hasRole("SELLER")
-                        .requestMatchers("/api/sellers/products/**").hasRole("SELLER")
-                        .requestMatchers("/api/sellers/images/**").hasRole("SELLER")
-                        .requestMatchers("/api/sellers/**").permitAll() // TODO: JWT 구현 후 제거
-                        .requestMatchers("/api/products/**").permitAll() // TODO: JWT 구현 후 제거
-                        .requestMatchers("/payments/**").permitAll()
-                        .requestMatchers("/api/payments/**").permitAll()
-                        .requestMatchers("/api/wishlists/**").permitAll()
-                        .requestMatchers("/api/queues/**").permitAll()
-                        .requestMatchers("/api/recommendations/**").permitAll()
-                        .requestMatchers("/api/admin/sellers/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, tokenBlacklistService), Usernam
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 미사용
+        .authorizeHttpRequests(auth -> auth
+            // 인증 없이 접근 가능한 경로
+            .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
+            .requestMatchers("/api/users/signup").permitAll()
+            // 관리자 전용 경로
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            // 판매자 전용 경로
+            .requestMatchers("/api/sellers/drops/**").hasRole("SELLER")
+            .requestMatchers("/api/sellers/products/**").hasRole("SELLER")
+            .requestMatchers("/api/sellers/images/**").hasRole("SELLER")
+            .requestMatchers("/api/sellers/**").permitAll() // TODO: JWT 구현 후 제거
+            .requestMatchers("/api/products/**").permitAll() // TODO: JWT 구현 후 제거
+            .requestMatchers("/payments/**").permitAll()
+            .requestMatchers("/api/payments/**").permitAll()
+            .requestMatchers("/api/wishlists/**").permitAll()
+            .requestMatchers("/api/queues/**").permitAll()
+            .requestMatchers("/api/recommendations/**").permitAll()
+            .requestMatchers("/api/admin/sellers/**").hasRole("ADMIN")
+            .anyRequest().authenticated()
+        )
+        // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치
+        .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, tokenBlacklistService),
+            UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+  }
+}
