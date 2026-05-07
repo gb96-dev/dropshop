@@ -6,9 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
-/**
- * 환불 응답.
- */
+/** 환불 응답. */
 @Getter
 public class RefundResponse {
 

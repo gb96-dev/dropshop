@@ -6,9 +6,7 @@ import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
-/**
- * 결제 확정 응답.
- */
+/** 결제 확정 응답. */
 @Getter
 public class PaymentConfirmResponse {
 

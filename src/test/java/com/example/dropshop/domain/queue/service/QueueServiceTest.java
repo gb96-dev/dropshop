@@ -1,6 +1,5 @@
 package com.example.dropshop.domain.queue.service;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,23 +35,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class QueueServiceTest {
 
-  @Mock
-  private QueueRepository queueRepository;
+  @Mock private QueueRepository queueRepository;
 
-  @Mock
-  private QueueTokenRepository queueTokenRepository;
+  @Mock private QueueTokenRepository queueTokenRepository;
 
-  @Mock
-  private DropsRepository dropsRepository;
+  @Mock private DropsRepository dropsRepository;
 
-  @Mock
-  private UserRepository userRepository;
+  @Mock private UserRepository userRepository;
 
-  @Mock
-  private QueueTokenProducer queueTokenProducer;
+  @Mock private QueueTokenProducer queueTokenProducer;
 
-  @InjectMocks
-  private QueueService queueService;
+  @InjectMocks private QueueService queueService;
 
   private static final Long DROP_ID = 1L;
   private static final Long USER_ID = 1L;
@@ -63,16 +56,14 @@ class QueueServiceTest {
     // given
     User mockUser = mock(User.class);
 
-    given(userRepository.findByEmail(anyString()))
-        .willReturn(Optional.of(mockUser));
+    given(userRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
 
     given(mockUser.getId()).willReturn(USER_ID);
 
     given(dropsRepository.findById(1L)).willReturn(Optional.empty());
 
     // when && then
-    assertThrows(ServiceException.class,
-        () -> queueService.decideQueue(DROP_ID, USER_EMAIL));
+    assertThrows(ServiceException.class, () -> queueService.decideQueue(DROP_ID, USER_EMAIL));
   }
 
   @Test
@@ -80,8 +71,7 @@ class QueueServiceTest {
     // given
     User mockUser = mock(User.class);
 
-    given(userRepository.findByEmail(anyString()))
-        .willReturn(Optional.of(mockUser));
+    given(userRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
 
     given(mockUser.getId()).willReturn(USER_ID);
 
@@ -92,8 +82,7 @@ class QueueServiceTest {
     given(dropsRepository.findById(1L)).willReturn(Optional.of(drop));
 
     // when && then
-    assertThrows(ServiceException.class,
-        () -> queueService.decideQueue(DROP_ID, USER_EMAIL));
+    assertThrows(ServiceException.class, () -> queueService.decideQueue(DROP_ID, USER_EMAIL));
   }
 
   @Test
@@ -101,8 +90,7 @@ class QueueServiceTest {
     // given
     User mockUser = mock(User.class);
 
-    given(userRepository.findByEmail(anyString()))
-        .willReturn(Optional.of(mockUser));
+    given(userRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
 
     given(mockUser.getId()).willReturn(USER_ID);
 
@@ -145,8 +133,7 @@ class QueueServiceTest {
     // given
     User mockUser = mock(User.class);
 
-    given(userRepository.findByEmail(anyString()))
-        .willReturn(Optional.of(mockUser));
+    given(userRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
 
     given(mockUser.getId()).willReturn(USER_ID);
 
@@ -184,8 +171,7 @@ class QueueServiceTest {
     // given
     User mockUser = mock(User.class);
 
-    given(userRepository.findByEmail(anyString()))
-        .willReturn(Optional.of(mockUser));
+    given(userRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
 
     given(mockUser.getId()).willReturn(USER_ID);
 
@@ -204,8 +190,7 @@ class QueueServiceTest {
 
     given(queue.getId()).willReturn(10L);
 
-    given(queueTokenRepository.findByQueueId(10L))
-        .willReturn(Optional.of(token));
+    given(queueTokenRepository.findByQueueId(10L)).willReturn(Optional.of(token));
 
     given(token.getQueueToken()).willReturn("testToken");
 
@@ -224,8 +209,7 @@ class QueueServiceTest {
     // given
     User mockUser = mock(User.class);
 
-    given(userRepository.findByEmail(anyString()))
-        .willReturn(Optional.of(mockUser));
+    given(userRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
 
     given(mockUser.getId()).willReturn(USER_ID);
 
@@ -238,15 +222,13 @@ class QueueServiceTest {
     given(queueRepository.findByDropIdAndUserIdAndStatusIn(any(), any(), any()))
         .willReturn(List.of());
 
-    Queue queue =  mock(Queue.class);
+    Queue queue = mock(Queue.class);
 
     given(queueRepository.save(any())).willReturn(queue);
 
-    given(queueRepository.countByDropIdAndStatusIn(any(), any()))
-        .willReturn(5L);
+    given(queueRepository.countByDropIdAndStatusIn(any(), any())).willReturn(5L);
 
-    given(queueTokenRepository.save(any()))
-        .willAnswer(invocation -> invocation.getArgument(0));
+    given(queueTokenRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
     // when
     ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
@@ -261,8 +243,7 @@ class QueueServiceTest {
     // given
     User mockUser = mock(User.class);
 
-    given(userRepository.findByEmail(anyString()))
-        .willReturn(Optional.of(mockUser));
+    given(userRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
 
     given(mockUser.getId()).willReturn(USER_ID);
 
@@ -275,15 +256,14 @@ class QueueServiceTest {
     given(queueRepository.findByDropIdAndUserIdAndStatusIn(any(), any(), any()))
         .willReturn(List.of());
 
-    Queue queue =  mock(Queue.class);
+    Queue queue = mock(Queue.class);
 
     given(queueRepository.save(any())).willReturn(queue);
 
-    given(queueRepository.countByDropIdAndStatusIn(any(), any()))
-        .willReturn(15L);
+    given(queueRepository.countByDropIdAndStatusIn(any(), any())).willReturn(15L);
 
-//    given(queueTokenRepository.save(any()))
-//        .willAnswer(invocation -> invocation.getArgument(0));
+    //    given(queueTokenRepository.save(any()))
+    //        .willAnswer(invocation -> invocation.getArgument(0));
 
     // when
     ThreadHoldResponse response = queueService.decideQueue(DROP_ID, USER_EMAIL);
@@ -293,4 +273,3 @@ class QueueServiceTest {
     assertTrue(response.getAheadCount() >= 10);
   }
 }
-

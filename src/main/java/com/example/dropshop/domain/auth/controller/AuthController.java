@@ -15,54 +15,53 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+  private final AuthService authService;
 
-    @PostMapping("/login")
-    public ApiResponse<String> login(@RequestBody LoginRequest request, HttpServletResponse response) {
-        TokenResponse token = authService.login(request);
+  @PostMapping("/login")
+  public ApiResponse<String> login(
+      @RequestBody LoginRequest request, HttpServletResponse response) {
+    TokenResponse token = authService.login(request);
 
-        // RefreshToken 쿠키 설정
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
-                .httpOnly(true)
-                .path("/")
-                .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Lax") // CSRF 방지
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    // RefreshToken 쿠키 설정
+    ResponseCookie cookie =
+        ResponseCookie.from("refreshToken", token.getRefreshToken())
+            .httpOnly(true)
+            .path("/")
+            .maxAge(7 * 24 * 60 * 60)
+            .sameSite("Lax") // CSRF 방지
+            .build();
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        return ApiResponse.ok(token.getAccessToken());
+    return ApiResponse.ok(token.getAccessToken());
+  }
+
+  @PostMapping("/refresh")
+  public ApiResponse<String> refresh(
+      @CookieValue(name = "refreshToken", required = false)
+          String refreshToken // required = false 추가
+      ) {
+    if (refreshToken == null || refreshToken.isEmpty()) {
+      throw new RuntimeException("리프레시 토큰이 쿠키에 없습니다.");
+    }
+    String newAccessToken = authService.refresh(refreshToken);
+    return ApiResponse.ok(newAccessToken);
+  }
+
+  @PostMapping("/logout")
+  public ApiResponse<Void> logout(
+      @RequestHeader(value = "Authorization", required = false) String authHeader,
+      HttpServletResponse response) {
+    // 쿠키 삭제
+    ResponseCookie cookie =
+        ResponseCookie.from("refreshToken", "").httpOnly(true).path("/").maxAge(0).build();
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+    // 액세스 토큰 블랙리스트 등록 + 리프레시 토큰 DB 삭제
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+      String accessToken = authHeader.substring(7);
+      authService.logout(accessToken);
     }
 
-    @PostMapping("/refresh")
-    public ApiResponse<String> refresh(
-            @CookieValue(name = "refreshToken", required = false) String refreshToken // required = false 추가
-    ) {
-        if (refreshToken == null || refreshToken.isEmpty()) {
-            throw new RuntimeException("리프레시 토큰이 쿠키에 없습니다.");
-        }
-        String newAccessToken = authService.refresh(refreshToken);
-        return ApiResponse.ok(newAccessToken);
-    }
-
-    @PostMapping("/logout")
-    public ApiResponse<Void> logout(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            HttpServletResponse response
-    ) {
-        // 쿠키 삭제
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true)
-                .path("/")
-                .maxAge(0)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
-        // 액세스 토큰 블랙리스트 등록 + 리프레시 토큰 DB 삭제
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String accessToken = authHeader.substring(7);
-            authService.logout(accessToken);
-        }
-
-        return ApiResponse.ok();
-    }
+    return ApiResponse.ok();
+  }
 }

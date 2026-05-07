@@ -1,6 +1,5 @@
 package com.example.dropshop.domain.order.dto.response;
 
-
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import java.math.BigDecimal;
@@ -9,9 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Getter;
 
-/**
- * 주문 단건 조회 응답.
- */
+/** 주문 단건 조회 응답. */
 @Getter
 public class OrderDetailResponse {
 
@@ -28,14 +25,11 @@ public class OrderDetailResponse {
     this.status = order.getStatus();
     this.totalAmount = order.getTotalAmount();
     this.holdExpiredAt = order.getHoldExpiredAt();
-    this.orderItems = order.getOrderItems().stream()
-        .map(OrderItemResponse::from)
-        .collect(Collectors.toList());
+    this.orderItems =
+        order.getOrderItems().stream().map(OrderItemResponse::from).collect(Collectors.toList());
   }
 
-  /**
-   * Order로부터 응답 생성.
-   */
+  /** Order로부터 응답 생성. */
   public static OrderDetailResponse from(Order order) {
     return new OrderDetailResponse(order);
   }

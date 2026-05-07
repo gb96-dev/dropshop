@@ -6,9 +6,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 상품 등록 응답 DTO.
- */
+/** 상품 등록 응답 DTO. */
 @Getter
 @Builder
 public class ProductCreateResponse {

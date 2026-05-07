@@ -26,20 +26,15 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class PaymentFacadeServiceTest {
 
-  @Mock
-  private PaymentService paymentService;
+  @Mock private PaymentService paymentService;
 
-  @Mock
-  private PaymentQueryService paymentQueryService;
+  @Mock private PaymentQueryService paymentQueryService;
 
-  @Mock
-  private PaymentWebhookService paymentWebhookService;
+  @Mock private PaymentWebhookService paymentWebhookService;
 
-  @Mock
-  private ProductDomainFacadeService productDomainFacadeService;
+  @Mock private ProductDomainFacadeService productDomainFacadeService;
 
-  @InjectMocks
-  private PaymentFacadeService paymentFacadeService;
+  @InjectMocks private PaymentFacadeService paymentFacadeService;
 
   @Test
   @DisplayName("PortOne 요청 정보 조회 시 단일 상품 주문은 상품명을 orderName으로 반환한다")
@@ -52,7 +47,8 @@ class PaymentFacadeServiceTest {
     given(paymentQueryService.getOrder(1L, "test@test.com")).willReturn(order);
     given(paymentQueryService.getStoreId()).willReturn("store-test");
     given(paymentQueryService.getChannelKey()).willReturn("channel-test");
-    given(paymentQueryService.getRedirectUrl()).willReturn("http://localhost:8080/payments/redirect");
+    given(paymentQueryService.getRedirectUrl())
+        .willReturn("http://localhost:8080/payments/redirect");
     given(productDomainFacadeService.findProduct(100L)).willReturn(product);
 
     var response = paymentFacadeService.getPortOneRequest(1L, "test@test.com");
@@ -72,7 +68,8 @@ class PaymentFacadeServiceTest {
     given(paymentQueryService.getOrder(1L, "test@test.com")).willReturn(order);
     given(paymentQueryService.getStoreId()).willReturn("store-test");
     given(paymentQueryService.getChannelKey()).willReturn("channel-test");
-    given(paymentQueryService.getRedirectUrl()).willReturn("http://localhost:8080/payments/redirect");
+    given(paymentQueryService.getRedirectUrl())
+        .willReturn("http://localhost:8080/payments/redirect");
     given(productDomainFacadeService.findProduct(100L)).willReturn(firstProduct);
 
     var response = paymentFacadeService.getPortOneRequest(1L, "test@test.com");
@@ -86,43 +83,39 @@ class PaymentFacadeServiceTest {
     ReflectionTestUtils.setField(order, "id", 1L);
 
     for (Long productId : productIds) {
-      order.addOrderItem(OrderItem.create(
-          order,
-          productId,
-          new BigDecimal("100000"),
-          new BigDecimal("79000"),
-          new BigDecimal("21000"),
-          "https://dummy-image"
-      ));
+      order.addOrderItem(
+          OrderItem.create(
+              order,
+              productId,
+              new BigDecimal("100000"),
+              new BigDecimal("79000"),
+              new BigDecimal("21000"),
+              "https://dummy-image"));
     }
     return order;
   }
 
   private Payment createPayment() {
-    Payment payment = Payment.prepare(
-        1L,
-        "payment-test-123",
-        PaymentMethod.CARD,
-        new BigDecimal("79000")
-    );
+    Payment payment =
+        Payment.prepare(1L, "payment-test-123", PaymentMethod.CARD, new BigDecimal("79000"));
     ReflectionTestUtils.setField(payment, "id", 1L);
     return payment;
   }
 
   private Product createProduct(Long productId, String name) {
-    Product product = Product.create(
-        1L,
-        name,
-        "SHOES",
-        new BigDecimal("100000"),
-        21,
-        100,
-        "https://dummy-image",
-        "상품 설명",
-        "상품 스펙",
-        "배송 안내",
-        "환불 정책"
-    );
+    Product product =
+        Product.create(
+            1L,
+            name,
+            "SHOES",
+            new BigDecimal("100000"),
+            21,
+            100,
+            "https://dummy-image",
+            "상품 설명",
+            "상품 스펙",
+            "배송 안내",
+            "환불 정책");
     ReflectionTestUtils.setField(product, "id", productId);
     return product;
   }

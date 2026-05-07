@@ -19,7 +19,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
   long countByUserIdAndStatus(Long userId, NotificationStatus status);
 
   @Modifying
-  @Query("""
+  @Query(
+      """
       UPDATE Notification n
       SET n.status = :readStatus, n.readAt = CURRENT_TIMESTAMP
       WHERE n.userId = :userId AND n.status = :unreadStatus
@@ -27,6 +28,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
   int markAllAsRead(
       @Param("userId") Long userId,
       @Param("readStatus") NotificationStatus readStatus,
-      @Param("unreadStatus") NotificationStatus unreadStatus
-  );
+      @Param("unreadStatus") NotificationStatus unreadStatus);
 }

@@ -1,8 +1,6 @@
 package com.example.dropshop.common.constant.kafka.topic;
 
-/**
- * 카프카 토픽 상수들.
- */
+/** 카프카 토픽 상수들. */
 public class KafkaTopics {
 
   public static final String TOPIC_USER_LOGIN = "user-login";

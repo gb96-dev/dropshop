@@ -23,17 +23,17 @@ import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class DropsFacadeServiceTest {
@@ -41,31 +41,27 @@ class DropsFacadeServiceTest {
   private static final Long DEFAULT_DROP_ID = 10L;
   private static final Long DEFAULT_PRODUCT_ID = 1L;
 
-  @Mock
-  private DropsService dropsService;
+  @Mock private DropsService dropsService;
 
-  @Mock
-  private ProductDomainFacadeService productDomainFacadeService;
+  @Mock private ProductDomainFacadeService productDomainFacadeService;
 
-  @Mock
-  private OrderHistoryQueryService orderHistoryQueryService;
+  @Mock private OrderHistoryQueryService orderHistoryQueryService;
 
-  @Mock
-  private RedisLockService redisLockService;
+  @Mock private RedisLockService redisLockService;
 
-  @Mock
-  private DropsStockPreemptionService dropsStockPreemptionService;
+  @Mock private DropsStockPreemptionService dropsStockPreemptionService;
 
-  @InjectMocks
-  private DropsFacadeService dropsFacadeService;
+  @InjectMocks private DropsFacadeService dropsFacadeService;
 
   @BeforeEach
   void setUp() {
-    lenient().when(redisLockService.executeWithLock(anyString(), any()))
-        .thenAnswer(invocation -> {
-          RedisLockService.LockCallback<?> callback = invocation.getArgument(1);
-          return callback.doInLock();
-        });
+    lenient()
+        .when(redisLockService.executeWithLock(anyString(), any()))
+        .thenAnswer(
+            invocation -> {
+              RedisLockService.LockCallback<?> callback = invocation.getArgument(1);
+              return callback.doInLock();
+            });
   }
 
   @Test
@@ -102,7 +98,8 @@ class DropsFacadeServiceTest {
         .hasMessage(ErrorCode.DROP_DELETE_NOT_ALLOWED.getMessage());
 
     verify(dropsService, never()).delete(any(Drops.class));
-    verify(productDomainFacadeService, never()).updateStatusByDrop(any(Product.class), any(ProductStatus.class));
+    verify(productDomainFacadeService, never())
+        .updateStatusByDrop(any(Product.class), any(ProductStatus.class));
   }
 
   @Test
@@ -135,7 +132,8 @@ class DropsFacadeServiceTest {
 
     assertThat(result.getRemainStock()).isEqualTo(4L);
     verify(dropsStockPreemptionService, never()).compensateReservedStock(DEFAULT_DROP_ID, 1);
-    verify(productDomainFacadeService, never()).updateStatusByDrop(any(Product.class), any(ProductStatus.class));
+    verify(productDomainFacadeService, never())
+        .updateStatusByDrop(any(Product.class), any(ProductStatus.class));
   }
 
   @Test
@@ -168,7 +166,8 @@ class DropsFacadeServiceTest {
           .hasMessage(ErrorCode.DROP_PRODUCT_MISMATCH.getMessage());
 
       assertThat(TransactionSynchronizationManager.getSynchronizations()).hasSize(1);
-      for (TransactionSynchronization synchronization : TransactionSynchronizationManager.getSynchronizations()) {
+      for (TransactionSynchronization synchronization :
+          TransactionSynchronizationManager.getSynchronizations()) {
         synchronization.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK);
       }
     } finally {
@@ -215,67 +214,41 @@ class DropsFacadeServiceTest {
   }
 
   private Product createProduct(Long sellerId) {
-    Product product = Product.create(
-        sellerId,
-        "한정판 스니커즈",
-        "SHOES",
-        new BigDecimal("250000"),
-        10,
-        100,
-        "https://cdn.example.com/thumb.jpg",
-        "<p>상품 설명</p>",
-        "사이즈: 255",
-        "배송 안내",
-        "환불 정책"
-    );
+    Product product =
+        Product.create(
+            sellerId,
+            "한정판 스니커즈",
+            "SHOES",
+            new BigDecimal("250000"),
+            10,
+            100,
+            "https://cdn.example.com/thumb.jpg",
+            "<p>상품 설명</p>",
+            "사이즈: 255",
+            "배송 안내",
+            "환불 정책");
     ReflectionTestUtils.setField(product, "id", DEFAULT_PRODUCT_ID);
     return product;
   }
 
   private Drops createDrop(
-      Product product,
-      LocalDateTime startAt,
-      LocalDateTime endAt,
-      DropsStatus status
-  ) {
-    Drops drops = Drops.create(
-        product,
-        startAt,
-        endAt,
-        30L,
-        1L,
-        true
-    );
+      Product product, LocalDateTime startAt, LocalDateTime endAt, DropsStatus status) {
+    Drops drops = Drops.create(product, startAt, endAt, 30L, 1L, true);
     ReflectionTestUtils.setField(drops, "status", status);
     ReflectionTestUtils.setField(drops, "id", DEFAULT_DROP_ID);
     return drops;
   }
 
   private Drops createScheduledDrop(Product product, LocalDateTime baseTime) {
-    return createDrop(
-        product,
-        baseTime.plusDays(1),
-        baseTime.plusDays(2),
-        DropsStatus.SCHEDULED
-    );
+    return createDrop(product, baseTime.plusDays(1), baseTime.plusDays(2), DropsStatus.SCHEDULED);
   }
 
   private Drops createActiveDrop(Product product, LocalDateTime baseTime) {
-    return createDrop(
-        product,
-        baseTime.minusHours(1),
-        baseTime.plusHours(1),
-        DropsStatus.ACTIVE
-    );
+    return createDrop(product, baseTime.minusHours(1), baseTime.plusHours(1), DropsStatus.ACTIVE);
   }
 
   private Drops createFinishedButReactivatableDrop(Product product, LocalDateTime baseTime) {
-    return createDrop(
-        product,
-        baseTime.minusDays(1),
-        baseTime.plusHours(2),
-        DropsStatus.FINISHED
-    );
+    return createDrop(product, baseTime.minusDays(1), baseTime.plusHours(2), DropsStatus.FINISHED);
   }
 
   private DropCreateRequest createDropCreateRequest(Long productId, LocalDateTime baseTime) {
@@ -289,7 +262,3 @@ class DropsFacadeServiceTest {
     return request;
   }
 }
-
-
-
-

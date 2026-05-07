@@ -13,7 +13,6 @@ import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
-import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
@@ -36,36 +35,28 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
 
-  @Mock
-  private PaymentRepository paymentRepository;
+  @Mock private PaymentRepository paymentRepository;
 
-  @Mock
-  private OrderFacadeService orderFacadeService;
+  @Mock private OrderFacadeService orderFacadeService;
 
-  @Mock
-  private PortOneClient portOneClient;
+  @Mock private PortOneClient portOneClient;
 
-  @Mock
-  private RedisLockService redisLockService;
+  @Mock private RedisLockService redisLockService;
 
-  @Mock
-  private TransactionTemplate transactionTemplate;
+  @Mock private TransactionTemplate transactionTemplate;
 
-  @Spy
-  private PaymentVerificationService paymentVerificationService;
+  @Spy private PaymentVerificationService paymentVerificationService;
 
-  @Mock
-  private PaymentOutboxPublisher paymentOutboxPublisher;
+  @Mock private PaymentOutboxPublisher paymentOutboxPublisher;
 
-  @InjectMocks
-  private PaymentService paymentService;
+  @InjectMocks private PaymentService paymentService;
 
   private Order order;
   private Payment payment;
@@ -75,24 +66,28 @@ class PaymentServiceTest {
     order = Order.create(1L, 10L);
     ReflectionTestUtils.setField(order, "id", 1L);
     ReflectionTestUtils.setField(order, "holdExpiredAt", LocalDateTime.now().plusMinutes(5));
-    order.addOrderItem(OrderItem.create(
-        order,
-        100L,
-        new BigDecimal("100000"),
-        new BigDecimal("79000"),
-        new BigDecimal("21000"),
-        "https://dummy-image"
-    ));
+    order.addOrderItem(
+        OrderItem.create(
+            order,
+            100L,
+            new BigDecimal("100000"),
+            new BigDecimal("79000"),
+            new BigDecimal("21000"),
+            "https://dummy-image"));
 
     payment = Payment.prepare(1L, "payment-test-123", PaymentMethod.CARD, new BigDecimal("79000"));
     ReflectionTestUtils.setField(payment, "id", 1L);
 
-    lenient().when(redisLockService.executeWithLock(anyString(), any())).thenAnswer(
-        invocation -> ((RedisLockService.LockCallback<?>) invocation.getArgument(1)).doInLock()
-    );
-    lenient().when(transactionTemplate.execute(any())).thenAnswer(
-        invocation -> ((TransactionCallback<?>) invocation.getArgument(0)).doInTransaction(null)
-    );
+    lenient()
+        .when(redisLockService.executeWithLock(anyString(), any()))
+        .thenAnswer(
+            invocation ->
+                ((RedisLockService.LockCallback<?>) invocation.getArgument(1)).doInLock());
+    lenient()
+        .when(transactionTemplate.execute(any()))
+        .thenAnswer(
+            invocation ->
+                ((TransactionCallback<?>) invocation.getArgument(0)).doInTransaction(null));
   }
 
   @Test
@@ -100,16 +95,14 @@ class PaymentServiceTest {
   void preparePayment_success() {
     given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
     given(paymentRepository.existsByOrderId(1L)).willReturn(false);
-    given(paymentRepository.findByMerchantPaymentId("payment-test-123")).willReturn(Optional.empty());
-    given(paymentRepository.save(any(Payment.class))).willAnswer(invocation -> invocation.getArgument(0));
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.empty());
+    given(paymentRepository.save(any(Payment.class)))
+        .willAnswer(invocation -> invocation.getArgument(0));
 
-    Payment result = paymentService.preparePayment(
-        "test@test.com",
-        1L,
-        new BigDecimal("79000"),
-        "payment-test-123",
-        PaymentMethod.CARD
-    );
+    Payment result =
+        paymentService.preparePayment(
+            "test@test.com", 1L, new BigDecimal("79000"), "payment-test-123", PaymentMethod.CARD);
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.PENDING);
     assertThat(result.getOrderId()).isEqualTo(1L);
@@ -125,13 +118,15 @@ class PaymentServiceTest {
     given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
         .willReturn(Optional.of(existingPayment));
 
-    assertThatThrownBy(() -> paymentService.preparePayment(
-        "test@test.com",
-        1L,
-        new BigDecimal("79000"),
-        "payment-test-123",
-        PaymentMethod.CARD
-    )).isInstanceOf(PaymentException.class);
+    assertThatThrownBy(
+            () ->
+                paymentService.preparePayment(
+                    "test@test.com",
+                    1L,
+                    new BigDecimal("79000"),
+                    "payment-test-123",
+                    PaymentMethod.CARD))
+        .isInstanceOf(PaymentException.class);
 
     verify(paymentRepository, never()).save(any(Payment.class));
   }
@@ -143,13 +138,9 @@ class PaymentServiceTest {
     given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
         .willReturn(Optional.of(payment));
 
-    Payment result = paymentService.preparePayment(
-        "test@test.com",
-        1L,
-        new BigDecimal("79000"),
-        "payment-test-123",
-        PaymentMethod.CARD
-    );
+    Payment result =
+        paymentService.preparePayment(
+            "test@test.com", 1L, new BigDecimal("79000"), "payment-test-123", PaymentMethod.CARD);
 
     assertThat(result).isSameAs(payment);
     verify(paymentRepository, never()).save(any(Payment.class));
@@ -161,11 +152,14 @@ class PaymentServiceTest {
   void confirmPayment_success() {
     given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
     given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
-    given(orderFacadeService.payOrderByPayment(order)).willAnswer(invocation -> {
-      order.pay();
-      return order;
-    });
-    given(portOneClient.getPayment("payment-test-123")).willReturn(portOnePayment("PAID", "tx-123", "79000"));
+    given(orderFacadeService.payOrderByPayment(order))
+        .willAnswer(
+            invocation -> {
+              order.pay();
+              return order;
+            });
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(portOnePayment("PAID", "tx-123", "79000"));
 
     Payment result = paymentService.confirmPayment(1L, "test@test.com", "payment-test-123");
 
@@ -182,11 +176,14 @@ class PaymentServiceTest {
   void confirmPayment_failed() {
     given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
     given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
-    given(orderFacadeService.cancelOrderByPaymentFailure(order)).willAnswer(invocation -> {
-      order.cancel();
-      return order;
-    });
-    given(portOneClient.getPayment("payment-test-123")).willReturn(portOnePayment("FAILED", "tx-999", "79000"));
+    given(orderFacadeService.cancelOrderByPaymentFailure(order))
+        .willAnswer(
+            invocation -> {
+              order.cancel();
+              return order;
+            });
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(portOnePayment("FAILED", "tx-999", "79000"));
 
     Payment result = paymentService.confirmPayment(1L, "test@test.com", "payment-test-123");
 
@@ -224,12 +221,12 @@ class PaymentServiceTest {
     verify(portOneClient, never()).getPayment(any());
   }
 
-  private PortOnePaymentResponse portOnePayment(String status, String transactionId, String amount) {
+  private PortOnePaymentResponse portOnePayment(
+      String status, String transactionId, String amount) {
     return new PortOnePaymentResponse(
         "payment-test-123",
         status,
         transactionId,
-        new PortOnePaymentResponse.Amount(new BigDecimal(amount))
-    );
+        new PortOnePaymentResponse.Amount(new BigDecimal(amount)));
   }
 }

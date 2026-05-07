@@ -7,9 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-/**
- * 대기열 토큰 생성자.
- */
+/** 대기열 토큰 생성자. */
 @Service
 @RequiredArgsConstructor
 public class QueueTokenProducer {
@@ -17,6 +15,7 @@ public class QueueTokenProducer {
 
   /**
    * send.
+   *
    * @param threadHoldResponse dto.
    */
   public void send(ThreadHoldResponse threadHoldResponse) {

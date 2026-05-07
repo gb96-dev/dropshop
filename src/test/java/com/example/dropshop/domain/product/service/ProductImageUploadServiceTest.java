@@ -13,13 +13,9 @@ class ProductImageUploadServiceTest {
   @Test
   @SuppressWarnings("NonAsciiCharacters")
   void 허용되지_않은_이미지_타입이면_예외를_던진다() throws Exception {
-    ProductImageUploadProperties properties = new ProductImageUploadProperties(
-        "test-bucket",
-        "ap-northeast-2",
-        "products",
-        "https://cdn.example.com",
-        300L
-    );
+    ProductImageUploadProperties properties =
+        new ProductImageUploadProperties(
+            "test-bucket", "ap-northeast-2", "products", "https://cdn.example.com", 300L);
     ProductImageUploadService service = new ProductImageUploadService(null, properties);
 
     PresignedUrlIssueRequest request = new PresignedUrlIssueRequest();
@@ -32,4 +28,3 @@ class ProductImageUploadServiceTest {
         .hasMessage(ErrorCode.INVALID_IMAGE_FILE_TYPE.getMessage());
   }
 }
-

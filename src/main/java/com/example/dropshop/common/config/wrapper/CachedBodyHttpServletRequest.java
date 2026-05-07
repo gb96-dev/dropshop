@@ -10,15 +10,14 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/**
- * 레퍼 요청 클래스.
- */
+/** 레퍼 요청 클래스. */
 public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 
   private final byte[] cachedBody;
 
   /**
    * 생성자.
+   *
    * @param request 요청.
    * @throws IOException 예외.
    */
@@ -29,8 +28,7 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 
   @Override
   public ServletInputStream getInputStream() {
-    ByteArrayInputStream byteArrayInputStream =
-        new ByteArrayInputStream(cachedBody);
+    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(cachedBody);
 
     return new ServletInputStream() {
       @Override
@@ -44,8 +42,7 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
       }
 
       @Override
-      public void setReadListener(
-          ReadListener readListener) {}
+      public void setReadListener(ReadListener readListener) {}
 
       @Override
       public int read() {

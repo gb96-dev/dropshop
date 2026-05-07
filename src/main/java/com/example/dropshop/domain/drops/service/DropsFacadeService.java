@@ -30,9 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-/**
- * 드랍 도메인 파사드 서비스.
- */
+/** 드랍 도메인 파사드 서비스. */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -45,21 +43,16 @@ public class DropsFacadeService {
   private final RedisLockService redisLockService;
   private final DropsStockPreemptionService dropsStockPreemptionService;
 
-  /**
-   * 판매자 드랍을 생성한다.
-   */
-  @Caching(evict = {
-      @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
-      @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#request.productId"),
-      @CacheEvict(value = CacheNames.DROP_LATEST, key = "#request.productId")
-  })
+  /** 판매자 드랍을 생성한다. */
+  @Caching(
+      evict = {
+        @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
+        @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#request.productId"),
+        @CacheEvict(value = CacheNames.DROP_LATEST, key = "#request.productId")
+      })
   @Transactional
   public DropResponse createSellerDrop(
-      Long sellerId,
-      boolean sellerApproved,
-      boolean sellerVerified,
-      DropCreateRequest request
-  ) {
+      Long sellerId, boolean sellerApproved, boolean sellerVerified, DropCreateRequest request) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
     Product product = productDomainFacadeService.findOwnedProduct(request.getProductId(), sellerId);
@@ -70,22 +63,20 @@ public class DropsFacadeService {
     return DropResponse.from(saved);
   }
 
-  /**
-   * 판매자 드랍을 수정한다.
-   */
-  @Caching(evict = {
-      @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
-      @CacheEvict(value = CacheNames.PRODUCT_DETAIL, allEntries = true),
-      @CacheEvict(value = CacheNames.DROP_LATEST, allEntries = true)
-  })
+  /** 판매자 드랍을 수정한다. */
+  @Caching(
+      evict = {
+        @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
+        @CacheEvict(value = CacheNames.PRODUCT_DETAIL, allEntries = true),
+        @CacheEvict(value = CacheNames.DROP_LATEST, allEntries = true)
+      })
   @Transactional
   public DropResponse updateSellerDrop(
       Long dropId,
       Long sellerId,
       boolean sellerApproved,
       boolean sellerVerified,
-      DropUpdateRequest request
-  ) {
+      DropUpdateRequest request) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
     Drops drops = dropsService.findById(dropId);
@@ -96,21 +87,16 @@ public class DropsFacadeService {
     return DropResponse.from(saved);
   }
 
-  /**
-   * 판매자 드랍을 삭제한다.
-   */
-  @Caching(evict = {
-      @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
-      @CacheEvict(value = CacheNames.PRODUCT_DETAIL, allEntries = true),
-      @CacheEvict(value = CacheNames.DROP_LATEST, allEntries = true)
-  })
+  /** 판매자 드랍을 삭제한다. */
+  @Caching(
+      evict = {
+        @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
+        @CacheEvict(value = CacheNames.PRODUCT_DETAIL, allEntries = true),
+        @CacheEvict(value = CacheNames.DROP_LATEST, allEntries = true)
+      })
   @Transactional
   public void deleteSellerDrop(
-      Long dropId,
-      Long sellerId,
-      boolean sellerApproved,
-      boolean sellerVerified
-  ) {
+      Long dropId, Long sellerId, boolean sellerApproved, boolean sellerVerified) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
     Drops drops = dropsService.findById(dropId);
@@ -128,21 +114,16 @@ public class DropsFacadeService {
     }
   }
 
-  /**
-   * 판매자 드랍을 강제 종료한다.
-   */
-  @Caching(evict = {
-      @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
-      @CacheEvict(value = CacheNames.PRODUCT_DETAIL, allEntries = true),
-      @CacheEvict(value = CacheNames.DROP_LATEST, allEntries = true)
-  })
+  /** 판매자 드랍을 강제 종료한다. */
+  @Caching(
+      evict = {
+        @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
+        @CacheEvict(value = CacheNames.PRODUCT_DETAIL, allEntries = true),
+        @CacheEvict(value = CacheNames.DROP_LATEST, allEntries = true)
+      })
   @Transactional
   public DropResponse stopSellerDrop(
-      Long dropId,
-      Long sellerId,
-      boolean sellerApproved,
-      boolean sellerVerified
-  ) {
+      Long dropId, Long sellerId, boolean sellerApproved, boolean sellerVerified) {
     productDomainFacadeService.validateSellerState(sellerApproved, sellerVerified);
 
     Drops drops = dropsService.findById(dropId);
@@ -158,9 +139,7 @@ public class DropsFacadeService {
     return DropResponse.from(drops);
   }
 
-  /**
-   * 상품 삭제를 막아야 하는 드랍 이력 존재 여부를 확인한다.
-   */
+  /** 상품 삭제를 막아야 하는 드랍 이력 존재 여부를 확인한다. */
   @Transactional(readOnly = true)
   public boolean existsDropHistoryForProduct(Long productId) {
     return dropsService.existsDropHistoryForProduct(productId);
@@ -172,17 +151,13 @@ public class DropsFacadeService {
     }
   }
 
-  /**
-   * 특정 상품의 최신 드랍 1건을 조회한다.
-   */
+  /** 특정 상품의 최신 드랍 1건을 조회한다. */
   @Transactional(readOnly = true)
   public Optional<Drops> findLatestDropByProductId(Long productId) {
     return dropsRepository.findTopByProductIdOrderByStartAtDesc(productId);
   }
 
-  /**
-   * 상품별 최신 드랍 맵을 조회한다.
-   */
+  /** 상품별 최신 드랍 맵을 조회한다. */
   @Transactional(readOnly = true)
   public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
     List<Drops> dropsList =
@@ -200,33 +175,36 @@ public class DropsFacadeService {
    *
    * <p>분산락으로 동시 복원 요청을 직렬화해 {@code @Version} 기반 낙관적 락 충돌을 최소화한다.
    */
-  @Caching(evict = {
-      @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
-      @CacheEvict(value = CacheNames.PRODUCT_DETAIL, allEntries = true),
-      @CacheEvict(value = CacheNames.DROP_LATEST, allEntries = true)
-  })
+  @Caching(
+      evict = {
+        @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
+        @CacheEvict(value = CacheNames.PRODUCT_DETAIL, allEntries = true),
+        @CacheEvict(value = CacheNames.DROP_LATEST, allEntries = true)
+      })
   @Transactional
   public void restoreStockForOrder(Long dropId, int quantity) {
-    redisLockService.executeWithLock(LockKeys.dropStock(dropId), () -> {
-      Drops drops = dropsService.findById(dropId);
-      drops.restoreRemainStock(quantity);
+    redisLockService.executeWithLock(
+        LockKeys.dropStock(dropId),
+        () -> {
+          Drops drops = dropsService.findById(dropId);
+          drops.restoreRemainStock(quantity);
 
-      registerAfterCommit(
-          () -> dropsStockPreemptionService.increaseStockAfterRestore(dropId, quantity)
-      );
+          registerAfterCommit(
+              () -> dropsStockPreemptionService.increaseStockAfterRestore(dropId, quantity));
 
-      try {
-        if (drops.isFinished()
-            && drops.getRemainStock() > 0L
-            && LocalDateTime.now().isBefore(drops.getEndAt())) {
-          drops.activate();
-          productDomainFacadeService.updateStatusByDrop(drops.getProduct(), ProductStatus.ON_SALE);
-        }
-      } catch (OptimisticLockingFailureException e) {
-        log.info("드랍 ID={} 재활성화가 동시성 충돌로 스킵되었습니다.", dropId, e);
-      }
-      return null;
-    });
+          try {
+            if (drops.isFinished()
+                && drops.getRemainStock() > 0L
+                && LocalDateTime.now().isBefore(drops.getEndAt())) {
+              drops.activate();
+              productDomainFacadeService.updateStatusByDrop(
+                  drops.getProduct(), ProductStatus.ON_SALE);
+            }
+          } catch (OptimisticLockingFailureException e) {
+            log.info("드랍 ID={} 재활성화가 동시성 충돌로 스킵되었습니다.", dropId, e);
+          }
+          return null;
+        });
   }
 
   /**
@@ -251,26 +229,26 @@ public class DropsFacadeService {
     // Redis 선점 성공 이후에는 예외 발생 여부와 무관하게 롤백 보상을 등록한다.
     registerRollbackCompensation(dropId, quantity);
 
-    return redisLockService.executeWithLock(LockKeys.dropStock(dropId), () -> {
-      Drops found = dropsService.findById(dropId);
+    return redisLockService.executeWithLock(
+        LockKeys.dropStock(dropId),
+        () -> {
+          Drops found = dropsService.findById(dropId);
 
-      if (!found.isActive()) {
-        throw new DropsException(ErrorCode.DROP_ORDER_NOT_ALLOWED);
-      }
-      if (!found.getProduct().getId().equals(productId)) {
-        throw new DropsException(ErrorCode.DROP_PRODUCT_MISMATCH);
-      }
+          if (!found.isActive()) {
+            throw new DropsException(ErrorCode.DROP_ORDER_NOT_ALLOWED);
+          }
+          if (!found.getProduct().getId().equals(productId)) {
+            throw new DropsException(ErrorCode.DROP_PRODUCT_MISMATCH);
+          }
 
-      found.decrementRemainStock(quantity);
-      if (found.getRemainStock() <= 0L) {
-        found.finish();
-        productDomainFacadeService.updateStatusByDrop(
-            found.getProduct(),
-            ProductStatus.OUT_OF_STOCK
-        );
-      }
-      return found;
-    });
+          found.decrementRemainStock(quantity);
+          if (found.getRemainStock() <= 0L) {
+            found.finish();
+            productDomainFacadeService.updateStatusByDrop(
+                found.getProduct(), ProductStatus.OUT_OF_STOCK);
+          }
+          return found;
+        });
   }
 
   private void registerRollbackCompensation(Long dropId, int quantity) {
@@ -278,28 +256,29 @@ public class DropsFacadeService {
       return;
     }
 
-    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-      @Override
-      public void afterCompletion(int status) {
-        if (status == TransactionSynchronization.STATUS_ROLLED_BACK) {
-          dropsStockPreemptionService.compensateReservedStock(dropId, quantity);
-        }
-      }
-    });
+    TransactionSynchronizationManager.registerSynchronization(
+        new TransactionSynchronization() {
+          @Override
+          public void afterCompletion(int status) {
+            if (status == TransactionSynchronization.STATUS_ROLLED_BACK) {
+              dropsStockPreemptionService.compensateReservedStock(dropId, quantity);
+            }
+          }
+        });
   }
 
   private void registerAfterCommit(Runnable action) {
     if (TransactionSynchronizationManager.isSynchronizationActive()) {
-      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-        @Override
-        public void afterCommit() {
-          action.run();
-        }
-      });
+      TransactionSynchronizationManager.registerSynchronization(
+          new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+              action.run();
+            }
+          });
       return;
     }
 
     action.run();
   }
 }
-

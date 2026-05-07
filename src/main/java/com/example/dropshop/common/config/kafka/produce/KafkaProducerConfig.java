@@ -2,8 +2,6 @@ package com.example.dropshop.common.config.kafka.produce;
 
 import com.example.dropshop.domain.order.event.OrderStatusChangedEvent;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
-import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
-import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -16,9 +14,7 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 
-/**
- * 카프카 생산자 설정.
- */
+/** 카프카 생산자 설정. */
 @EnableKafka
 @Configuration
 public class KafkaProducerConfig {

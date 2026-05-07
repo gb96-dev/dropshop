@@ -8,9 +8,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import lombok.Getter;
 
-/**
- * 대기열 반환 응답 큐.
- */
+/** 대기열 반환 응답 큐. */
 @Getter
 public class ThreadHoldResponse {
   // 입장 요청에 대한 결과
@@ -42,6 +40,7 @@ public class ThreadHoldResponse {
 
   /**
    * 대기열 direct.
+   *
    * @param dropsId 드랍 아이디.
    * @param admissionToken 입장 토큰.
    * @param expiresAt 만료 일자.
@@ -49,8 +48,7 @@ public class ThreadHoldResponse {
    * @return 리턴.
    */
   public static ThreadHoldResponse direct(
-      Long dropsId, String admissionToken, LocalDateTime expiresAt, Long queueId
-  ) {
+      Long dropsId, String admissionToken, LocalDateTime expiresAt, Long queueId) {
     ThreadHoldResponse response = new ThreadHoldResponse();
     response.result = ThreadHoldResult.DIRECT;
     response.dropsId = dropsId;
@@ -70,6 +68,7 @@ public class ThreadHoldResponse {
 
   /**
    * 대기열 new direct.
+   *
    * @param dropsId 드랍 아이디.
    * @param admissionToken 입장 토큰.
    * @param expiresAt 만료 일자.
@@ -77,8 +76,7 @@ public class ThreadHoldResponse {
    * @return 리턴.
    */
   public static ThreadHoldResponse newDirect(
-      Long dropsId, String admissionToken, LocalDateTime expiresAt, Long queueId
-  ) {
+      Long dropsId, String admissionToken, LocalDateTime expiresAt, Long queueId) {
     ThreadHoldResponse response = new ThreadHoldResponse();
     response.result = ThreadHoldResult.DIRECT;
     response.dropsId = dropsId;
@@ -99,6 +97,7 @@ public class ThreadHoldResponse {
 
   /**
    * 대기열 queue.
+   *
    * @param dropsId 드랍 아이디.
    * @param queueId 대기열 아이디.
    * @param aheadCount 대기 세션 수.
@@ -106,8 +105,7 @@ public class ThreadHoldResponse {
    * @return 리턴.
    */
   public static ThreadHoldResponse queue(
-      Long dropsId, Long queueId, long aheadCount, int estimatedWaitSeconds
-  ) {
+      Long dropsId, Long queueId, long aheadCount, int estimatedWaitSeconds) {
     ThreadHoldResponse response = new ThreadHoldResponse();
     response.result = ThreadHoldResult.QUEUE;
     response.dropsId = dropsId;
@@ -121,13 +119,12 @@ public class ThreadHoldResponse {
 
   /**
    * 대기열 expire.
+   *
    * @param dropsId 드랍 아이디.
    * @param queueId 대기열 아이디.
    * @return 리턴.
    */
-  public static ThreadHoldResponse expire(
-      Long dropsId, Long queueId
-  ) {
+  public static ThreadHoldResponse expire(Long dropsId, Long queueId) {
     ThreadHoldResponse response = new ThreadHoldResponse();
     response.result = ThreadHoldResult.EXPIRED;
     response.dropsId = dropsId;

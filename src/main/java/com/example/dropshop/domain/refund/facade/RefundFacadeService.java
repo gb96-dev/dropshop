@@ -8,9 +8,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-/**
- * 환불 유스케이스 파사드 서비스.
- */
+/** 환불 유스케이스 파사드 서비스. */
 @Service
 @RequiredArgsConstructor
 public class RefundFacadeService {
@@ -25,12 +23,9 @@ public class RefundFacadeService {
    * @return 환불 응답
    */
   public RefundResponse createRefund(String email, RefundCreateRequest request) {
-    Refund refund = refundService.createRefund(
-        email,
-        request.getPaymentId(),
-        request.getRefundAmount(),
-        request.getRefundReason()
-    );
+    Refund refund =
+        refundService.createRefund(
+            email, request.getPaymentId(), request.getRefundAmount(), request.getRefundReason());
     return RefundResponse.from(refund);
   }
 

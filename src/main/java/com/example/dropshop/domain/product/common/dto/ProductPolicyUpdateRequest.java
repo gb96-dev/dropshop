@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 
-/**
- * 상품 공통 정책 수정 Request DTO
- */
+/** 상품 공통 정책 수정 Request DTO */
 @Getter
 public class ProductPolicyUpdateRequest {
 
@@ -14,4 +12,3 @@ public class ProductPolicyUpdateRequest {
   @JsonProperty("content")
   private String content;
 }
-

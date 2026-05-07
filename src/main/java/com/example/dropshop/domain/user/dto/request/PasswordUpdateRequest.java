@@ -7,11 +7,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PasswordUpdateRequest {
-    private String oldPassword;
-    private String newPassword;
+  private String oldPassword;
+  private String newPassword;
 
-    public PasswordUpdateRequest(String oldPassword, String newPassword) {
-        this.oldPassword = oldPassword;
-        this.newPassword = newPassword;
-    }
+  public PasswordUpdateRequest(String oldPassword, String newPassword) {
+    this.oldPassword = oldPassword;
+    this.newPassword = newPassword;
+  }
 }

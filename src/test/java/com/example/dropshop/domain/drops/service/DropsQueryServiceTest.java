@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.BDDMockito.given;
 
 import com.example.dropshop.domain.drops.dto.response.DropListItemResponse;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
@@ -38,17 +38,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class DropsQueryServiceTest {
 
-  @Mock
-  private DropsRepository dropsRepository;
+  @Mock private DropsRepository dropsRepository;
 
-  @Mock
-  private StringRedisTemplate stringRedisTemplate;
+  @Mock private StringRedisTemplate stringRedisTemplate;
 
-  @Mock
-  private ValueOperations<String, String> valueOperations;
+  @Mock private ValueOperations<String, String> valueOperations;
 
-  @InjectMocks
-  private DropsQueryService dropsQueryService;
+  @InjectMocks private DropsQueryService dropsQueryService;
 
   @Test
   @DisplayName("공개 드롭 목록 조회 성공")
@@ -59,10 +55,8 @@ class DropsQueryServiceTest {
 
     given(dropsRepository.findAllByStatusIn(any(), any(Pageable.class))).willReturn(page);
 
-    Page<DropListItemResponse> result = dropsQueryService.findPublicDrops(
-        null,
-        PageRequest.of(0, 20)
-    );
+    Page<DropListItemResponse> result =
+        dropsQueryService.findPublicDrops(null, PageRequest.of(0, 20));
 
     assertThat(result).hasSize(1);
     assertThat(result.getContent().get(0).getDropId()).isEqualTo(10L);
@@ -77,12 +71,10 @@ class DropsQueryServiceTest {
     Drops drop = createDrop(product, DropsStatus.SCHEDULED);
     Page<Drops> page = new PageImpl<>(List.of(drop), PageRequest.of(0, 20), 1);
 
-    given(dropsRepository.findSellerDropsBySellerId(
-        eq(1L),
-        any(Pageable.class)
-    )).willReturn(page);
+    given(dropsRepository.findSellerDropsBySellerId(eq(1L), any(Pageable.class))).willReturn(page);
 
-    Page<DropListItemResponse> result = dropsQueryService.findSellerDrops(1L, PageRequest.of(0, 20));
+    Page<DropListItemResponse> result =
+        dropsQueryService.findSellerDrops(1L, PageRequest.of(0, 20));
 
     assertThat(result).hasSize(1);
     assertThat(result.getContent().get(0).getProductName()).isEqualTo("테스트 상품");
@@ -98,7 +90,8 @@ class DropsQueryServiceTest {
     given(dropsRepository.findAllByProductIdAndStatusIn(eq(1L), any(), any(Pageable.class)))
         .willReturn(page);
 
-    Page<DropListItemResponse> result = dropsQueryService.findDropsByProduct(1L, PageRequest.of(0, 20));
+    Page<DropListItemResponse> result =
+        dropsQueryService.findDropsByProduct(1L, PageRequest.of(0, 20));
 
     assertThat(result).hasSize(1);
     assertThat(result.getContent().get(0).getStatus()).isEqualTo("FINISHED");
@@ -114,11 +107,11 @@ class DropsQueryServiceTest {
 
     given(dropsRepository.findOneByIdAndStatusIn(eq(10L), any())).willReturn(Optional.of(drop));
     given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class)))
-        .willReturn(true);
+    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class))).willReturn(true);
     given(dropsRepository.incrementViewCount(10L)).willReturn(1);
 
-    DropResponse result = dropsQueryService.findPublicDropDetail(10L, "user@test.com", "127.0.0.1", "Mozilla/5.0");
+    DropResponse result =
+        dropsQueryService.findPublicDropDetail(10L, "user@test.com", "127.0.0.1", "Mozilla/5.0");
 
     assertThat(result.getViewCount()).isEqualTo(1L);
     verify(dropsRepository).incrementViewCount(10L);
@@ -135,10 +128,10 @@ class DropsQueryServiceTest {
 
     given(dropsRepository.findOneByIdAndStatusIn(eq(10L), any())).willReturn(Optional.of(drop));
     given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class)))
-        .willReturn(false);
+    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class))).willReturn(false);
 
-    DropResponse result = dropsQueryService.findPublicDropDetail(10L, "user@test.com", "127.0.0.1", "Mozilla/5.0");
+    DropResponse result =
+        dropsQueryService.findPublicDropDetail(10L, "user@test.com", "127.0.0.1", "Mozilla/5.0");
 
     assertThat(result.getViewCount()).isEqualTo(0L);
     verify(dropsRepository, never()).incrementViewCount(10L);
@@ -155,11 +148,11 @@ class DropsQueryServiceTest {
 
     given(dropsRepository.findOneByIdAndStatusIn(eq(10L), any())).willReturn(Optional.of(drop));
     given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class)))
-        .willReturn(true);
+    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class))).willReturn(true);
     given(dropsRepository.incrementViewCount(10L)).willReturn(0);
 
-    DropResponse result = dropsQueryService.findPublicDropDetail(10L, "user@test.com", "127.0.0.1", "Mozilla/5.0");
+    DropResponse result =
+        dropsQueryService.findPublicDropDetail(10L, "user@test.com", "127.0.0.1", "Mozilla/5.0");
 
     assertThat(result.getViewCount()).isEqualTo(0L);
     verify(stringRedisTemplate).delete(anyString());
@@ -175,11 +168,11 @@ class DropsQueryServiceTest {
 
     given(dropsRepository.findOneByIdAndStatusIn(eq(10L), any())).willReturn(Optional.of(drop));
     given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class)))
-        .willReturn(true);
+    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class))).willReturn(true);
     given(dropsRepository.incrementViewCount(10L)).willThrow(new RuntimeException("db failure"));
 
-    DropResponse result = dropsQueryService.findPublicDropDetail(10L, "user@test.com", "127.0.0.1", "Mozilla/5.0");
+    DropResponse result =
+        dropsQueryService.findPublicDropDetail(10L, "user@test.com", "127.0.0.1", "Mozilla/5.0");
 
     assertThat(result.getViewCount()).isEqualTo(0L);
     verify(stringRedisTemplate).delete(anyString());
@@ -195,11 +188,11 @@ class DropsQueryServiceTest {
 
     given(dropsRepository.findOneByIdAndStatusIn(eq(10L), any())).willReturn(Optional.of(drop));
     given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class)))
-        .willReturn(true);
+    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class))).willReturn(true);
     given(dropsRepository.incrementViewCount(10L)).willReturn(1);
 
-    DropResponse result = dropsQueryService.findPublicDropDetail(10L, null, "192.168.1.100", "Chrome/User-Agent");
+    DropResponse result =
+        dropsQueryService.findPublicDropDetail(10L, null, "192.168.1.100", "Chrome/User-Agent");
 
     assertThat(result.getViewCount()).isEqualTo(1L);
     verify(dropsRepository).incrementViewCount(10L);
@@ -220,52 +213,50 @@ class DropsQueryServiceTest {
 
     given(dropsRepository.findOneByIdAndStatusIn(eq(10L), any())).willReturn(Optional.of(drop));
     given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class)))
-        .willReturn(true);
+    given(valueOperations.setIfAbsent(anyString(), eq("1"), any(Duration.class))).willReturn(true);
     given(dropsRepository.incrementViewCount(10L)).willReturn(1);
 
     dropsQueryService.findPublicDropDetail(10L, null, "203.0.113.50", "Safari/User-Agent");
     dropsQueryService.findPublicDropDetail(10L, null, "203.0.113.51", "Safari/User-Agent");
 
     ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-    verify(valueOperations, times(2)).setIfAbsent(keyCaptor.capture(), eq("1"), any(Duration.class));
+    verify(valueOperations, times(2))
+        .setIfAbsent(keyCaptor.capture(), eq("1"), any(Duration.class));
     assertThat(keyCaptor.getAllValues().get(0)).isNotEqualTo(keyCaptor.getAllValues().get(1));
     assertThat(keyCaptor.getAllValues().get(0)).startsWith("drop:view:10:");
     assertThat(keyCaptor.getAllValues().get(1)).startsWith("drop:view:10:");
   }
 
   private Product createProduct(Long sellerId) {
-    Product product = Product.create(
-        sellerId,
-        "테스트 상품",
-        "TEST",
-        new BigDecimal("100000"),
-        10,
-        100,
-        "https://example.com/thumb.jpg",
-        "상품 설명",
-        "상품 상세",
-        "배송 안내",
-        "환불 정책"
-    );
+    Product product =
+        Product.create(
+            sellerId,
+            "테스트 상품",
+            "TEST",
+            new BigDecimal("100000"),
+            10,
+            100,
+            "https://example.com/thumb.jpg",
+            "상품 설명",
+            "상품 상세",
+            "배송 안내",
+            "환불 정책");
     ReflectionTestUtils.setField(product, "id", 1L);
     return product;
   }
 
   private Drops createDrop(Product product, DropsStatus status) {
-    Drops drops = Drops.create(
-        product,
-        LocalDateTime.now().plusDays(1),
-        LocalDateTime.now().plusDays(2),
-        30L,
-        1L,
-        true
-    );
+    Drops drops =
+        Drops.create(
+            product,
+            LocalDateTime.now().plusDays(1),
+            LocalDateTime.now().plusDays(2),
+            30L,
+            1L,
+            true);
     ReflectionTestUtils.setField(drops, "id", 10L);
     ReflectionTestUtils.setField(drops, "status", status);
     ReflectionTestUtils.setField(drops, "viewCount", 0L);
     return drops;
   }
 }
-
-

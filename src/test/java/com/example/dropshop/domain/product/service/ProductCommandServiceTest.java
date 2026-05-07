@@ -37,24 +37,21 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class ProductCommandServiceTest {
 
-  @Mock
-  private ProductRepository productRepository;
+  @Mock private ProductRepository productRepository;
 
-  @Mock
-  private ProductPolicyService productPolicyService;
+  @Mock private ProductPolicyService productPolicyService;
 
-  @Mock
-  private ProductValidator productValidator;
+  @Mock private ProductValidator productValidator;
 
-  @Mock
-  private ApplicationEventPublisher eventPublisher;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   private ProductCommandService productCommandService;
 
   @BeforeEach
   void setUp() {
     productCommandService =
-        new ProductCommandService(productRepository, productPolicyService, productValidator, eventPublisher);
+        new ProductCommandService(
+            productRepository, productPolicyService, productValidator, eventPublisher);
   }
 
   @Test
@@ -66,11 +63,13 @@ class ProductCommandServiceTest {
 
     ProductCreateRequest request = createProductCreateRequest();
 
-    given(productRepository.save(any(Product.class))).willAnswer(invocation -> {
-      Product product = invocation.getArgument(0);
-      ReflectionTestUtils.setField(product, "id", 100L);
-      return product;
-    });
+    given(productRepository.save(any(Product.class)))
+        .willAnswer(
+            invocation -> {
+              Product product = invocation.getArgument(0);
+              ReflectionTestUtils.setField(product, "id", 100L);
+              return product;
+            });
 
     ProductCreateResponse response =
         productCommandService.createSellerProduct(1L, true, true, request);
@@ -93,9 +92,8 @@ class ProductCommandServiceTest {
 
     given(productRepository.findById(10L)).willReturn(Optional.of(readyProduct));
 
-    assertThatThrownBy(() ->
-        productCommandService.updateSellerProduct(10L, 1L, true, true, request)
-    )
+    assertThatThrownBy(
+            () -> productCommandService.updateSellerProduct(10L, 1L, true, true, request))
         .isInstanceOf(ProductException.class)
         .hasMessage(ErrorCode.PRODUCT_CORE_UPDATE_LOCKED.getMessage());
   }
@@ -106,9 +104,8 @@ class ProductCommandServiceTest {
     Product product = createProduct();
     given(productRepository.findById(20L)).willReturn(Optional.of(product));
 
-    assertThatThrownBy(() ->
-        productCommandService.deleteSellerProduct(20L, 1L, true, true, true, false)
-    )
+    assertThatThrownBy(
+            () -> productCommandService.deleteSellerProduct(20L, 1L, true, true, true, false))
         .isInstanceOf(ProductException.class)
         .hasMessage(ErrorCode.PRODUCT_DELETE_NOT_ALLOWED.getMessage());
 
@@ -123,9 +120,8 @@ class ProductCommandServiceTest {
 
     given(productRepository.findById(10L)).willReturn(Optional.of(product));
 
-    assertThatThrownBy(() ->
-        productCommandService.changeSellerProductStatus(10L, 1L, true, true, request)
-    )
+    assertThatThrownBy(
+            () -> productCommandService.changeSellerProductStatus(10L, 1L, true, true, request))
         .isInstanceOf(ProductException.class)
         .hasMessage(ErrorCode.INVALID_PRODUCT_STATUS_CHANGE.getMessage());
 
@@ -140,7 +136,8 @@ class ProductCommandServiceTest {
     ProductStatusUpdateRequest request = createStatusUpdateRequest(ProductStatus.HIDDEN);
 
     given(productRepository.findById(10L)).willReturn(Optional.of(product));
-    given(productRepository.save(any(Product.class))).willAnswer(invocation -> invocation.getArgument(0));
+    given(productRepository.save(any(Product.class)))
+        .willAnswer(invocation -> invocation.getArgument(0));
 
     ProductCreateResponse response =
         productCommandService.changeSellerProductStatus(10L, 1L, true, true, request);
@@ -155,15 +152,18 @@ class ProductCommandServiceTest {
     ProductImageCreateRequest request = createImageCreateRequest();
 
     given(productRepository.findById(10L)).willReturn(Optional.of(product));
-    given(productRepository.save(any(Product.class))).willAnswer(invocation -> {
-      Product saved = invocation.getArgument(0);
-      ProductImage newImage = saved.getImages().stream()
-          .filter(image -> image.getId() == null)
-          .findFirst()
-          .orElseThrow();
-      ReflectionTestUtils.setField(newImage, "id", 200L);
-      return saved;
-    });
+    given(productRepository.save(any(Product.class)))
+        .willAnswer(
+            invocation -> {
+              Product saved = invocation.getArgument(0);
+              ProductImage newImage =
+                  saved.getImages().stream()
+                      .filter(image -> image.getId() == null)
+                      .findFirst()
+                      .orElseThrow();
+              ReflectionTestUtils.setField(newImage, "id", 200L);
+              return saved;
+            });
 
     ProductImageResponse response =
         productCommandService.createSellerProductImage(10L, 1L, true, true, request);
@@ -186,16 +186,10 @@ class ProductCommandServiceTest {
 
     given(productRepository.findById(10L)).willReturn(Optional.of(product));
 
-    assertThatThrownBy(() ->
-        productCommandService.updateSellerProductImage(
-            10L,
-            onlyThumbnail.getId(),
-            1L,
-            true,
-            true,
-            request
-        )
-    )
+    assertThatThrownBy(
+            () ->
+                productCommandService.updateSellerProductImage(
+                    10L, onlyThumbnail.getId(), 1L, true, true, request))
         .isInstanceOf(ProductException.class)
         .hasMessage(ErrorCode.THUMBNAIL_REQUIRED.getMessage());
 
@@ -209,7 +203,8 @@ class ProductCommandServiceTest {
     ProductImageUpdateRequest request = createImageUpdateRequest(3, null);
 
     given(productRepository.findById(10L)).willReturn(Optional.of(product));
-    given(productRepository.save(any(Product.class))).willAnswer(invocation -> invocation.getArgument(0));
+    given(productRepository.save(any(Product.class)))
+        .willAnswer(invocation -> invocation.getArgument(0));
 
     ProductImageResponse response =
         productCommandService.updateSellerProductImage(10L, 102L, 1L, true, true, request);
@@ -226,7 +221,8 @@ class ProductCommandServiceTest {
     ProductImageUpdateRequest request = createImageUpdateRequest(null, true);
 
     given(productRepository.findById(10L)).willReturn(Optional.of(product));
-    given(productRepository.save(any(Product.class))).willAnswer(invocation -> invocation.getArgument(0));
+    given(productRepository.save(any(Product.class)))
+        .willAnswer(invocation -> invocation.getArgument(0));
 
     ProductImageResponse response =
         productCommandService.updateSellerProductImage(10L, 102L, 1L, true, true, request);
@@ -234,7 +230,8 @@ class ProductCommandServiceTest {
     assertThat(response.getImageId()).isEqualTo(102L);
     assertThat(response.isThumbnail()).isTrue();
     assertThat(product.getThumbnailUrl()).isEqualTo("https://cdn.example.com/detail.jpg");
-    assertThat(product.getImages().stream().filter(ProductImage::isThumbnail).count()).isEqualTo(1L);
+    assertThat(product.getImages().stream().filter(ProductImage::isThumbnail).count())
+        .isEqualTo(1L);
   }
 
   @Test
@@ -245,9 +242,8 @@ class ProductCommandServiceTest {
 
     given(productRepository.findById(10L)).willReturn(Optional.of(product));
 
-    assertThatThrownBy(() ->
-        productCommandService.deleteSellerProductImage(10L, thumbnailId, 1L, true, true)
-    )
+    assertThatThrownBy(
+            () -> productCommandService.deleteSellerProductImage(10L, thumbnailId, 1L, true, true))
         .isInstanceOf(ProductException.class)
         .hasMessage(ErrorCode.THUMBNAIL_DELETE_NOT_ALLOWED.getMessage());
 
@@ -260,7 +256,8 @@ class ProductCommandServiceTest {
     Product product = createProductWithImages();
 
     given(productRepository.findById(10L)).willReturn(Optional.of(product));
-    given(productRepository.save(any(Product.class))).willAnswer(invocation -> invocation.getArgument(0));
+    given(productRepository.save(any(Product.class)))
+        .willAnswer(invocation -> invocation.getArgument(0));
 
     productCommandService.deleteSellerProductImage(10L, 102L, 1L, true, true);
 
@@ -304,7 +301,8 @@ class ProductCommandServiceTest {
     return request;
   }
 
-  private ProductImageUpdateRequest createImageUpdateRequest(Integer sortOrder, Boolean isThumbnail) {
+  private ProductImageUpdateRequest createImageUpdateRequest(
+      Integer sortOrder, Boolean isThumbnail) {
     ProductImageUpdateRequest request = new ProductImageUpdateRequest();
     ReflectionTestUtils.setField(request, "sortOrder", sortOrder);
     ReflectionTestUtils.setField(request, "isThumbnail", isThumbnail);
@@ -312,44 +310,44 @@ class ProductCommandServiceTest {
   }
 
   private Product createProduct() {
-    Product product = Product.create(
-        1L,
-        "기본 상품",
-        "SHOES",
-        BigDecimal.valueOf(100000),
-        10,
-        30,
-        "https://cdn.example.com/thumb.jpg",
-        "설명",
-        "스펙",
-        "배송 정책",
-        "환불 정책"
-    );
+    Product product =
+        Product.create(
+            1L,
+            "기본 상품",
+            "SHOES",
+            BigDecimal.valueOf(100000),
+            10,
+            30,
+            "https://cdn.example.com/thumb.jpg",
+            "설명",
+            "스펙",
+            "배송 정책",
+            "환불 정책");
     ReflectionTestUtils.setField(product, "id", 10L);
     return product;
   }
 
   private Product createProductWithImages() {
     Product product = createProduct();
-    ProductImage thumbnail = ProductImage.builder()
-        .product(product)
-        .imageUrl("https://cdn.example.com/thumb.jpg")
-        .sortOrder(1)
-        .isThumbnail(true)
-        .build();
+    ProductImage thumbnail =
+        ProductImage.builder()
+            .product(product)
+            .imageUrl("https://cdn.example.com/thumb.jpg")
+            .sortOrder(1)
+            .isThumbnail(true)
+            .build();
     product.addImage(thumbnail);
     ReflectionTestUtils.setField(thumbnail, "id", 101L);
 
-    ProductImage detailImage = ProductImage.builder()
-        .product(product)
-        .imageUrl("https://cdn.example.com/detail.jpg")
-        .sortOrder(2)
-        .isThumbnail(false)
-        .build();
+    ProductImage detailImage =
+        ProductImage.builder()
+            .product(product)
+            .imageUrl("https://cdn.example.com/detail.jpg")
+            .sortOrder(2)
+            .isThumbnail(false)
+            .build();
     product.addImage(detailImage);
     ReflectionTestUtils.setField(detailImage, "id", 102L);
     return product;
   }
 }
-
-

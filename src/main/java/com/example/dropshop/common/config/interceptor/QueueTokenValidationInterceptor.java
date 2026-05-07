@@ -18,9 +18,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
-/**
- * 대기열 토큰 검증 인터셉터.
- */
+/** 대기열 토큰 검증 인터셉터. */
 @Component
 @ConditionalOnBean({UserRepository.class, QueueTokenValidationService.class})
 @RequiredArgsConstructor
@@ -31,8 +29,8 @@ public class QueueTokenValidationInterceptor implements HandlerInterceptor {
   private final QueueTokenValidationService queueTokenValidationService;
 
   @Override
-  public boolean preHandle(HttpServletRequest request,
-      HttpServletResponse response, Object handler) throws Exception {
+  public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+      throws Exception {
 
     if (!(handler instanceof HandlerMethod)) {
       return true;
@@ -43,15 +41,17 @@ public class QueueTokenValidationInterceptor implements HandlerInterceptor {
 
     String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-    Long userId = userRepository.findByEmail(email).orElseThrow(
-        () -> new ServiceException(ErrorCode.USER_NOT_FOUND)
-    ).getId();
+    Long userId =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND))
+            .getId();
 
     if ("GET".equals(method) && ("/api/drops".equals(uri) || uri.startsWith("/api/drops/"))) {
 
-      Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(
-          HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE
-      );
+      Map<String, String> pathVariables =
+          (Map<String, String>)
+              request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
 
       Long dropId = Long.valueOf(pathVariables.get("dropId"));
 
@@ -66,10 +66,8 @@ public class QueueTokenValidationInterceptor implements HandlerInterceptor {
 
       ContentCachingRequestWrapper wrappedRequest = (ContentCachingRequestWrapper) request;
 
-      String body = new String(
-          wrappedRequest.getContentAsByteArray(),
-          request.getCharacterEncoding()
-      );
+      String body =
+          new String(wrappedRequest.getContentAsByteArray(), request.getCharacterEncoding());
 
       OrderCreateRequest dto = objectMapper.readValue(body, OrderCreateRequest.class);
 

@@ -29,47 +29,38 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(DropsQueryController.class)
 class DropsQueryControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-  @MockitoBean
-  private JpaMetamodelMappingContext jpaMetamodelMappingContext;
+  @MockitoBean private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
-  @MockitoBean
-  private DropsQueryService dropsQueryService;
+  @MockitoBean private DropsQueryService dropsQueryService;
 
-  @MockitoBean
-  private TokenBlacklistService tokenBlacklistService;
+  @MockitoBean private TokenBlacklistService tokenBlacklistService;
 
   @Test
   @DisplayName("공개 드롭 목록 조회 성공")
   void getPublicDrops_success() throws Exception {
-    DropListItemResponse item = DropListItemResponse.builder()
-        .dropId(10L)
-        .productId(1L)
-        .productName("테스트 상품")
-        .thumbnailUrl("https://example.com/thumb.jpg")
-        .status("ACTIVE")
-        .startAt(LocalDateTime.of(2026, 4, 25, 12, 0))
-        .endAt(LocalDateTime.of(2026, 4, 26, 12, 0))
-        .soldCount(5L)
-        .remainStock(25L)
-        .purchaseLimit(1L)
-        .useQueue(true)
-        .build();
+    DropListItemResponse item =
+        DropListItemResponse.builder()
+            .dropId(10L)
+            .productId(1L)
+            .productName("테스트 상품")
+            .thumbnailUrl("https://example.com/thumb.jpg")
+            .status("ACTIVE")
+            .startAt(LocalDateTime.of(2026, 4, 25, 12, 0))
+            .endAt(LocalDateTime.of(2026, 4, 26, 12, 0))
+            .soldCount(5L)
+            .remainStock(25L)
+            .purchaseLimit(1L)
+            .useQueue(true)
+            .build();
 
-    Page<DropListItemResponse> page = new PageImpl<>(
-        List.of(item),
-        PageRequest.of(0, 20),
-        1
-    );
+    Page<DropListItemResponse> page = new PageImpl<>(List.of(item), PageRequest.of(0, 20), 1);
 
     given(dropsQueryService.findPublicDrops(eq(DropsStatus.ACTIVE), any())).willReturn(page);
 
-    mockMvc.perform(get("/api/drops")
-            .param("status", "ACTIVE")
-            .param("page", "0")
-            .param("size", "20"))
+    mockMvc
+        .perform(get("/api/drops").param("status", "ACTIVE").param("page", "0").param("size", "20"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.content[0].dropId").value(10L))
@@ -80,22 +71,25 @@ class DropsQueryControllerTest {
   @Test
   @DisplayName("공개 드롭 상세 조회 성공")
   void getDropDetail_success() throws Exception {
-    DropResponse response = DropResponse.builder()
-        .dropId(10L)
-        .productId(1L)
-        .status("ACTIVE")
-        .startAt(LocalDateTime.of(2026, 4, 25, 12, 0))
-        .endAt(LocalDateTime.of(2026, 4, 26, 12, 0))
-        .totalStock(30L)
-        .remainStock(25L)
-        .viewCount(10L)
-        .purchaseLimit(1L)
-        .useQueue(true)
-        .build();
+    DropResponse response =
+        DropResponse.builder()
+            .dropId(10L)
+            .productId(1L)
+            .status("ACTIVE")
+            .startAt(LocalDateTime.of(2026, 4, 25, 12, 0))
+            .endAt(LocalDateTime.of(2026, 4, 26, 12, 0))
+            .totalStock(30L)
+            .remainStock(25L)
+            .viewCount(10L)
+            .purchaseLimit(1L)
+            .useQueue(true)
+            .build();
 
-    given(dropsQueryService.findPublicDropDetail(eq(10L), isNull(), any(), any())).willReturn(response);
+    given(dropsQueryService.findPublicDropDetail(eq(10L), isNull(), any(), any()))
+        .willReturn(response);
 
-    mockMvc.perform(get("/api/drops/{dropId}", 10L))
+    mockMvc
+        .perform(get("/api/drops/{dropId}", 10L))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.dropId").value(10L))
@@ -103,4 +97,3 @@ class DropsQueryControllerTest {
         .andExpect(jsonPath("$.data.useQueue").value(true));
   }
 }
-
