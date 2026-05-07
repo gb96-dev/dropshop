@@ -51,4 +51,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, tokenBlacklistService), Usernam
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, tokenBlacklistService), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+}
