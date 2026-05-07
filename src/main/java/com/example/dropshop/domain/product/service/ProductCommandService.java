@@ -16,11 +16,13 @@ import com.example.dropshop.domain.product.enums.ProductStatus;
 import com.example.dropshop.domain.product.exception.ProductException;
 import com.example.dropshop.domain.product.repository.ProductRepository;
 import com.example.dropshop.domain.product.validator.ProductValidator;
+import com.example.dropshop.domain.recommendation.event.ProductEmbeddingEvent;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -35,6 +37,7 @@ public class ProductCommandService {
   private final ProductRepository productRepository;
   private final ProductPolicyService productPolicyService;
   private final ProductValidator productValidator;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * 판매자 상품을 생성한다.
@@ -79,6 +82,16 @@ public class ProductCommandService {
         ));
 
     Product saved = productRepository.save(product);
+
+    // 임베딩 이벤트 발행 (비동기 처리 — 상품 등록 응답에 영향 없음)
+    eventPublisher.publishEvent(new ProductEmbeddingEvent(
+        this,
+        saved.getId(),
+        saved.getName(),
+        saved.getCategory(),
+        saved.getDescription()
+    ));
+
     return ProductCreateResponse.from(saved);
   }
 
@@ -319,19 +332,4 @@ public class ProductCommandService {
   private boolean isCoreFieldUpdateRequested(ProductUpdateRequest request) {
     return request.getName() != null
         || request.getPrice() != null
-        || request.getDiscountRate() != null;
-  }
-
-  private boolean isCoreUpdateLocked(Product product) {
-    return product.getStatus() == ProductStatus.READY
-        || product.getStatus() == ProductStatus.ON_SALE;
-  }
-
-  private String extractThumbnailUrl(ProductCreateRequest request) {
-    return request.getImages().stream()
-        .filter(img -> Boolean.TRUE.equals(img.getIsThumbnail()))
-        .findFirst()
-        .orElseThrow(() -> new ProductException(ErrorCode.THUMBNAIL_REQUIRED))
-        .getImageUrl();
-  }
-}
+        || request.getDiscountRate() != null;

@@ -46,12 +46,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/**").permitAll()
                         .requestMatchers("/api/wishlists/**").permitAll()
                         .requestMatchers("/api/queues/**").permitAll()
+                        .requestMatchers("/api/recommendations/**").permitAll()
                         .requestMatchers("/api/admin/sellers/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, tokenBlacklistService), UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
-}
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, tokenBlacklistService), Usernam
