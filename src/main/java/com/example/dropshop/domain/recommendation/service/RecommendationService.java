@@ -1,12 +1,14 @@
 package com.example.dropshop.domain.recommendation.service;
 
+import com.example.dropshop.domain.product.entity.Product;
+import com.example.dropshop.domain.product.repository.ProductRepository;
 import com.example.dropshop.domain.recommendation.client.OpenAiClient;
 import com.example.dropshop.domain.recommendation.client.PineconeClient;
 import com.example.dropshop.domain.recommendation.dto.response.RecommendationResponse;
+import com.example.dropshop.domain.recommendation.dto.response.RecommendedProductDto;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -18,27 +20,39 @@ import org.springframework.stereotype.Service;
  *   <li>사용자 질의 → OpenAI 임베딩 변환</li>
  *   <li>Pinecone에서 유사 상품 검색 (RAG)</li>
  *   <li>검색된 상품 정보 → GPT에 컨텍스트로 전달</li>
- *   <li>GPT 추천 문구 → 사용자 반환</li>
+ *   <li>GPT 추천 문구 + DB 상품 상세 정보 → 사용자 반환</li>
  * </ol>
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class RecommendationService {
 
   private static final int TOP_K = 5;
 
   private final OpenAiClient openAiClient;
   private final PineconeClient pineconeClient;
+  private final ProductRepository productRepository;
+
+  public RecommendationService(
+      OpenAiClient openAiClient,
+      PineconeClient pineconeClient,
+      ProductRepository productRepository
+  ) {
+    this.openAiClient = openAiClient;
+    this.pineconeClient = pineconeClient;
+    this.productRepository = productRepository;
+  }
 
   /**
    * 사용자 질의에 맞는 상품을 추천한다.
    *
    * @param query 사용자 질의 (예: "여름에 입기 좋은 캐주얼 상품")
-   * @return 추천 결과
+   * @return 추천 결과 (GPT 추천 문구 + 상품 상세 목록)
    */
   @SuppressWarnings("unchecked")
   public RecommendationResponse recommend(String query) {
+    log.info("추천 요청: query={}", query);
+
     // 1. 사용자 질의 임베딩
     List<Float> queryVector = openAiClient.embed(query);
 
@@ -46,10 +60,11 @@ public class RecommendationService {
     List<Map<String, Object>> matches = pineconeClient.query(queryVector, TOP_K);
 
     if (matches.isEmpty()) {
+      log.info("추천 결과 없음: query={}", query);
       return RecommendationResponse.empty(query);
     }
 
-    // 3. 검색된 상품 정보 추출
+    // 3. 검색된 상품 정보 추출 (GPT 컨텍스트용)
     List<String> productInfos = matches.stream()
         .map(match -> {
           Map<String, Object> metadata = (Map<String, Object>) match.get("metadata");
@@ -63,6 +78,7 @@ public class RecommendationService {
         .filter(s -> !s.isEmpty())
         .collect(Collectors.toList());
 
+    // 4. 상품 ID 추출
     List<Long> productIds = matches.stream()
         .map(match -> {
           Map<String, Object> metadata = (Map<String, Object>) match.get("metadata");
@@ -74,9 +90,19 @@ public class RecommendationService {
         .filter(id -> id != null)
         .collect(Collectors.toList());
 
-    // 4. GPT 추천 문구 생성
+    // 5. DB에서 상품 상세 정보 조회
+    List<RecommendedProductDto> products = productRepository.findAllById(productIds)
+        .stream()
+        .map(RecommendedProductDto::from)
+        .collect(Collectors.toList());
+
+    log.info("추천 상품 조회 완료: {}개", products.size());
+
+    // 6. GPT 추천 문구 생성
     String recommendation = openAiClient.recommend(query, productInfos);
 
-    return RecommendationResponse.of(query, recommendation, productIds);
+    log.info("추천 완료: query={}, 상품수={}", query, products.size());
+
+    return RecommendationResponse.of(query, recommendation, products);
   }
 }

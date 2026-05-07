@@ -18,14 +18,15 @@ public class RecommendationResponse {
   /** GPT가 생성한 추천 문구 */
   private final String recommendation;
 
-  /** 추천된 상품 ID 목록 */
-  private final List<Long> productIds;
+  /** 추천된 상품 상세 목록 */
+  private final List<RecommendedProductDto> products;
 
-  public static RecommendationResponse of(String query, String recommendation, List<Long> productIds) {
+  public static RecommendationResponse of(String query, String recommendation,
+      List<RecommendedProductDto> products) {
     return RecommendationResponse.builder()
         .query(query)
         .recommendation(recommendation)
-        .productIds(productIds)
+        .products(products)
         .build();
   }
 
@@ -33,7 +34,7 @@ public class RecommendationResponse {
     return RecommendationResponse.builder()
         .query(query)
         .recommendation("현재 추천할 상품이 없습니다. 더 많은 상품이 등록되면 추천이 가능합니다.")
-        .productIds(List.of())
+        .products(List.of())
         .build();
   }
 }
