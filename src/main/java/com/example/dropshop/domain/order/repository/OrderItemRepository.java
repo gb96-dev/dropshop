@@ -1,6 +1,7 @@
 package com.example.dropshop.domain.order.repository;
 
 import com.example.dropshop.domain.order.entity.OrderItem;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -12,5 +13,10 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
    * 특정 상품의 주문 이력 존재 여부를 확인한다.
    */
   boolean existsByProductId(Long productId);
+
+  /**
+   * 주문 ID로 첫 번째 주문 아이템을 조회한다 (알림용 productId 추출).
+   */
+  Optional<OrderItem> findFirstByOrder_IdOrderByIdAsc(Long orderId);
 }
 
