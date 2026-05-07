@@ -26,7 +26,8 @@ public interface QueueRepository extends JpaRepository<Queue, Integer> {
       LocalDateTime enteredAt
   );
 
-  List<Queue> findByDropIdAndUserIdAndStatusIn(Long dropId, Long userId, Collection<QueueStatus> statuses);
+  List<Queue> findByDropIdAndUserIdAndStatusIn(Long dropId, Long userId,
+      Collection<QueueStatus> statuses);
 
   // READY 상태 조회
   List<Queue> findByStatus(QueueStatus status);
@@ -35,18 +36,18 @@ public interface QueueRepository extends JpaRepository<Queue, Integer> {
   List<Queue> findByStatusAndExpiredAtBefore(QueueStatus status, LocalDateTime time);
 
   @Query("""
-    SELECT q
-    FROM Queue q
-    JOIN FETCH q.queueToken qt
-    WHERE q.status = :status
-""")
+          SELECT q
+          FROM Queue q
+          JOIN FETCH q.queueToken qt
+          WHERE q.status = :status
+      """)
   List<Queue> findReadyQueuesWithToken(@Param("status") QueueStatus status);
 
   @Query("""
-    SELECT q
-    FROM Queue q
-    JOIN FETCH q.queueToken qt
-    WHERE qt = :token
-""")
+          SELECT q
+          FROM Queue q
+          JOIN FETCH q.queueToken qt
+          WHERE qt = :token
+      """)
   Optional<Queue> findByQueue(@Param("token") QueueToken token);
 }

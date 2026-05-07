@@ -5,24 +5,18 @@ import static com.example.dropshop.common.constant.kafka.key.KafkaKeys.KEY_DELAY
 import static com.example.dropshop.common.constant.kafka.topic.KafkaTopics.TOPIC_READY_QUEUE_TOKEN;
 
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
-import com.example.dropshop.domain.queue.entity.Queue;
-import com.example.dropshop.domain.queue.entity.QueueToken;
-import com.example.dropshop.domain.queue.enums.QueueStatus;
 import com.example.dropshop.domain.queue.repository.QueueRepository;
 import com.example.dropshop.domain.queue.repository.QueueTokenRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.Jwts.KEY;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 대기열 스케쥴러.

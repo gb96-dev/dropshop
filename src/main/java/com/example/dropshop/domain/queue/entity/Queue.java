@@ -66,6 +66,7 @@ public class Queue {
 
   /**
    * 대기열 생성자.
+   *
    * @param userId 유저 아이디.
    * @param dropId 드랍 아이디.
    */

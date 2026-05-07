@@ -13,10 +13,12 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class QueueTokenProducer {
+
   private final KafkaTemplate<String, Object> kafkaTemplate;
 
   /**
    * send.
+   *
    * @param threadHoldResponse dto.
    */
   public void send(ThreadHoldResponse threadHoldResponse) {

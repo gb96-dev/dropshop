@@ -13,6 +13,7 @@ import lombok.Getter;
  */
 @Getter
 public class ThreadHoldResponse {
+
   // 입장 요청에 대한 결과
   private ThreadHoldResult result;
 
@@ -42,10 +43,11 @@ public class ThreadHoldResponse {
 
   /**
    * 대기열 direct.
-   * @param dropsId 드랍 아이디.
+   *
+   * @param dropsId        드랍 아이디.
    * @param admissionToken 입장 토큰.
-   * @param expiresAt 만료 일자.
-   * @param queueId 대기열 아이디.
+   * @param expiresAt      만료 일자.
+   * @param queueId        대기열 아이디.
    * @return 리턴.
    */
   public static ThreadHoldResponse direct(
@@ -57,7 +59,9 @@ public class ThreadHoldResponse {
     response.admissionToken = admissionToken;
     response.expiresInSeconds = (int) Duration.between(LocalDateTime.now(), expiresAt).getSeconds();
 
-    if (response.expiresInSeconds < 0) response.expiresInSeconds = 0;
+    if (response.expiresInSeconds < 0) {
+      response.expiresInSeconds = 0;
+    }
 
     response.queueId = queueId;
 
@@ -70,10 +74,11 @@ public class ThreadHoldResponse {
 
   /**
    * 대기열 new direct.
-   * @param dropsId 드랍 아이디.
+   *
+   * @param dropsId        드랍 아이디.
    * @param admissionToken 입장 토큰.
-   * @param expiresAt 만료 일자.
-   * @param queueId 대기열 아이디.
+   * @param expiresAt      만료 일자.
+   * @param queueId        대기열 아이디.
    * @return 리턴.
    */
   public static ThreadHoldResponse newDirect(
@@ -85,7 +90,9 @@ public class ThreadHoldResponse {
     response.admissionToken = admissionToken;
     response.expiresInSeconds = (int) Duration.between(LocalDateTime.now(), expiresAt).getSeconds();
 
-    if (response.expiresInSeconds < 0) response.expiresInSeconds = 0;
+    if (response.expiresInSeconds < 0) {
+      response.expiresInSeconds = 0;
+    }
 
     response.queueId = queueId;
 
@@ -99,9 +106,10 @@ public class ThreadHoldResponse {
 
   /**
    * 대기열 queue.
-   * @param dropsId 드랍 아이디.
-   * @param queueId 대기열 아이디.
-   * @param aheadCount 대기 세션 수.
+   *
+   * @param dropsId              드랍 아이디.
+   * @param queueId              대기열 아이디.
+   * @param aheadCount           대기 세션 수.
    * @param estimatedWaitSeconds 예상 대기 시간.
    * @return 리턴.
    */
@@ -121,6 +129,7 @@ public class ThreadHoldResponse {
 
   /**
    * 대기열 expire.
+   *
    * @param dropsId 드랍 아이디.
    * @param queueId 대기열 아이디.
    * @return 리턴.

@@ -14,13 +14,14 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 public class WishlistRepositoryCustomImpl implements WishlistRepositoryCustom {
+
   private final JPAQueryFactory queryFactory;
 
   @Override
   public List<WishlistResponse> findRecentByUserId(Long userId, int limit) {
     return queryFactory
         .select(Projections.constructor(
-          WishlistResponse.class,
+            WishlistResponse.class,
             wishlist.dropId,
             wishlist.createdAt
         ))

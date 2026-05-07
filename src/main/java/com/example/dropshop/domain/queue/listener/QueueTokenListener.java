@@ -24,6 +24,7 @@ public class QueueTokenListener {
 
   /**
    * 카프카 리스너.
+   *
    * @param threadHoldResponse dto.
    * @throws JsonProcessingException 예외처리.
    */

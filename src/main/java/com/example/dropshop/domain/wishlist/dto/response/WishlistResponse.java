@@ -20,10 +20,11 @@ public class WishlistResponse {
 
   /**
    * 스태틱 빌더 메소드.
+   *
    * @param dropId 드랍 아이디.
    * @return 리턴.
    */
-  public static WishlistResponse build(Long dropId, LocalDateTime time){
+  public static WishlistResponse build(Long dropId, LocalDateTime time) {
     return WishlistResponse.builder()
         .dropId(dropId)
         .createdAt(time)

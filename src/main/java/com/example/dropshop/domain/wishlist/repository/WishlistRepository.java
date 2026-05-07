@@ -8,7 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 /**
  * 찜 JPA 리포지토리.
  */
-public interface WishlistRepository extends JpaRepository<Wishlist, Long>, WishlistRepositoryCustom{
+public interface WishlistRepository extends JpaRepository<Wishlist, Long>,
+    WishlistRepositoryCustom {
 
   boolean existsByUserIdAndDropId(Long userId, Long dropId);
 

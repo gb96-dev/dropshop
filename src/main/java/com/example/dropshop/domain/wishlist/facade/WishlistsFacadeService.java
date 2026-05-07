@@ -31,7 +31,8 @@ public class WishlistsFacadeService {
 
   /**
    * 찜 생성.
-   * @param email 이메일.
+   *
+   * @param email   이메일.
    * @param request 요청.
    * @return 리턴.
    */
@@ -43,7 +44,8 @@ public class WishlistsFacadeService {
 
   /**
    * 찜 취소.
-   * @param email 이메일.
+   *
+   * @param email   이메일.
    * @param request 요청.
    */
   public void cancel(String email, WishlistRequest request) {

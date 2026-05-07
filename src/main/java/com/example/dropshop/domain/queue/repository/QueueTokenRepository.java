@@ -1,6 +1,5 @@
 package com.example.dropshop.domain.queue.repository;
 
-import com.example.dropshop.domain.queue.entity.Queue;
 import com.example.dropshop.domain.queue.entity.QueueToken;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,14 +15,15 @@ public interface QueueTokenRepository extends CrudRepository<QueueToken, Long> {
 
   /**
    * 대기열 토큰.
+   *
    * @param queueId 대기열 아이디.
    * @return 리턴.
    */
   @Query("""
-    SELECT qt
-    FROM QueueToken qt
-    WHERE qt.queue.id = :queueId
-""")
+          SELECT qt
+          FROM QueueToken qt
+          WHERE qt.queue.id = :queueId
+      """)
   Optional<QueueToken> findByQueueId(@Param("queueId") Long queueId);
 
   @Query("SELECT qt FROM QueueToken qt WHERE qt.createdAt <= :time")
