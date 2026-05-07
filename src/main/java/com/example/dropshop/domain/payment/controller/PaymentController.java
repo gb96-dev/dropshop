@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 결제 준비, 요청 정보 조회, 결제 확정을 처리하는 REST 컨트롤러다.
+ * 결제 REST 컨트롤러.
  */
 @RestController
 @RequestMapping("/api/payments")
@@ -32,6 +32,7 @@ public class PaymentController {
   /**
    * 주문 결제를 준비하고 결제 엔티티를 생성한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param request 결제 준비 요청
    * @return 생성된 결제 정보 응답
    */
@@ -46,6 +47,7 @@ public class PaymentController {
   /**
    * 프론트엔드의 PortOne 결제 요청에 필요한 정보를 조회한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param paymentId 결제 ID
    * @return PortOne 요청 정보 응답
    */
@@ -61,6 +63,7 @@ public class PaymentController {
   /**
    * PortOne 결제 결과를 검증한 뒤 결제를 확정한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param paymentId 결제 ID
    * @param request 결제 확정 요청
    * @return 결제 확정 결과 응답

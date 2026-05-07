@@ -27,6 +27,7 @@ import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.exception.PaymentException;
+import com.example.dropshop.domain.payment.outbox.PaymentOutboxPublisher;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -41,8 +42,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -68,8 +69,11 @@ class PaymentWebhookServiceTest {
   @Mock
   private TransactionTemplate transactionTemplate;
 
+  @Spy
+  private PaymentVerificationService paymentVerificationService = new PaymentVerificationService();
+
   @Mock
-  private ApplicationEventPublisher eventPublisher;
+  private PaymentOutboxPublisher paymentOutboxPublisher;
 
   @InjectMocks
   private PaymentWebhookService paymentWebhookService;
@@ -119,7 +123,7 @@ class PaymentWebhookServiceTest {
     assertThat(result.getPortOneTransactionId()).isEqualTo("tx-webhook");
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
-    verify(eventPublisher, times(1)).publishEvent(any(PaymentStatusChangedEvent.class));
+    verify(paymentOutboxPublisher, times(1)).save(any(PaymentStatusChangedEvent.class));
   }
 
   @Test
@@ -134,7 +138,7 @@ class PaymentWebhookServiceTest {
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     verify(orderFacadeService, never()).payOrderByPayment(any(Order.class));
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
-    verify(eventPublisher, never()).publishEvent(any());
+    verify(paymentOutboxPublisher, never()).save(any());
   }
 
   @Test
@@ -148,7 +152,7 @@ class PaymentWebhookServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
-    verify(eventPublisher, times(1)).publishEvent(any(PaymentStatusChangedEvent.class));
+    verify(paymentOutboxPublisher, times(1)).save(any());
   }
 
   @Test

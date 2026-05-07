@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * 환불 유스케이스 응답 조합을 담당하는 파사드 서비스.
+ * 환불 유스케이스 파사드 서비스.
  */
 @Service
 @RequiredArgsConstructor

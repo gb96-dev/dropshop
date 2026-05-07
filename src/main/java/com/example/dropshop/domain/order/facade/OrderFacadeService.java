@@ -28,6 +28,10 @@ public class OrderFacadeService {
 
   /**
    * 주문 생성.
+   *
+   * @param email 인증된 사용자 이메일
+   * @param request 주문 생성 요청
+   * @return 생성된 주문 응답
    */
   @Transactional
   public OrderCreateResponse createOrder(String email, OrderCreateRequest request) {
@@ -54,6 +58,10 @@ public class OrderFacadeService {
 
   /**
    * 주문 단건 조회.
+   *
+   * @param orderId 주문 ID
+   * @param email 인증된 사용자 이메일
+   * @return 주문 상세 응답
    */
   public OrderDetailResponse findOrderById(Long orderId, String email) {
     return OrderDetailResponse.from(orderService.findOrderById(orderId, getUserIdByEmail(email)));
@@ -61,6 +69,10 @@ public class OrderFacadeService {
 
   /**
    * 결제 도메인에서 사용할 주문을 조회한다.
+   *
+   * @param orderId 주문 ID
+   * @param email 인증된 사용자 이메일
+   * @return 주문 엔티티
    */
   @Transactional(readOnly = true)
   public Order findOrderForPayment(Long orderId, String email) {
@@ -69,6 +81,9 @@ public class OrderFacadeService {
 
   /**
    * 웹훅 등 내부 연동에서 사용할 주문을 조회한다.
+   *
+   * @param orderId 주문 ID
+   * @return 주문 엔티티
    */
   @Transactional(readOnly = true)
   public Order findOrderForPaymentWebhook(Long orderId) {
@@ -77,6 +92,9 @@ public class OrderFacadeService {
 
   /**
    * 결제 성공에 따른 주문 완료 처리.
+   *
+   * @param order 주문 엔티티
+   * @return 결제 완료된 주문 엔티티
    */
   public Order payOrderByPayment(Order order) {
     return orderService.payOrder(order);
@@ -84,6 +102,9 @@ public class OrderFacadeService {
 
   /**
    * 결제 실패에 따른 주문 취소 및 재고 복원 처리.
+   *
+   * @param order 주문 엔티티
+   * @return 취소된 주문 엔티티
    */
   public Order cancelOrderByPaymentFailure(Order order) {
     return orderService.cancelOrderAndRestoreStock(order);
@@ -101,6 +122,10 @@ public class OrderFacadeService {
 
   /**
    * 주문 목록 조회.
+   *
+   * @param email 인증된 사용자 이메일
+   * @param pageable 페이지 정보
+   * @return 주문 목록 응답
    */
   @Transactional(readOnly = true)
   public Page<OrderListItemResponse> findOrdersByUserId(String email, Pageable pageable) {
@@ -110,6 +135,9 @@ public class OrderFacadeService {
 
   /**
    * 드랍의 주문 이력 존재 여부를 확인한다.
+   *
+   * @param dropId 드랍 ID
+   * @return 주문 이력 존재 여부
    */
   @Transactional(readOnly = true)
   public boolean existsOrderHistoryForDrop(Long dropId) {
@@ -118,6 +146,10 @@ public class OrderFacadeService {
 
   /**
    * 주문 수동 취소.
+   *
+   * @param orderId 주문 ID
+   * @param email 인증된 사용자 이메일
+   * @return 취소된 주문 응답
    */
   public OrderDetailResponse cancelOrder(Long orderId, String email) {
     return OrderDetailResponse.from(orderService.cancelOrder(orderId, getUserIdByEmail(email)));

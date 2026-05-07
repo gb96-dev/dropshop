@@ -58,6 +58,9 @@ class PaymentServiceTest {
   private TransactionTemplate transactionTemplate;
 
   @Mock
+  private PaymentVerificationService paymentVerificationService;
+
+  @Mock
   private PaymentOutboxPublisher paymentOutboxPublisher;
 
   @InjectMocks
