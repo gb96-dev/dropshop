@@ -13,6 +13,7 @@ import com.example.dropshop.domain.notification.dto.response.NotificationRespons
 import com.example.dropshop.domain.notification.entity.Notification;
 import com.example.dropshop.domain.notification.enums.NotificationType;
 import com.example.dropshop.domain.notification.repository.NotificationRepository;
+import com.example.dropshop.domain.notification.service.NotificationService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.seller.entity.Seller;
@@ -47,7 +48,6 @@ public class SseEmitterService {
   private final DropsRepository dropsRepository;
   private final UserFacadeService userFacadeService;
   private final SellerFacadeService sellerFacadeService;
-  private final DropsFacadeService dropsFacadeService;
 
   /**
    * 클라이언트의 SSE 구독 요청을 처리한다. 기존 연결이 있으면 교체한다.
@@ -136,25 +136,11 @@ public class SseEmitterService {
    * @param email 강제 로그아웃할 사용자 이메일
    */
   public void sendForceLogout(String email) {
-    SseEmitter emitter = emitterRepository.findEmitterByEmail(email);
+    User user = userFacadeService.findByEmail(email).orElseThrow(
+        () -> new ServiceException(ErrorCode.USER_NOT_FOUND)
+    );
 
-    if (emitter == null) {
-      // 기존 디바이스가 SSE 구독 중이 아닌 경우 (앱 재시작 등) — 정상 케이스
-      log.debug("[SSE] force-logout 대상 emitter 없음 - email: {}", email);
-      return;
-    }
-
-    try {
-      emitter.send(SseEmitter.event()
-          .name("force-logout")
-          .data("다른 기기에서 로그인하여 현재 세션이 종료됩니다."));
-      emitter.complete();
-      log.info("[SSE] force-logout 이벤트 전송 완료 - email: {}", email);
-    } catch (IOException e) {
-      log.warn("[SSE] force-logout 이벤트 전송 실패 - email: {}", email, e);
-    } finally {
-      emitterRepository.deleteByEmail(email);
-    }
+    send(user, NotificationType.FORCE_LOGOUT, "다른 기기에서 로그인하여 현재 세션이 종료됩니다.", null);
   }
 
   /**

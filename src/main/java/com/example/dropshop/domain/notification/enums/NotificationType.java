@@ -9,6 +9,7 @@ import lombok.Getter;
  */
 @Getter
 public enum NotificationType {
+  FORCE_LOGOUT("동일 계정 로그아웃"),
   DROP_IMPENDING("드랍 임박"),
   PURCHASE_SUCCESS("구매 성공"),
   PURCHASE_FAIL("구매 실패"),
