@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 환불 완료 흐름의 트랜잭션 경계를 분리해 처리한다.
+ * 환불 완료 트랜잭션 분리 처리 서비스.
  */
 @Service
 @RequiredArgsConstructor
@@ -31,6 +31,10 @@ public class RefundCompletionWorker {
 
   /**
    * 외부 PG 환불 호출 전 내부 환불을 처리 중 상태로 전이한다.
+   *
+   * @param refundId 환불 ID
+   * @param email 인증된 사용자 이메일
+   * @return 환불 완료 처리 명령
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public RefundCompletionCommand prepareRefundCompletion(Long refundId, String email) {
@@ -57,6 +61,8 @@ public class RefundCompletionWorker {
 
   /**
    * 외부 PG 환불 실패 시 내부 환불 상태를 승인으로 되돌린다.
+   *
+   * @param refundId 환불 ID
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void revertRefundCompletion(Long refundId) {
@@ -68,6 +74,10 @@ public class RefundCompletionWorker {
 
   /**
    * 외부 PG 환불 성공 후 내부 환불과 주문 상태를 마감한다.
+   *
+   * @param refundId 환불 ID
+   * @param orderId 주문 ID
+   * @return 완료된 환불 엔티티
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public Refund finalizeRefundCompletion(Long refundId, Long orderId) {

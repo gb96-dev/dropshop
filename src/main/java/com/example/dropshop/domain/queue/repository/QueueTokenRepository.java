@@ -28,4 +28,6 @@ public interface QueueTokenRepository extends CrudRepository<QueueToken, Long> {
 
   @Query("SELECT qt FROM QueueToken qt WHERE qt.createdAt <= :time")
   List<QueueToken> findExpiredTokens(LocalDateTime time);
+
+  Optional<QueueToken> findByQueueToken(String queueToken);
 }

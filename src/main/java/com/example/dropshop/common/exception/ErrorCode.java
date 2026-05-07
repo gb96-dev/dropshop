@@ -131,7 +131,19 @@ public enum ErrorCode {
   REFUND_INVALID_STATUS(HttpStatus.BAD_REQUEST, "환불 상태가 올바르지 않습니다."),
   REFUND_PORTONE_API_ERROR(HttpStatus.BAD_GATEWAY, "포트원 환불 처리 중 오류가 발생했습니다."),
 
-  // Wishlist
+  /**
+   * Queue.
+   */
+  QUEUE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 대기열은 존재하지 않습니다."),
+
+  /**
+   * QueueToken.
+   */
+  QUEUE_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 대기열 토큰은 존재하지 않습니다."),
+
+  /**
+   * Wishlist.
+   */
   EXISTS_BY_USER_AND_DROP(HttpStatus.CONFLICT, "이미 찜한 상품입니다."),
   DROP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 드랍은 존재하지 않습니다.");
 

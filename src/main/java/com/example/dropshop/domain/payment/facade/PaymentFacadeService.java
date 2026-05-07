@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * 결제 유스케이스에 필요한 응답 조합을 담당하는 파사드 서비스다.
+ * 결제 유스케이스 파사드 서비스.
  */
 @Service
 @RequiredArgsConstructor
@@ -33,6 +33,7 @@ public class PaymentFacadeService {
   /**
    * 결제를 준비하고 응답 DTO로 변환한다.
    *
+   * @param email 인증된 사용자 이메일
    * @param request 결제 준비 요청
    * @return 결제 준비 응답
    */
@@ -51,6 +52,7 @@ public class PaymentFacadeService {
    * PortOne 결제 요청에 필요한 정보를 조회한다.
    *
    * @param paymentId 결제 ID
+   * @param email 인증된 사용자 이메일
    * @return PortOne 요청 정보 응답
    */
   public PaymentPortOneRequestResponse getPortOneRequest(Long paymentId, String email) {
@@ -70,6 +72,7 @@ public class PaymentFacadeService {
    * 결제를 확정하고 주문 상태를 포함한 응답을 반환한다.
    *
    * @param paymentId 결제 ID
+   * @param email 인증된 사용자 이메일
    * @param request 결제 확정 요청
    * @return 결제 확정 응답
    */
@@ -85,6 +88,8 @@ public class PaymentFacadeService {
 
   /**
    * PortOne 웹훅을 처리한다.
+   *
+   * @param request PortOne 웹훅 요청
    */
   public void handleWebhook(PaymentWebhookRequest request) {
     paymentWebhookService.handleWebhook(request);

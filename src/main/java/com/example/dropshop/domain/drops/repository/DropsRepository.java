@@ -64,6 +64,11 @@ public interface DropsRepository extends JpaRepository<Drops, Long> {
   List<Drops> findAllByStatusAndStartAtLessThanEqual(DropsStatus status, LocalDateTime baseTime);
 
   /**
+   * 특정 상태의 드랍 전체를 조회한다.
+   */
+  List<Drops> findAllByStatus(DropsStatus status);
+
+  /**
    * 종료 대상(종료 시간 도달 또는 재고 소진)인 진행 중 드랍을 조회한다.
    */
   @Query(
