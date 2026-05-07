@@ -23,6 +23,7 @@ import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
 import com.example.dropshop.domain.payment.exception.PaymentException;
+import com.example.dropshop.domain.payment.outbox.PaymentOutboxPublisher;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,7 +35,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -58,7 +58,7 @@ class PaymentServiceTest {
   private TransactionTemplate transactionTemplate;
 
   @Mock
-  private ApplicationEventPublisher eventPublisher;
+  private PaymentOutboxPublisher paymentOutboxPublisher;
 
   @InjectMocks
   private PaymentService paymentService;
@@ -170,7 +170,7 @@ class PaymentServiceTest {
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
-    verify(eventPublisher, times(1)).publishEvent(any());
+    verify(paymentOutboxPublisher, times(1)).save(any());
   }
 
   @Test
@@ -188,7 +188,7 @@ class PaymentServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     verify(orderFacadeService, times(1)).cancelOrderByPaymentFailure(order);
-    verify(eventPublisher, times(1)).publishEvent(any());
+    verify(paymentOutboxPublisher, times(1)).save(any());
   }
 
   @Test
@@ -205,7 +205,7 @@ class PaymentServiceTest {
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     verify(portOneClient, never()).getPayment(any());
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
-    verify(eventPublisher, never()).publishEvent(any());
+    verify(paymentOutboxPublisher, never()).save(any());
   }
 
   @Test

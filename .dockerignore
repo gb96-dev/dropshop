@@ -1,0 +1,11 @@
+.git
+.github
+.gradle
+build/reports
+build/test-results
+build/tmp
+src/test
+load-test
+data
+*.md
+
