@@ -332,4 +332,18 @@ public class ProductCommandService {
   private boolean isCoreFieldUpdateRequested(ProductUpdateRequest request) {
     return request.getName() != null
         || request.getPrice() != null
-        || request.getDiscountRate() != null;
+        || request.getDiscountRate() != null;
+  }
+
+  private boolean isCoreUpdateLocked(Product product) {
+    return product.isCoreLocked();
+  }
+
+  private String extractThumbnailUrl(ProductCreateRequest request) {
+    return request.getImages().stream()
+        .filter(image -> Boolean.TRUE.equals(image.getIsThumbnail()))
+        .map(ProductCreateRequest.ImageRequest::getImageUrl)
+        .findFirst()
+        .orElseThrow(() -> new ProductException(ErrorCode.THUMBNAIL_REQUIRED));
+  }
+}
