@@ -34,6 +34,10 @@ jobs:
       - name: Compile (main/test)
         run: ./gradlew --no-daemon --console=plain compileJava compileTestJava
 
+      - name: Spotless format check
+        continue-on-error: true
+        run: ./gradlew --no-daemon --console=plain spotlessCheck
+
       - name: Run unit tests
         run: ./gradlew --no-daemon --console=plain test
 
