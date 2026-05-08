@@ -22,6 +22,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 public class QueueToken {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -40,7 +41,7 @@ public class QueueToken {
    * 대기열 토큰 생성자.
    *
    * @param queueToken 대기열 토큰.
-   * @param queue 대기열 엔티티.
+   * @param queue      대기열 엔티티.
    */
   public QueueToken(String queueToken, Queue queue) {
     this.queueToken = queueToken;

@@ -43,8 +43,8 @@ public class ThreadHoldResponse {
    *
    * @param dropsId 드랍 아이디.
    * @param admissionToken 입장 토큰.
-   * @param expiresAt 만료 일자.
-   * @param queueId 대기열 아이디.
+   * @param expiresAt      만료 일자.
+   * @param queueId        대기열 아이디.
    * @return 리턴.
    */
   public static ThreadHoldResponse direct(
@@ -73,8 +73,8 @@ public class ThreadHoldResponse {
    *
    * @param dropsId 드랍 아이디.
    * @param admissionToken 입장 토큰.
-   * @param expiresAt 만료 일자.
-   * @param queueId 대기열 아이디.
+   * @param expiresAt      만료 일자.
+   * @param queueId        대기열 아이디.
    * @return 리턴.
    */
   public static ThreadHoldResponse newDirect(
