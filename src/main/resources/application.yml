@@ -53,6 +53,9 @@ dropshop:
   drops:
     view-count-ttl-seconds: 600
 
+recommendation:
+  enabled: false
+
 management:
   endpoints:
     web:

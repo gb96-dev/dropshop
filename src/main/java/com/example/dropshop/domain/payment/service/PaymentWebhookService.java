@@ -4,6 +4,7 @@ import com.example.dropshop.common.config.PortOneProperties;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
+import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
@@ -35,6 +36,7 @@ public class PaymentWebhookService {
   private final TransactionTemplate transactionTemplate;
   private final PaymentVerificationService paymentVerificationService;
   private final PaymentOutboxPublisher paymentOutboxPublisher;
+  private final SellerDashboardRefreshService sellerDashboardRefreshService;
 
   /**
    * PortOne 결제 식별자로 웹훅 동기화 처리.
@@ -85,6 +87,7 @@ public class PaymentWebhookService {
       paymentVerificationService.validateOrderNotExpired(order);
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
+      sellerDashboardRefreshService.refreshForOrder(order);
       publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK", order.getUserId());
       return;
     }

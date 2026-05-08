@@ -19,7 +19,6 @@ import com.example.dropshop.domain.product.validator.ProductValidator;
 import com.example.dropshop.domain.recommendation.event.ProductEmbeddingEvent;
 import java.math.BigDecimal;
 import java.util.Comparator;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,13 +30,24 @@ import org.springframework.util.StringUtils;
  * 상품 쓰기 도메인 서비스.
  */
 @Service
-@RequiredArgsConstructor
 public class ProductCommandService {
 
   private final ProductRepository productRepository;
   private final ProductPolicyService productPolicyService;
   private final ProductValidator productValidator;
   private final ApplicationEventPublisher eventPublisher;
+
+  public ProductCommandService(
+      ProductRepository productRepository,
+      ProductPolicyService productPolicyService,
+      ProductValidator productValidator,
+      ApplicationEventPublisher eventPublisher
+  ) {
+    this.productRepository = productRepository;
+    this.productPolicyService = productPolicyService;
+    this.productValidator = productValidator;
+    this.eventPublisher = eventPublisher;
+  }
 
   /**
    * 판매자 상품을 생성한다.
@@ -83,7 +93,6 @@ public class ProductCommandService {
 
     Product saved = productRepository.save(product);
 
-    // 임베딩 이벤트 발행 (비동기 처리 — 상품 등록 응답에 영향 없음)
     eventPublisher.publishEvent(new ProductEmbeddingEvent(
         this,
         saved.getId(),
@@ -332,4 +341,18 @@ public class ProductCommandService {
   private boolean isCoreFieldUpdateRequested(ProductUpdateRequest request) {
     return request.getName() != null
         || request.getPrice() != null
-        || request.getDiscountRate() != null;
+        || request.getDiscountRate() != null;
+  }
+
+  private boolean isCoreUpdateLocked(Product product) {
+    return product.isCoreLocked();
+  }
+
+  private String extractThumbnailUrl(ProductCreateRequest request) {
+    return request.getImages().stream()
+        .filter(ProductCreateRequest.ImageRequest::getIsThumbnail)
+        .findFirst()
+        .map(ProductCreateRequest.ImageRequest::getImageUrl)
+        .orElseThrow(() -> new ProductException(ErrorCode.THUMBNAIL_REQUIRED));
+  }
+}

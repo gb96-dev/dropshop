@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,12 +46,20 @@ class ProductCommandServiceTest {
   @Mock
   private ProductValidator productValidator;
 
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
+
   private ProductCommandService productCommandService;
 
   @BeforeEach
   void setUp() {
     productCommandService =
-        new ProductCommandService(productRepository, productPolicyService, productValidator);
+        new ProductCommandService(
+            productRepository,
+            productPolicyService,
+            productValidator,
+            eventPublisher
+        );
   }
 
   @Test

@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -57,11 +59,14 @@ class PaymentServiceTest {
   @Mock
   private TransactionTemplate transactionTemplate;
 
-  @Mock
-  private PaymentVerificationService paymentVerificationService;
+  @Spy
+  private PaymentVerificationService paymentVerificationService = new PaymentVerificationService();
 
   @Mock
   private PaymentOutboxPublisher paymentOutboxPublisher;
+
+  @Mock
+  private SellerDashboardRefreshService sellerDashboardRefreshService;
 
   @InjectMocks
   private PaymentService paymentService;
@@ -173,6 +178,7 @@ class PaymentServiceTest {
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
+    verify(sellerDashboardRefreshService, times(1)).refreshForOrder(order);
     verify(paymentOutboxPublisher, times(1)).save(any());
   }
 
@@ -191,6 +197,7 @@ class PaymentServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     verify(orderFacadeService, times(1)).cancelOrderByPaymentFailure(order);
+    verify(sellerDashboardRefreshService, never()).refreshForOrder(any(Order.class));
     verify(paymentOutboxPublisher, times(1)).save(any());
   }
 
@@ -208,6 +215,7 @@ class PaymentServiceTest {
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     verify(portOneClient, never()).getPayment(any());
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
+    verify(sellerDashboardRefreshService, never()).refreshForOrder(any(Order.class));
     verify(paymentOutboxPublisher, never()).save(any());
   }
 

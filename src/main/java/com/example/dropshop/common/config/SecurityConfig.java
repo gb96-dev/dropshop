@@ -37,6 +37,7 @@ public class SecurityConfig {
                         // 관리자 전용 경로
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 판매자 전용 경로
+                        .requestMatchers("/api/sellers/me/dashboard/**").hasRole("SELLER")
                         .requestMatchers("/api/sellers/drops/**").hasRole("SELLER")
                         .requestMatchers("/api/sellers/products/**").hasRole("SELLER")
                         .requestMatchers("/api/sellers/images/**").hasRole("SELLER")
@@ -51,4 +52,11 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, tokenBlacklistService), Usernam
+                .addFilterBefore(
+                    new JwtAuthenticationFilter(jwtUtil, tokenBlacklistService),
+                    UsernamePasswordAuthenticationFilter.class
+                );
+
+        return http.build();
+    }
+}

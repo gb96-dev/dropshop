@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
@@ -40,6 +41,9 @@ class RefundCompletionWorkerTest {
 
   @Mock
   private OrderFacadeService orderFacadeService;
+
+  @Mock
+  private SellerDashboardRefreshService sellerDashboardRefreshService;
 
   @InjectMocks
   private RefundCompletionWorker refundCompletionWorker;
@@ -120,6 +124,7 @@ class RefundCompletionWorkerTest {
     assertThat(result.getStatus()).isEqualTo(RefundStatus.COMPLETED);
     assertThat(order.getStatus().name()).isEqualTo("REFUNDED");
     verify(orderFacadeService, times(1)).refundOrderByRefund(order);
+    verify(sellerDashboardRefreshService, times(1)).refreshForOrder(order);
   }
 
   @Test
@@ -144,5 +149,6 @@ class RefundCompletionWorkerTest {
 
     assertThat(result.getStatus()).isEqualTo(RefundStatus.COMPLETED);
     verify(orderFacadeService, never()).refundOrderByRefund(order);
+    verify(sellerDashboardRefreshService, never()).refreshForOrder(order);
   }
 }

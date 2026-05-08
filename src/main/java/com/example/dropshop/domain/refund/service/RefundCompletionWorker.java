@@ -1,6 +1,7 @@
 package com.example.dropshop.domain.refund.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
@@ -28,6 +29,7 @@ public class RefundCompletionWorker {
   private final RefundRepository refundRepository;
   private final PaymentRepository paymentRepository;
   private final OrderFacadeService orderFacadeService;
+  private final SellerDashboardRefreshService sellerDashboardRefreshService;
 
   /**
    * 외부 PG 환불 호출 전 내부 환불을 처리 중 상태로 전이한다.
@@ -90,6 +92,7 @@ public class RefundCompletionWorker {
     Order order = orderFacadeService.findOrderForPaymentWebhook(orderId);
     if (order.getStatus() == OrderStatus.PAID) {
       orderFacadeService.refundOrderByRefund(order);
+      sellerDashboardRefreshService.refreshForOrder(order);
     } else if (order.getStatus() != OrderStatus.REFUNDED) {
       throw new RefundException(ErrorCode.REFUND_ORDER_INVALID_STATUS);
     }

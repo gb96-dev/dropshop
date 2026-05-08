@@ -15,6 +15,7 @@ import com.example.dropshop.common.config.PortOneProperties;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
+import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.exception.OrderException;
@@ -75,6 +76,9 @@ class PaymentWebhookServiceTest {
   @Mock
   private PaymentOutboxPublisher paymentOutboxPublisher;
 
+  @Mock
+  private SellerDashboardRefreshService sellerDashboardRefreshService;
+
   @InjectMocks
   private PaymentWebhookService paymentWebhookService;
 
@@ -123,6 +127,7 @@ class PaymentWebhookServiceTest {
     assertThat(result.getPortOneTransactionId()).isEqualTo("tx-webhook");
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
+    verify(sellerDashboardRefreshService, times(1)).refreshForOrder(order);
     verify(paymentOutboxPublisher, times(1)).save(any(PaymentStatusChangedEvent.class));
   }
 
@@ -138,6 +143,7 @@ class PaymentWebhookServiceTest {
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     verify(orderFacadeService, never()).payOrderByPayment(any(Order.class));
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
+    verify(sellerDashboardRefreshService, never()).refreshForOrder(any(Order.class));
     verify(paymentOutboxPublisher, never()).save(any());
   }
 
@@ -152,6 +158,7 @@ class PaymentWebhookServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
+    verify(sellerDashboardRefreshService, never()).refreshForOrder(any(Order.class));
     verify(paymentOutboxPublisher, times(1)).save(any());
   }
 

@@ -3,6 +3,7 @@ package com.example.dropshop.domain.payment.service;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
+import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.exception.OrderException;
@@ -36,6 +37,7 @@ public class PaymentService {
   private final TransactionTemplate transactionTemplate;
   private final PaymentVerificationService paymentVerificationService;
   private final PaymentOutboxPublisher paymentOutboxPublisher;
+  private final SellerDashboardRefreshService sellerDashboardRefreshService;
 
   /**
    * 결제 확정 결과.
@@ -196,6 +198,7 @@ public class PaymentService {
     if (paymentVerificationService.isPaidStatus(portOnePayment.status())) {
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
+      sellerDashboardRefreshService.refreshForOrder(order);
       publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API", order.getUserId());
       return;
     }

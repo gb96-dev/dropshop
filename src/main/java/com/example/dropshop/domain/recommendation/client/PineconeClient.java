@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -14,6 +15,7 @@ import org.springframework.web.client.RestClient;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "recommendation", name = "enabled", havingValue = "true")
 public class PineconeClient {
 
   private final RestClient restClient;

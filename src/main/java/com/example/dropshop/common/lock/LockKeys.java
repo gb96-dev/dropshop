@@ -1,5 +1,7 @@
 package com.example.dropshop.common.lock;
 
+import java.time.LocalDate;
+
 /**
  * 분산 락 키 생성 유틸리티.
  */
@@ -22,5 +24,9 @@ public final class LockKeys {
 
   public static String dropStock(Long dropId) {
     return "lock:drop:stock:" + dropId;
+  }
+
+  public static String sellerDashboardDaily(Long sellerId, LocalDate statDate) {
+    return "lock:seller-dashboard:" + sellerId + ":" + statDate;
   }
 }

@@ -45,6 +45,16 @@ public class QueueService {
    * @param userEmail 유저 이메일.
    */
   @Transactional
+  public ThreadHoldResponse decideQueue(Long dropId, Long userId, String userEmail) {
+    return decideQueue(dropId, userEmail);
+  }
+
+  /**
+   * 대기열 direct, queue 결정 메소드.
+   * @param dropId 드랍 아이디.
+   * @param userEmail 유저 이메일.
+   */
+  @Transactional
   public ThreadHoldResponse decideQueue(Long dropId, String userEmail) {
     User user = userRepository.findByEmail(userEmail).orElseThrow(
         () -> new ServiceException(ErrorCode.USER_NOT_FOUND)
