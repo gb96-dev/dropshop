@@ -5,9 +5,7 @@ import java.math.BigDecimal;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 추천 상품 상세 정보 DTO.
- */
+/** 추천 상품 상세 정보 DTO. */
 @Getter
 @Builder
 public class RecommendedProductDto {
