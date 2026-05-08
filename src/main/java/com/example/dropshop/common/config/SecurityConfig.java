@@ -51,7 +51,9 @@ public class SecurityConfig {
                     .requestMatchers("/api/sellers/**")
                     .permitAll() // TODO: JWT 구현 후 제거
                     .requestMatchers("/api/products/**")
-                    .permitAll() // TODO: JWT 구현 후 제거
+                    .permitAll()
+                    .requestMatchers("/api/drops/**")
+                    .permitAll()
                     .requestMatchers("/payments/**")
                     .permitAll()
                     .requestMatchers("/api/payments/**")

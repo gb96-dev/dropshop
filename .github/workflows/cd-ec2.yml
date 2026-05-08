@@ -111,10 +111,11 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          script_stop: true
           envs: APP_NAME,DEPLOY_DIR,MIN_DISK_MB
           script: |
             set -euo pipefail
+            trap 'echo "[deploy] failed at line $LINENO" >&2' ERR
+            set -x
             sudo mkdir -p "${DEPLOY_DIR}"
             sudo mv "/tmp/${APP_NAME}/docker-compose.prod.yml" "${DEPLOY_DIR}/docker-compose.yml"
             sudo mv "/tmp/${APP_NAME}/.env" "${DEPLOY_DIR}/.env"
@@ -126,9 +127,8 @@ jobs:
             chmod +x "${DEPLOY_DIR}/scripts/ec2-preflight.sh"
             "${DEPLOY_DIR}/scripts/ec2-preflight.sh" "${DEPLOY_DIR}" "${MIN_DISK_MB}"
 
-            PREV_IMAGE=""
-            if docker ps -a --format '{{.Names}}' | grep -qx 'dropshop-app'; then
-              PREV_IMAGE="$(docker inspect --format='{{.Config.Image}}' dropshop-app || true)"
+            PREV_IMAGE="$(docker inspect --format='{{.Config.Image}}' dropshop-app 2>/dev/null || true)"
+            if [ -n "${PREV_IMAGE}" ]; then
               echo "Detected previous image: ${PREV_IMAGE}"
             else
               echo "No existing dropshop-app container found."
@@ -166,7 +166,7 @@ jobs:
               exit 1
             fi
 
-            APP_PORT=$(grep '^APP_PORT=' .env | cut -d '=' -f2)
+            APP_PORT="$(awk -F= '/^APP_PORT=/{print $2}' .env | tail -n1)"
             APP_PORT="${APP_PORT:-8080}"
             health_status=0
             for i in $(seq 1 12); do
