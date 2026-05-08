@@ -19,9 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 결제 REST 컨트롤러.
- */
+/** 결제 REST 컨트롤러. */
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
@@ -38,8 +36,7 @@ public class PaymentController {
    */
   @PostMapping("/prepare")
   public ResponseEntity<ApiResponse<PaymentPrepareResponse>> preparePayment(
-      @AuthenticationPrincipal String email,
-      @RequestBody @Valid PaymentPrepareRequest request) {
+      @AuthenticationPrincipal String email, @RequestBody @Valid PaymentPrepareRequest request) {
     return ResponseEntity.status(201)
         .body(ApiResponse.created(paymentFacadeService.preparePayment(email, request)));
   }
@@ -53,11 +50,9 @@ public class PaymentController {
    */
   @GetMapping("/{paymentId}/portone-request")
   public ResponseEntity<ApiResponse<PaymentPortOneRequestResponse>> getPortOneRequest(
-      @AuthenticationPrincipal String email,
-      @PathVariable Long paymentId) {
-    return ResponseEntity.ok(ApiResponse.ok(
-        paymentFacadeService.getPortOneRequest(paymentId, email)
-    ));
+      @AuthenticationPrincipal String email, @PathVariable Long paymentId) {
+    return ResponseEntity.ok(
+        ApiResponse.ok(paymentFacadeService.getPortOneRequest(paymentId, email)));
   }
 
   /**
@@ -72,11 +67,9 @@ public class PaymentController {
   public ResponseEntity<ApiResponse<PaymentConfirmResponse>> confirmPayment(
       @AuthenticationPrincipal String email,
       @PathVariable Long paymentId,
-      @RequestBody @Valid PaymentConfirmRequest request
-  ) {
-    return ResponseEntity.ok(ApiResponse.ok(
-        paymentFacadeService.confirmPayment(paymentId, email, request)
-    ));
+      @RequestBody @Valid PaymentConfirmRequest request) {
+    return ResponseEntity.ok(
+        ApiResponse.ok(paymentFacadeService.confirmPayment(paymentId, email, request)));
   }
 
   /**
@@ -87,8 +80,7 @@ public class PaymentController {
    */
   @PostMapping("/webhook")
   public ResponseEntity<ApiResponse<Void>> handleWebhook(
-      @RequestBody PaymentWebhookRequest request
-  ) {
+      @RequestBody PaymentWebhookRequest request) {
     paymentFacadeService.handleWebhook(request);
     return ResponseEntity.ok(ApiResponse.ok());
   }

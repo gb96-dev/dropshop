@@ -28,20 +28,15 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class DropsStatusTransitionWorkerTest {
 
-  @Mock
-  private DropsService dropsService;
+  @Mock private DropsService dropsService;
 
-  @Mock
-  private ProductDomainFacadeService productDomainFacadeService;
+  @Mock private ProductDomainFacadeService productDomainFacadeService;
 
-  @Mock
-  private DropsStockPreemptionService dropsStockPreemptionService;
+  @Mock private DropsStockPreemptionService dropsStockPreemptionService;
 
-  @Mock
-  private DropsStatusChangedEventProducer dropsStatusChangedEventProducer;
+  @Mock private DropsStatusChangedEventProducer dropsStatusChangedEventProducer;
 
-  @InjectMocks
-  private DropsStatusTransitionWorker worker;
+  @InjectMocks private DropsStatusTransitionWorker worker;
 
   @Test
   @DisplayName("SCHEDULED 드랍을 ACTIVE로 전이하면 상태 이벤트를 발행하고 Redis 키를 선적재한다")
@@ -120,19 +115,19 @@ class DropsStatusTransitionWorkerTest {
   }
 
   private Drops createDrop(Long dropId, DropsStatus status) {
-    Product product = Product.create(
-        1L,
-        "테스트 상품",
-        "TEST",
-        new BigDecimal("100000"),
-        10,
-        100,
-        "https://example.com/thumb.jpg",
-        "상품 설명",
-        "상품 상세",
-        "배송 안내",
-        "환불 정책"
-    );
+    Product product =
+        Product.create(
+            1L,
+            "테스트 상품",
+            "TEST",
+            new BigDecimal("100000"),
+            10,
+            100,
+            "https://example.com/thumb.jpg",
+            "상품 설명",
+            "상품 상세",
+            "배송 안내",
+            "환불 정책");
     ReflectionTestUtils.setField(product, "id", 100L + dropId);
 
     LocalDateTime now = LocalDateTime.now();
@@ -143,5 +138,3 @@ class DropsStatusTransitionWorkerTest {
     return drops;
   }
 }
-
-

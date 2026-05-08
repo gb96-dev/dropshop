@@ -12,9 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-/**
- * PortOne REST API와 통신하는 클라이언트다.
- */
+/** PortOne REST API와 통신하는 클라이언트다. */
 @Component
 @RequiredArgsConstructor
 public class PortOneClient {
@@ -30,7 +28,8 @@ public class PortOneClient {
    */
   public PortOnePaymentResponse getPayment(String paymentId) {
     try {
-      return restClient().get()
+      return restClient()
+          .get()
           .uri("/payments/{paymentId}", paymentId)
           .retrieve()
           .body(PortOnePaymentResponse.class);
@@ -49,13 +48,10 @@ public class PortOneClient {
    */
   public void cancelPayment(String paymentId, BigDecimal amount, String reason) {
     try {
-      restClient().post()
+      restClient()
+          .post()
           .uri("/payments/{paymentId}/cancel", paymentId)
-          .body(new CancelPaymentBody(
-              portOneProperties.storeId(),
-              toPortOneAmount(amount),
-              reason
-          ))
+          .body(new CancelPaymentBody(portOneProperties.storeId(), toPortOneAmount(amount), reason))
           .retrieve()
           .toBodilessEntity();
     } catch (RestClientException e) {
@@ -74,18 +70,10 @@ public class PortOneClient {
   private RestClient restClient() {
     return RestClient.builder()
         .baseUrl(portOneProperties.resolvedApiBaseUrl())
-        .defaultHeader(
-            HttpHeaders.AUTHORIZATION,
-            "PortOne " + portOneProperties.apiSecret()
-        )
+        .defaultHeader(HttpHeaders.AUTHORIZATION, "PortOne " + portOneProperties.apiSecret())
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .build();
   }
 
-  private record CancelPaymentBody(
-      String storeId,
-      Long amount,
-      String reason
-  ) {
-  }
+  private record CancelPaymentBody(String storeId, Long amount, String reason) {}
 }

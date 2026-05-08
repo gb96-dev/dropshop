@@ -7,9 +7,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 공개 상품 목록 아이템 응답 DTO.
- */
+/** 공개 상품 목록 아이템 응답 DTO. */
 @Getter
 @Builder
 public class ProductListItemResponse {
@@ -22,9 +20,7 @@ public class ProductListItemResponse {
   private final String status;
   private final LocalDateTime dropStartAt;
 
-  /**
-   * Product와 최신 Drop으로 목록 아이템을 생성한다.
-   */
+  /** Product와 최신 Drop으로 목록 아이템을 생성한다. */
   public static ProductListItemResponse of(Product product, Drops latestDrop) {
     return ProductListItemResponse.builder()
         .productId(product.getId())
@@ -37,4 +33,3 @@ public class ProductListItemResponse {
         .build();
   }
 }
-

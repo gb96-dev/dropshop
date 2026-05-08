@@ -6,9 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
-/**
- * 주문 상태 변경 이벤트.
- */
+/** 주문 상태 변경 이벤트. */
 @Getter
 public class OrderStatusChangedEvent {
 
@@ -38,9 +36,7 @@ public class OrderStatusChangedEvent {
     this.occurredAt = LocalDateTime.now().toString();
   }
 
-  /**
-   * 파티셔닝용 메시지 키를 반환한다.
-   */
+  /** 파티셔닝용 메시지 키를 반환한다. */
   public String eventKey() {
     return String.valueOf(orderId);
   }

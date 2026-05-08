@@ -15,9 +15,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 상품 이미지 엔티티.
- */
+/** 상품 이미지 엔티티. */
 @Getter
 @Entity
 @Table(name = "product_images")
@@ -42,24 +40,19 @@ public class ProductImage extends BaseEntity {
   private boolean isThumbnail;
 
   @Builder
-  private ProductImage(Product product, String imageUrl,
-      int sortOrder, boolean isThumbnail) {
+  private ProductImage(Product product, String imageUrl, int sortOrder, boolean isThumbnail) {
     this.product = product;
     this.imageUrl = imageUrl;
     this.sortOrder = sortOrder;
     this.isThumbnail = isThumbnail;
   }
 
-  /**
-   * 현재 이미지를 대표 이미지로 지정한다.
-   */
+  /** 현재 이미지를 대표 이미지로 지정한다. */
   public void markAsThumbnail() {
     this.isThumbnail = true;
   }
 
-  /**
-   * 현재 이미지의 대표 이미지 지정을 해제한다.
-   */
+  /** 현재 이미지의 대표 이미지 지정을 해제한다. */
   public void unmarkAsThumbnail() {
     this.isThumbnail = false;
   }

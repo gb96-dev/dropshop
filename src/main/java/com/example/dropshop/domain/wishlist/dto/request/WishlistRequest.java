@@ -3,9 +3,7 @@ package com.example.dropshop.domain.wishlist.dto.request;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/**
- * 찜 요청 DTO.
- */
+/** 찜 요청 DTO. */
 @Getter
 @AllArgsConstructor
 public class WishlistRequest {

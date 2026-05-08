@@ -8,9 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Getter;
 
-/**
- * 주문 응답.
- */
+/** 주문 응답. */
 @Getter
 public class OrderCreateResponse {
 
@@ -27,16 +25,12 @@ public class OrderCreateResponse {
     this.status = order.getStatus();
     this.totalAmount = order.getTotalAmount();
     this.holdExpiredAt = order.getHoldExpiredAt();
-    this.orderItems = order.getOrderItems().stream()
-        .map(OrderItemResponse::from)
-        .collect(Collectors.toList());
+    this.orderItems =
+        order.getOrderItems().stream().map(OrderItemResponse::from).collect(Collectors.toList());
   }
 
-  /**
-   * Order로부터 응답 생성.
-   */
+  /** Order로부터 응답 생성. */
   public static OrderCreateResponse from(Order order) {
     return new OrderCreateResponse(order);
   }
-
 }

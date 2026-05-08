@@ -6,9 +6,7 @@ import com.example.dropshop.domain.notification.enums.NotificationType;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
-/**
- * 알림 응답 DTO.
- */
+/** 알림 응답 DTO. */
 @Getter
 public class NotificationResponse {
 

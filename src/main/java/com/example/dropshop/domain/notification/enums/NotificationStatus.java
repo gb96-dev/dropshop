@@ -2,9 +2,7 @@ package com.example.dropshop.domain.notification.enums;
 
 import lombok.Getter;
 
-/**
- * 알림 상태 enum.
- */
+/** 알림 상태 enum. */
 @Getter
 public enum NotificationStatus {
   UNREAD("읽지 않음"),

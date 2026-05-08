@@ -5,9 +5,7 @@ import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import java.math.BigDecimal;
 import lombok.Getter;
 
-/**
- * PortOne 결제 요청 정보 응답.
- */
+/** PortOne 결제 요청 정보 응답. */
 @Getter
 public class PaymentPortOneRequestResponse {
 
@@ -24,12 +22,7 @@ public class PaymentPortOneRequestResponse {
   private final String redirectUrl;
 
   private PaymentPortOneRequestResponse(
-      Payment payment,
-      String storeId,
-      String channelKey,
-      String orderName,
-      String redirectUrl
-  ) {
+      Payment payment, String storeId, String channelKey, String orderName, String redirectUrl) {
     this.paymentId = payment.getId();
     this.orderId = payment.getOrderId();
     this.storeId = storeId;
@@ -44,18 +37,7 @@ public class PaymentPortOneRequestResponse {
   }
 
   public static PaymentPortOneRequestResponse of(
-      Payment payment,
-      String storeId,
-      String channelKey,
-      String orderName,
-      String redirectUrl
-  ) {
-    return new PaymentPortOneRequestResponse(
-        payment,
-        storeId,
-        channelKey,
-        orderName,
-        redirectUrl
-    );
+      Payment payment, String storeId, String channelKey, String orderName, String redirectUrl) {
+    return new PaymentPortOneRequestResponse(payment, storeId, channelKey, orderName, redirectUrl);
   }
 }

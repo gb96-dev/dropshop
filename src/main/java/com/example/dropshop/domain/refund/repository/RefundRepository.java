@@ -6,9 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-/**
- * 환불 레포지토리.
- */
+/** 환불 레포지토리. */
 public interface RefundRepository extends JpaRepository<Refund, Long> {
 
   /**

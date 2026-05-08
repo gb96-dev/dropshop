@@ -3,9 +3,7 @@ package com.example.dropshop.common.exception;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/**
- * 공통 에러 응답 DTO.
- */
+/** 공통 에러 응답 DTO. */
 @Getter
 @AllArgsConstructor
 public class ErrorResponse {

@@ -2,7 +2,6 @@ package com.example.dropshop.domain.order.entity;
 
 import com.example.dropshop.common.entity.BaseEntity;
 import com.example.dropshop.common.exception.ErrorCode;
-
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.exception.OrderException;
 import jakarta.persistence.CascadeType;
@@ -25,16 +24,11 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 주문 엔티티.
- */
+/** 주문 엔티티. */
 @Entity
 @Table(
     name = "orders",
-    indexes = {
-        @Index(name = "idx_order_user_created", columnList = "user_id, created_at DESC")
-    }
-)
+    indexes = {@Index(name = "idx_order_user_created", columnList = "user_id, created_at DESC")})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order extends BaseEntity {
@@ -65,9 +59,7 @@ public class Order extends BaseEntity {
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<OrderItem> orderItems = new ArrayList<>();
 
-  /**
-   * 주문 생성.
-   */
+  /** 주문 생성. */
   public static Order create(Long userId, Long dropId) {
     Order order = new Order();
     order.userId = userId;
@@ -83,30 +75,25 @@ public class Order extends BaseEntity {
     return "ORDER-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
   }
 
-  /**
-   * 주문 아이템 추가.
-   */
+  /** 주문 아이템 추가. */
   public void addOrderItem(OrderItem orderItem) {
     orderItems.add(orderItem);
     calculateTotalAmount();
   }
 
   private void calculateTotalAmount() {
-    this.totalAmount = orderItems.stream()
-        .map(OrderItem::getSalePriceSnapshot)
-        .reduce(BigDecimal.ZERO, BigDecimal::add);
+    this.totalAmount =
+        orderItems.stream()
+            .map(OrderItem::getSalePriceSnapshot)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
-  /**
-   * 홀드 만료 여부 확인.
-   */
+  /** 홀드 만료 여부 확인. */
   public boolean isHoldExpired() {
     return LocalDateTime.now().isAfter(holdExpiredAt);
   }
 
-  /**
-   * 결제 완료 처리.
-   */
+  /** 결제 완료 처리. */
   public void pay() {
     if (this.status != OrderStatus.PENDING) {
       throw new OrderException(ErrorCode.ORDER_INVALID_STATUS);
@@ -114,9 +101,7 @@ public class Order extends BaseEntity {
     this.status = OrderStatus.PAID;
   }
 
-  /**
-   * 주문 취소 처리.
-   */
+  /** 주문 취소 처리. */
   public void cancel() {
     if (this.status != OrderStatus.PENDING) {
       throw new OrderException(ErrorCode.ORDER_INVALID_STATUS);
@@ -124,14 +109,11 @@ public class Order extends BaseEntity {
     this.status = OrderStatus.CANCELLED;
   }
 
-  /**
-   * 환불 처리.
-   */
+  /** 환불 처리. */
   public void refund() {
     if (this.status != OrderStatus.PAID) {
       throw new OrderException(ErrorCode.ORDER_INVALID_STATUS);
     }
     this.status = OrderStatus.REFUNDED;
   }
-
 }

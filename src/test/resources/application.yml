@@ -62,6 +62,15 @@ dropshop:
 jwt:
   secret: test-jwt-secret-key-for-unit-tests-only-32chars
 
+openai:
+  api-key: test-openai-api-key
+  embedding-model: text-embedding-3-small
+  chat-model: gpt-4o-mini
+
+pinecone:
+  api-key: test-pinecone-api-key
+  host: https://test-pinecone.local
+
 management:
   endpoints:
     web:

@@ -9,18 +9,16 @@ import com.example.dropshop.domain.payment.dto.response.PaymentConfirmResponse;
 import com.example.dropshop.domain.payment.dto.response.PaymentPortOneRequestResponse;
 import com.example.dropshop.domain.payment.dto.response.PaymentPrepareResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
-import com.example.dropshop.domain.payment.service.PaymentService.PaymentConfirmResult;
-import com.example.dropshop.domain.payment.service.PaymentService;
 import com.example.dropshop.domain.payment.service.PaymentQueryService;
+import com.example.dropshop.domain.payment.service.PaymentService;
+import com.example.dropshop.domain.payment.service.PaymentService.PaymentConfirmResult;
 import com.example.dropshop.domain.payment.service.PaymentWebhookService;
 import com.example.dropshop.domain.product.entity.Product;
 import com.example.dropshop.domain.product.service.ProductDomainFacadeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-/**
- * 결제 유스케이스 파사드 서비스.
- */
+/** 결제 유스케이스 파사드 서비스. */
 @Service
 @RequiredArgsConstructor
 public class PaymentFacadeService {
@@ -38,13 +36,13 @@ public class PaymentFacadeService {
    * @return 결제 준비 응답
    */
   public PaymentPrepareResponse preparePayment(String email, PaymentPrepareRequest request) {
-    Payment payment = paymentService.preparePayment(
-        email,
-        request.getOrderId(),
-        request.getAmount(),
-        request.getMerchantPaymentId(),
-        request.getPaymentMethod()
-    );
+    Payment payment =
+        paymentService.preparePayment(
+            email,
+            request.getOrderId(),
+            request.getAmount(),
+            request.getMerchantPaymentId(),
+            request.getPaymentMethod());
     return PaymentPrepareResponse.from(payment);
   }
 
@@ -64,8 +62,7 @@ public class PaymentFacadeService {
         paymentQueryService.getStoreId(),
         paymentQueryService.getChannelKey(),
         buildOrderName(order),
-        paymentQueryService.getRedirectUrl()
-    );
+        paymentQueryService.getRedirectUrl());
   }
 
   /**
@@ -77,12 +74,10 @@ public class PaymentFacadeService {
    * @return 결제 확정 응답
    */
   public PaymentConfirmResponse confirmPayment(
-      Long paymentId,
-      String email,
-      PaymentConfirmRequest request
-  ) {
+      Long paymentId, String email, PaymentConfirmRequest request) {
     PaymentConfirmResult result =
-        paymentService.confirmPaymentWithOrderStatus(paymentId, email, request.getPortOnePaymentId());
+        paymentService.confirmPaymentWithOrderStatus(
+            paymentId, email, request.getPortOnePaymentId());
     return PaymentConfirmResponse.of(result.payment(), result.orderStatus());
   }
 

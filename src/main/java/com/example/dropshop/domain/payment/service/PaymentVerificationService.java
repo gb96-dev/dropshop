@@ -9,9 +9,7 @@ import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.exception.PaymentException;
 import org.springframework.stereotype.Component;
 
-/**
- * 결제 검증 규칙을 제공하는 컴포넌트.
- */
+/** 결제 검증 규칙을 제공하는 컴포넌트. */
 @Component
 public class PaymentVerificationService {
 

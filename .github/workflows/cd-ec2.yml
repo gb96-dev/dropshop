@@ -21,7 +21,6 @@ env:
 jobs:
   build-and-push:
     name: build-and-push-image
-    if: ${{ false }} # TEMP: bypass CD pipeline during emergency merge window
     runs-on: ubuntu-latest
 
     outputs:
@@ -80,7 +79,6 @@ jobs:
 
   deploy-ec2:
     name: deploy-compose-to-ec2
-    if: ${{ false }} # TEMP: bypass CD pipeline during emergency merge window
     runs-on: ubuntu-latest
     needs: build-and-push
     environment: production

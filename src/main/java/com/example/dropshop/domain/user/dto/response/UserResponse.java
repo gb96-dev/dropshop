@@ -6,24 +6,22 @@ import com.example.dropshop.domain.user.enums.UserStatus;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 사용자 응답 DTO.
- */
+/** 사용자 응답 DTO. */
 @Getter
 @Builder
 public class UserResponse {
 
-    private String email;
-    private String nickname;
-    private UserStatus status;
-    private UserRole role;
+  private String email;
+  private String nickname;
+  private UserStatus status;
+  private UserRole role;
 
-    public static UserResponse from(User user) {
-        return UserResponse.builder()
-                .email(user.getEmail())
-                .nickname(user.getNickname())
-                .status(user.getStatus())
-                .role(user.getRole())
-                .build();
-    }
+  public static UserResponse from(User user) {
+    return UserResponse.builder()
+        .email(user.getEmail())
+        .nickname(user.getNickname())
+        .status(user.getStatus())
+        .role(user.getRole())
+        .build();
+  }
 }
