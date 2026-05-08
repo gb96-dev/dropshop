@@ -8,20 +8,9 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
       - kafka-1
       - kafka-2
       - kafka-3
-    networks:
-      - dropshop-net
-
-  redis:
-    image: redis:7-alpine
-    container_name: dropshop-redis
-    restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - redis_data:/data
     networks:
       - dropshop-net
 
@@ -92,7 +81,6 @@ services:
           - kafka-3
 
 volumes:
-  redis_data:
   kafka_1_data:
   kafka_2_data:
   kafka_3_data:
