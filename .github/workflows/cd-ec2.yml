@@ -107,7 +107,7 @@ jobs:
       - name: Deploy Docker Compose on EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
-          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
           GHCR_TOKEN: ${{ secrets.GHCR_PAT }}
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -173,7 +173,7 @@ jobs:
               exit 1
             fi
 
-            APP_PORT="$(awk -F= '/^APP_PORT=/{print $2}' .env | tail -n1 | tr -d '"'"'")"
+            APP_PORT="$(awk -F= '/^APP_PORT=/{print $2}' .env | tail -n1 | tr -d '"'"'"$'\r')"
             APP_PORT="${APP_PORT:-8080}"
             health_status=0
             for i in $(seq 1 12); do
