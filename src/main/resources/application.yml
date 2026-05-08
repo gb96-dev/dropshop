@@ -28,9 +28,7 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       ssl:
-        enabled: ${REDIS_USE_SSL:true}
-      cluster:
-        nodes: ${SPRING_DATA_REDIS_CLUSTER_NODES:}
+        enabled: ${REDIS_USE_SSL:false}
       timeout: 60000ms
       lettuce:
         pool:

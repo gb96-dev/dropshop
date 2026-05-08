@@ -54,18 +54,14 @@ class PaymentServiceTest {
 
   @Mock private TransactionTemplate transactionTemplate;
 
-  @Spy private PaymentVerificationService paymentVerificationService;
-  @Spy
-  private PaymentVerificationService paymentVerificationService = new PaymentVerificationService();
+  @Spy private PaymentVerificationService paymentVerificationService = new PaymentVerificationService();
 
   @Mock private PaymentOutboxPublisher paymentOutboxPublisher;
 
-  @InjectMocks private PaymentService paymentService;
   @Mock
   private SellerDashboardRefreshService sellerDashboardRefreshService;
 
-  @InjectMocks
-  private PaymentService paymentService;
+  @InjectMocks private PaymentService paymentService;
 
   private Order order;
   private Payment payment;

@@ -3,6 +3,7 @@ package com.example.dropshop.domain.order.scheduler;
 import com.example.dropshop.domain.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,10 @@ public class OrderScheduler {
 
   /** 만료된 주문 취소 스케줄러. 30초마다 만료 주문을 확인한다. */
   @Scheduled(fixedDelay = 30000)
+  @SchedulerLock(
+      name = "orderScheduler_cancelExpiredOrders",
+      lockAtMostFor = "PT1M",
+      lockAtLeastFor = "PT5S")
   public void cancelExpiredOrders() {
     log.info("만료 주문 취소 스케줄러 실행");
     orderService.cancelExpiredOrders();

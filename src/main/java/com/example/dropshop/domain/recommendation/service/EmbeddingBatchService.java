@@ -7,6 +7,7 @@ import com.example.dropshop.domain.recommendation.client.PineconeClient;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 /**
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
+@ConditionalOnProperty(prefix = "recommendation", name = "enabled", havingValue = "true")
 public class EmbeddingBatchService {
 
   private final ProductRepository productRepository;
