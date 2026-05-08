@@ -29,8 +29,6 @@ spring:
       password: ${REDIS_PASSWORD:}
       ssl:
         enabled: ${REDIS_USE_SSL:true}
-      cluster:
-        nodes: ${SPRING_DATA_REDIS_CLUSTER_NODES:}
       timeout: 60000ms
       lettuce:
         pool:
@@ -91,3 +89,13 @@ logging:
 
 server:
   port: 8080
+
+openai:
+  api-key: "dummy"
+  embedding-model: "text-embedding-3-small"
+  chat-model: "gpt-4o-mini"
+
+pinecone:
+  api-key: "dummy"
+  host: "https://dummy.pinecone.io"
+  index-name: "dropshop-products"
