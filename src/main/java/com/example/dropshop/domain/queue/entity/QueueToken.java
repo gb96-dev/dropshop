@@ -41,7 +41,7 @@ public class QueueToken {
    * 대기열 토큰 생성자.
    *
    * @param queueToken 대기열 토큰.
-   * @param queue      대기열 엔티티.
+   * @param queue 대기열 엔티티.
    */
   public QueueToken(String queueToken, Queue queue) {
     this.queueToken = queueToken;

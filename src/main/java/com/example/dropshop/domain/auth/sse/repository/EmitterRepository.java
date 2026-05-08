@@ -4,9 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-/**
- * Emitter 리포지토리 인터페이스.
- */
+/** Emitter 리포지토리 인터페이스. */
 public interface EmitterRepository {
 
   Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
