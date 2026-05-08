@@ -111,7 +111,6 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          script_stop: true
           envs: APP_NAME,DEPLOY_DIR,MIN_DISK_MB
           script: |
             set -euo pipefail
@@ -128,9 +127,8 @@ jobs:
             chmod +x "${DEPLOY_DIR}/scripts/ec2-preflight.sh"
             "${DEPLOY_DIR}/scripts/ec2-preflight.sh" "${DEPLOY_DIR}" "${MIN_DISK_MB}"
 
-            PREV_IMAGE=""
-            if docker container inspect dropshop-app >/dev/null 2>&1; then
-              PREV_IMAGE="$(docker inspect --format='{{.Config.Image}}' dropshop-app || true)"
+            PREV_IMAGE="$(docker inspect --format='{{.Config.Image}}' dropshop-app 2>/dev/null || true)"
+            if [ -n "${PREV_IMAGE}" ]; then
               echo "Detected previous image: ${PREV_IMAGE}"
             else
               echo "No existing dropshop-app container found."
