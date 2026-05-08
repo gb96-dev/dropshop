@@ -106,12 +106,15 @@ jobs:
 
       - name: Deploy Docker Compose on EC2
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_PAT }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          envs: APP_NAME,DEPLOY_DIR,MIN_DISK_MB
+          envs: APP_NAME,DEPLOY_DIR,MIN_DISK_MB,GHCR_USERNAME,GHCR_TOKEN
           script: |
             set -euo pipefail
             trap 'echo "[deploy] failed at line $LINENO" >&2' ERR
@@ -149,6 +152,10 @@ jobs:
               fi
             }
 
+            set +x
+            printf '%s\n' "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+            set -x
+
             set +e
             docker compose --env-file .env -f docker-compose.yml pull
             pull_status=$?
@@ -166,7 +173,7 @@ jobs:
               exit 1
             fi
 
-            APP_PORT="$(awk -F= '/^APP_PORT=/{print $2}' .env | tail -n1)"
+            APP_PORT="$(awk -F= '/^APP_PORT=/{print $2}' .env | tail -n1 | tr -d '"'"'"$'\r')"
             APP_PORT="${APP_PORT:-8080}"
             health_status=0
             for i in $(seq 1 12); do
