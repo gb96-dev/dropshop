@@ -8,6 +8,7 @@ import com.example.dropshop.domain.recommendation.dto.response.RecommendationRes
 import com.example.dropshop.domain.recommendation.dto.response.RecommendedProductDto;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 public class RecommendationService {
 
   private static final int TOP_K = 5;
+  private static final int QUERY_LOG_MAX_LENGTH = 30;
 
   private final OpenAiClient openAiClient;
   private final PineconeClient pineconeClient;
@@ -51,7 +53,7 @@ public class RecommendationService {
    */
   @SuppressWarnings("unchecked")
   public RecommendationResponse recommend(String query) {
-    log.info("추천 요청: query={}", query);
+    log.debug("recommend request: query={}, limit={}", maskQuery(query), TOP_K);
 
     // 1. 사용자 질의 임베딩
     List<Float> queryVector = openAiClient.embed(query);
@@ -60,7 +62,7 @@ public class RecommendationService {
     List<Map<String, Object>> matches = pineconeClient.query(queryVector, TOP_K);
 
     if (matches.isEmpty()) {
-      log.info("추천 결과 없음: query={}", query);
+      log.debug("recommend no results: query={}", maskQuery(query));
       return RecommendationResponse.empty(query);
     }
 
@@ -90,19 +92,30 @@ public class RecommendationService {
         .filter(id -> id != null)
         .collect(Collectors.toList());
 
-    // 5. DB에서 상품 상세 정보 조회
-    List<RecommendedProductDto> products = productRepository.findAllById(productIds)
+    // 5. DB에서 상품 상세 정보 조회 (Pinecone 유사도 순서 보존)
+    Map<Long, Product> productMap = productRepository.findAllById(productIds)
         .stream()
-        .map(RecommendedProductDto::from)
+        .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+    List<RecommendedProductDto> products = productIds.stream()
+        .filter(productMap::containsKey)
+        .map(id -> RecommendedProductDto.from(productMap.get(id)))
         .collect(Collectors.toList());
 
-    log.info("추천 상품 조회 완료: {}개", products.size());
+    log.info("recommend products fetched: productCount={}", products.size());
 
     // 6. GPT 추천 문구 생성
     String recommendation = openAiClient.recommend(query, productInfos);
 
-    log.info("추천 완료: query={}, 상품수={}", query, products.size());
+    log.info("recommend completed: productCount={}", products.size());
 
     return RecommendationResponse.of(query, recommendation, products);
+  }
+
+  /** 사용자 입력 쿼리를 로그용으로 앞 N자만 남기고 마스킹한다. */
+  private String maskQuery(String query) {
+    if (query == null) return "null";
+    if (query.length() <= QUERY_LOG_MAX_LENGTH) return query;
+    return query.substring(0, QUERY_LOG_MAX_LENGTH) + "...";
   }
 }
