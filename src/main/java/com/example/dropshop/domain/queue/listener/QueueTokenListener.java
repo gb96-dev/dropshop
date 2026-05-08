@@ -12,9 +12,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-/**
- * 대기열 토큰 리스너.
- */
+/** 대기열 토큰 리스너. */
 @Component
 @RequiredArgsConstructor
 public class QueueTokenListener {
@@ -31,14 +29,14 @@ public class QueueTokenListener {
   @KafkaListener(
       topics = TOPIC_QUEUE_TOKEN,
       groupId = QUEUE_GROUP_NAME,
-      containerFactory = "threadHoldKafkaListenerContainerFactory"
-  )
+      containerFactory = "threadHoldKafkaListenerContainerFactory")
   public void consume(ThreadHoldResponse threadHoldResponse) throws JsonProcessingException {
-    stringRedisTemplate.opsForZSet().add(
-        KEY_DELAY_QUEUE_TOKEN,
-        serialize(threadHoldResponse),
-        threadHoldResponse.getExecuteAt()
-    );
+    stringRedisTemplate
+        .opsForZSet()
+        .add(
+            KEY_DELAY_QUEUE_TOKEN,
+            serialize(threadHoldResponse),
+            threadHoldResponse.getExecuteAt());
   }
 
   private String serialize(ThreadHoldResponse threadHoldResponse) throws JsonProcessingException {

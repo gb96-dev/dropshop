@@ -30,9 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 판매자 상품 API 컨트롤러.
- */
+/** 판매자 상품 API 컨트롤러. */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/sellers/products")
@@ -41,162 +39,127 @@ public class ProductController {
   private final ProductFacadeService productFacadeService;
   private final SellerAuthResolver sellerAuthResolver;
 
-  /**
-   * 판매자가 새로운 상품을 등록한다.
-   */
+  /** 판매자가 새로운 상품을 등록한다. */
   @PostMapping
   public ResponseEntity<ApiResponse<ProductCreateResponse>> createProduct(
-      @AuthenticationPrincipal String email,
-      @Valid @RequestBody ProductCreateRequest request
-  ) {
+      @AuthenticationPrincipal String email, @Valid @RequestBody ProductCreateRequest request) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
 
-    ProductCreateResponse response = productFacadeService.createSellerProduct(
-        sellerAuth.sellerId(),
-        sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified(),
-        request
-    );
+    ProductCreateResponse response =
+        productFacadeService.createSellerProduct(
+            sellerAuth.sellerId(),
+            sellerAuth.sellerApproved(),
+            sellerAuth.sellerVerified(),
+            request);
 
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
   }
 
-  /**
-   * 판매자가 본인 상품 정보를 수정한다.
-   */
+  /** 판매자가 본인 상품 정보를 수정한다. */
   @PatchMapping("/{id}")
   public ResponseEntity<ApiResponse<ProductCreateResponse>> updateProduct(
       @PathVariable Long id,
       @AuthenticationPrincipal String email,
-      @Valid @RequestBody ProductUpdateRequest request
-  ) {
+      @Valid @RequestBody ProductUpdateRequest request) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
-    ProductCreateResponse response = productFacadeService.updateSellerProduct(
-        id,
-        sellerAuth.sellerId(),
-        sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified(),
-        request
-    );
+    ProductCreateResponse response =
+        productFacadeService.updateSellerProduct(
+            id,
+            sellerAuth.sellerId(),
+            sellerAuth.sellerApproved(),
+            sellerAuth.sellerVerified(),
+            request);
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 
-  /**
-   * 판매자가 본인 상품 상태를 변경한다.
-   */
+  /** 판매자가 본인 상품 상태를 변경한다. */
   @PatchMapping("/{id}/status")
   public ResponseEntity<ApiResponse<ProductCreateResponse>> updateProductStatus(
       @PathVariable Long id,
       @AuthenticationPrincipal String email,
-      @Valid @RequestBody ProductStatusUpdateRequest request
-  ) {
+      @Valid @RequestBody ProductStatusUpdateRequest request) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
-    ProductCreateResponse response = productFacadeService.changeSellerProductStatus(
-        id,
-        sellerAuth.sellerId(),
-        sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified(),
-        request
-    );
+    ProductCreateResponse response =
+        productFacadeService.changeSellerProductStatus(
+            id,
+            sellerAuth.sellerId(),
+            sellerAuth.sellerApproved(),
+            sellerAuth.sellerVerified(),
+            request);
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 
-  /**
-   * 판매자가 본인 상품을 삭제한다.
-   */
+  /** 판매자가 본인 상품을 삭제한다. */
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteProduct(
-      @PathVariable Long id,
-      @AuthenticationPrincipal String email
-  ) {
+      @PathVariable Long id, @AuthenticationPrincipal String email) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     productFacadeService.deleteSellerProduct(
-        id,
-        sellerAuth.sellerId(),
-        sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified()
-    );
+        id, sellerAuth.sellerId(), sellerAuth.sellerApproved(), sellerAuth.sellerVerified());
     return ResponseEntity.ok(ApiResponse.ok());
   }
 
-  /**
-   * 판매자가 본인 상품에 이미지를 추가한다.
-   */
+  /** 판매자가 본인 상품에 이미지를 추가한다. */
   @PostMapping("/{id}/images")
   public ResponseEntity<ApiResponse<ProductImageResponse>> createProductImage(
       @PathVariable Long id,
       @AuthenticationPrincipal String email,
-      @Valid @RequestBody ProductImageCreateRequest request
-  ) {
+      @Valid @RequestBody ProductImageCreateRequest request) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
-    ProductImageResponse response = productFacadeService.createSellerProductImage(
-        id,
-        sellerAuth.sellerId(),
-        sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified(),
-        request
-    );
+    ProductImageResponse response =
+        productFacadeService.createSellerProductImage(
+            id,
+            sellerAuth.sellerId(),
+            sellerAuth.sellerApproved(),
+            sellerAuth.sellerVerified(),
+            request);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
   }
 
-  /**
-   * 판매자가 본인 상품 이미지를 수정한다.
-   */
+  /** 판매자가 본인 상품 이미지를 수정한다. */
   @PatchMapping("/{id}/images/{imageId}")
   public ResponseEntity<ApiResponse<ProductImageResponse>> updateProductImage(
       @PathVariable Long id,
       @PathVariable Long imageId,
       @AuthenticationPrincipal String email,
-      @Valid @RequestBody ProductImageUpdateRequest request
-  ) {
+      @Valid @RequestBody ProductImageUpdateRequest request) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
-    ProductImageResponse response = productFacadeService.updateSellerProductImage(
-        id,
-        imageId,
-        sellerAuth.sellerId(),
-        sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified(),
-        request
-    );
+    ProductImageResponse response =
+        productFacadeService.updateSellerProductImage(
+            id,
+            imageId,
+            sellerAuth.sellerId(),
+            sellerAuth.sellerApproved(),
+            sellerAuth.sellerVerified(),
+            request);
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 
-  /**
-   * 판매자가 본인 상품 이미지를 삭제한다.
-   */
+  /** 판매자가 본인 상품 이미지를 삭제한다. */
   @DeleteMapping("/{id}/images/{imageId}")
   public ResponseEntity<ApiResponse<Void>> deleteProductImage(
-      @PathVariable Long id,
-      @PathVariable Long imageId,
-      @AuthenticationPrincipal String email
-  ) {
+      @PathVariable Long id, @PathVariable Long imageId, @AuthenticationPrincipal String email) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     productFacadeService.deleteSellerProductImage(
         id,
         imageId,
         sellerAuth.sellerId(),
         sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified()
-    );
+        sellerAuth.sellerVerified());
     return ResponseEntity.ok(ApiResponse.ok());
   }
 
-  /**
-   * 판매자 본인 상품 목록을 조회한다.
-   */
+  /** 판매자 본인 상품 목록을 조회한다. */
   @GetMapping("/mine")
-  public ResponseEntity<
-      ApiResponse<ApiResponse.PageResponse<SellerProductListItemResponse>>> findMineProducts(
-      @AuthenticationPrincipal String email,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size
-  ) {
+  public ResponseEntity<ApiResponse<ApiResponse.PageResponse<SellerProductListItemResponse>>>
+      findMineProducts(
+          @AuthenticationPrincipal String email,
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "20") int size) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     Pageable pageable = PageRequest.of(page, size);
-    Page<SellerProductListItemResponse> response = productFacadeService.findSellerProducts(
-        sellerAuth.sellerId(),
-        pageable
-    );
+    Page<SellerProductListItemResponse> response =
+        productFacadeService.findSellerProducts(sellerAuth.sellerId(), pageable);
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 }

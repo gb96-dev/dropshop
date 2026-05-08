@@ -11,9 +11,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-/**
- * 찜 facade 서비스.
- */
+/** 찜 facade 서비스. */
 @Service
 @RequiredArgsConstructor
 public class WishlistsFacadeService {
@@ -22,9 +20,10 @@ public class WishlistsFacadeService {
   private final UserRepository userRepository;
 
   private Long getUserId(String email) {
-    User user = userRepository.findByEmail(email).orElseThrow(
-        () -> new ServiceException(ErrorCode.USER_NOT_FOUND)
-    );
+    User user =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
 
     return user.getId();
   }
@@ -32,7 +31,7 @@ public class WishlistsFacadeService {
   /**
    * 찜 생성.
    *
-   * @param email   이메일.
+   * @param email 이메일.
    * @param request 요청.
    * @return 리턴.
    */
@@ -45,7 +44,7 @@ public class WishlistsFacadeService {
   /**
    * 찜 취소.
    *
-   * @param email   이메일.
+   * @param email 이메일.
    * @param request 요청.
    */
   public void cancel(String email, WishlistRequest request) {

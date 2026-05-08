@@ -1,8 +1,6 @@
 package com.example.dropshop.common.constant.kafka;
 
-/**
- * 매직 넘버들.
- */
+/** 매직 넘버들. */
 public class MagicNumbers {
   public static final int FIVE = 5;
   public static final long FIVE_MINUTES = 60 * FIVE;

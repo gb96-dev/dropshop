@@ -4,23 +4,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.dropshop.common.security.SellerAuthResolver;
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.domain.order.dto.request.OrderCreateRequest;
 import com.example.dropshop.domain.order.dto.response.OrderCreateResponse;
 import com.example.dropshop.domain.order.dto.response.OrderDetailResponse;
 import com.example.dropshop.domain.order.dto.response.OrderListItemResponse;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
-import com.example.dropshop.domain.auth.service.TokenBlacklistService;
-import com.example.dropshop.common.security.SellerAuthResolver;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,36 +28,31 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(OrderController.class)
 class OrderControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  @MockitoBean
-  private JpaMetamodelMappingContext jpaMetamodelMappingContext;
+  @MockitoBean private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
-  @MockitoBean
-  private OrderFacadeService orderFacadeService;
+  @MockitoBean private OrderFacadeService orderFacadeService;
 
-  @MockitoBean
-  private TokenBlacklistService tokenBlacklistService;
+  @MockitoBean private TokenBlacklistService tokenBlacklistService;
 
-  @MockitoBean
-  private SellerAuthResolver sellerAuthResolver;
+  @MockitoBean private SellerAuthResolver sellerAuthResolver;
 
   @Test
   @DisplayName("주문 생성 성공")
@@ -75,10 +70,12 @@ class OrderControllerTest {
         .willReturn(response);
 
     // when & then
-    mockMvc.perform(post("/api/orders")
-            .with(authentication(testAuthentication()))
-            .contentType(APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            post("/api/orders")
+                .with(authentication(testAuthentication()))
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.orderId").value(1L))
@@ -99,8 +96,8 @@ class OrderControllerTest {
     given(orderFacadeService.findOrderById(eq(1L), any())).willReturn(response);
 
     // when & then
-    mockMvc.perform(get("/api/orders/{orderId}", 1L)
-            .with(authentication(testAuthentication())))
+    mockMvc
+        .perform(get("/api/orders/{orderId}", 1L).with(authentication(testAuthentication())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.orderId").value(1L))
@@ -118,20 +115,18 @@ class OrderControllerTest {
     Order order = createOrderEntity(1L, 10L, 100L);
     OrderListItemResponse itemResponse = OrderListItemResponse.from(order);
 
-    Page<OrderListItemResponse> page = new PageImpl<>(
-        List.of(itemResponse),
-        PageRequest.of(0, 20),
-        1
-    );
+    Page<OrderListItemResponse> page =
+        new PageImpl<>(List.of(itemResponse), PageRequest.of(0, 20), 1);
 
-    given(orderFacadeService.findOrdersByUserId(any(), any()))
-        .willReturn(page);
+    given(orderFacadeService.findOrdersByUserId(any(), any())).willReturn(page);
 
     // when & then
-    mockMvc.perform(get("/api/orders")
-            .with(authentication(testAuthentication()))
-            .param("page", "0")
-            .param("size", "20"))
+    mockMvc
+        .perform(
+            get("/api/orders")
+                .with(authentication(testAuthentication()))
+                .param("page", "0")
+                .param("size", "20"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.content.length()").value(1))
@@ -157,8 +152,9 @@ class OrderControllerTest {
     given(orderFacadeService.cancelOrder(eq(1L), any())).willReturn(response);
 
     // when & then
-    mockMvc.perform(patch("/api/orders/{orderId}/cancel", 1L)
-            .with(authentication(testAuthentication())))
+    mockMvc
+        .perform(
+            patch("/api/orders/{orderId}/cancel", 1L).with(authentication(testAuthentication())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.orderId").value(1L))
@@ -169,30 +165,23 @@ class OrderControllerTest {
     Order order = Order.create(userId, dropId);
     ReflectionTestUtils.setField(order, "id", 1L);
 
-    OrderItem orderItem = OrderItem.create(
-        order,
-        productId,
-        new BigDecimal("100000"),
-        new BigDecimal("79000"),
-        new BigDecimal("21000"),
-        "https://dummy-image"
-    );
+    OrderItem orderItem =
+        OrderItem.create(
+            order,
+            productId,
+            new BigDecimal("100000"),
+            new BigDecimal("79000"),
+            new BigDecimal("21000"),
+            "https://dummy-image");
     order.addOrderItem(orderItem);
 
-    ReflectionTestUtils.setField(
-        order,
-        "holdExpiredAt",
-        LocalDateTime.of(2026, 4, 9, 12, 5, 0)
-    );
+    ReflectionTestUtils.setField(order, "holdExpiredAt", LocalDateTime.of(2026, 4, 9, 12, 5, 0));
 
     return order;
   }
 
   private static Authentication testAuthentication() {
     return new UsernamePasswordAuthenticationToken(
-        "test@test.com",
-        null,
-        List.of(new SimpleGrantedAuthority("ROLE_USER"))
-    );
+        "test@test.com", null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
   }
 }

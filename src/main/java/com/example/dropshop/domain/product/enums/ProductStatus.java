@@ -3,9 +3,7 @@ package com.example.dropshop.domain.product.enums;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/**
- * 상품 노출/판매 상태.
- */
+/** 상품 노출/판매 상태. */
 @Getter
 @RequiredArgsConstructor
 public enum ProductStatus {

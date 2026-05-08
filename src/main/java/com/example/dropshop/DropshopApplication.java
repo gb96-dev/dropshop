@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-//@EnableJpaAuditing jpaconfig 에포함
+// @EnableJpaAuditing jpaconfig 에포함
 @EnableScheduling
 @EnableAsync
 @EnableSchedulerLock(defaultLockAtMostFor = "PT1M")
@@ -18,5 +18,4 @@ public class DropshopApplication {
   public static void main(String[] args) {
     SpringApplication.run(DropshopApplication.class, args);
   }
-
 }

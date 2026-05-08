@@ -10,9 +10,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
-/**
- * Redis 기반 드랍 재고 선점 서비스.
- */
+/** Redis 기반 드랍 재고 선점 서비스. */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -36,8 +34,7 @@ public class DropsStockPreemptionService {
             + "if current < quantity then\n"
             + "  return -1\n"
             + "end\n"
-            + "return redis.call('decrby', KEYS[1], quantity)"
-    );
+            + "return redis.call('decrby', KEYS[1], quantity)");
     RESERVE_SCRIPT.setResultType(Long.class);
 
     INCREASE_IF_EXISTS_SCRIPT = new DefaultRedisScript<>();
@@ -46,8 +43,7 @@ public class DropsStockPreemptionService {
             + "  redis.call('incrby', KEYS[1], ARGV[1])\n"
             + "  return 1\n"
             + "end\n"
-            + "return 0"
-    );
+            + "return 0");
     INCREASE_IF_EXISTS_SCRIPT.setResultType(Long.class);
   }
 
@@ -57,8 +53,8 @@ public class DropsStockPreemptionService {
   /**
    * 주문 수량만큼 재고를 선점한다.
    *
-   * <p>주문 핫패스에서는 KEY_MISSING 재초기화를 수행하지 않고 fail-close 처리한다.
-   * 재초기화는 ACTIVE 전환 선적재/복구 후 반영 경로에서만 수행해 기준 재고를 단일화한다.
+   * <p>주문 핫패스에서는 KEY_MISSING 재초기화를 수행하지 않고 fail-close 처리한다. 재초기화는 ACTIVE 전환 선적재/복구 후 반영 경로에서만 수행해
+   * 기준 재고를 단일화한다.
    */
   public boolean tryReserve(Long dropId, int quantity) {
     validatePositiveQuantity(quantity);
@@ -109,27 +105,21 @@ public class DropsStockPreemptionService {
     initializeStockKeyIfAbsent(dropId);
   }
 
-  /**
-   * 드랍 ACTIVE 전환 시 Redis 재고 키를 미리 적재한다.
-   */
+  /** 드랍 ACTIVE 전환 시 Redis 재고 키를 미리 적재한다. */
   public void preloadStockKey(Long dropId) {
     initializeStockKeyIfAbsent(dropId);
   }
 
   private Long executeReserve(Long dropId, int quantity) {
     return stringRedisTemplate.execute(
-        RESERVE_SCRIPT,
-        Collections.singletonList(stockKey(dropId)),
-        String.valueOf(quantity)
-    );
+        RESERVE_SCRIPT, Collections.singletonList(stockKey(dropId)), String.valueOf(quantity));
   }
 
   private Long executeIncreaseIfExists(Long dropId, int quantity) {
     return stringRedisTemplate.execute(
         INCREASE_IF_EXISTS_SCRIPT,
         Collections.singletonList(stockKey(dropId)),
-        String.valueOf(quantity)
-    );
+        String.valueOf(quantity));
   }
 
   private void initializeStockKeyIfAbsent(Long dropId) {
@@ -140,11 +130,9 @@ public class DropsStockPreemptionService {
       return;
     }
 
-    stringRedisTemplate.opsForValue().setIfAbsent(
-        stockKey(dropId),
-        String.valueOf(drops.getRemainStock()),
-        ttl
-    );
+    stringRedisTemplate
+        .opsForValue()
+        .setIfAbsent(stockKey(dropId), String.valueOf(drops.getRemainStock()), ttl);
   }
 
   private Duration calculateKeyTtl(Drops drops) {
@@ -165,4 +153,3 @@ public class DropsStockPreemptionService {
     }
   }
 }
-

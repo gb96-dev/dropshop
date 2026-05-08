@@ -4,9 +4,7 @@ import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
-/**
- * 상품 이미지 업로드 관련 설정값을 바인딩한다.
- */
+/** 상품 이미지 업로드 관련 설정값을 바인딩한다. */
 @Getter
 @ConfigurationProperties(prefix = "product.image-upload")
 public class ProductImageUploadProperties {
@@ -32,8 +30,7 @@ public class ProductImageUploadProperties {
       @DefaultValue("ap-northeast-2") String region,
       @DefaultValue("products") String keyPrefix,
       @DefaultValue("https://cdn.example.com") String cdnBaseUrl,
-      @DefaultValue("300") long presignedExpirationSeconds
-  ) {
+      @DefaultValue("300") long presignedExpirationSeconds) {
     this.bucket = bucket;
     this.region = region;
     this.keyPrefix = keyPrefix;

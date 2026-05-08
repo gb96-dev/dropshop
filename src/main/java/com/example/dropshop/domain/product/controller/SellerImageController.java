@@ -16,9 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 판매자 이미지 업로드 API 컨트롤러.
- */
+/** 판매자 이미지 업로드 API 컨트롤러. */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/sellers/images")
@@ -27,22 +25,15 @@ public class SellerImageController {
   private final ProductImageUploadService productImageUploadService;
   private final SellerAuthResolver sellerAuthResolver;
 
-  /**
-   * S3 Presigned URL을 발급한다.
-   */
+  /** S3 Presigned URL을 발급한다. */
   @PostMapping("/presigned-url")
   public ResponseEntity<ApiResponse<PresignedUrlIssueResponse>> issuePresignedUrl(
-      @AuthenticationPrincipal String email,
-      @Valid @RequestBody PresignedUrlIssueRequest request
-  ) {
+      @AuthenticationPrincipal String email, @Valid @RequestBody PresignedUrlIssueRequest request) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
 
-    PresignedUrlIssueResponse response = productImageUploadService.issuePresignedUrl(
-        sellerAuth.sellerId(),
-        request
-    );
+    PresignedUrlIssueResponse response =
+        productImageUploadService.issuePresignedUrl(sellerAuth.sellerId(), request);
 
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.created(response));
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
   }
 }

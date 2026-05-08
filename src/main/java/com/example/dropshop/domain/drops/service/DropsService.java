@@ -18,38 +18,32 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 드랍 도메인 서비스.
- */
+/** 드랍 도메인 서비스. */
 @Service
 @RequiredArgsConstructor
 public class DropsService {
 
   private final DropsRepository dropsRepository;
 
-  /**
-   * 드랍을 생성한다.
-   */
+  /** 드랍을 생성한다. */
   @Transactional
   public Drops create(Product product, DropCreateRequest request) {
     validateStartAt(request.getStartAt());
     validateTotalStockWithinProductStock(request.getTotalStock(), product.getStock());
 
-    Drops drops = Drops.create(
-        product,
-        request.getStartAt(),
-        request.getEndAt(),
-        request.getTotalStock(),
-        request.getPurchaseLimit(),
-        Boolean.TRUE.equals(request.getUseQueue())
-    );
+    Drops drops =
+        Drops.create(
+            product,
+            request.getStartAt(),
+            request.getEndAt(),
+            request.getTotalStock(),
+            request.getPurchaseLimit(),
+            Boolean.TRUE.equals(request.getUseQueue()));
 
     return dropsRepository.save(drops);
   }
 
-  /**
-   * 드랍을 수정한다.
-   */
+  /** 드랍을 수정한다. */
   @Transactional
   public Drops update(Drops drops, int productStock, DropUpdateRequest request) {
     if (drops.isFinished()) {
@@ -59,21 +53,16 @@ public class DropsService {
       throw new DropsException(ErrorCode.DROP_ACTIVE_UPDATE_LOCKED);
     }
 
-    final LocalDateTime updatedStartAt = request.getStartAt() == null
-        ? drops.getStartAt()
-        : request.getStartAt();
-    final LocalDateTime updatedEndAt = request.getEndAt() == null
-        ? drops.getEndAt()
-        : request.getEndAt();
-    final Long updatedTotalStock = request.getTotalStock() == null
-        ? drops.getTotalStock()
-        : request.getTotalStock();
-    final Long updatedPurchaseLimit = request.getPurchaseLimit() == null
-        ? drops.getPurchaseLimit()
-        : request.getPurchaseLimit();
-    final boolean updatedUseQueue = request.getUseQueue() == null
-        ? drops.isUseQueue()
-        : request.getUseQueue();
+    final LocalDateTime updatedStartAt =
+        request.getStartAt() == null ? drops.getStartAt() : request.getStartAt();
+    final LocalDateTime updatedEndAt =
+        request.getEndAt() == null ? drops.getEndAt() : request.getEndAt();
+    final Long updatedTotalStock =
+        request.getTotalStock() == null ? drops.getTotalStock() : request.getTotalStock();
+    final Long updatedPurchaseLimit =
+        request.getPurchaseLimit() == null ? drops.getPurchaseLimit() : request.getPurchaseLimit();
+    final boolean updatedUseQueue =
+        request.getUseQueue() == null ? drops.isUseQueue() : request.getUseQueue();
 
     if (drops.isScheduled()) {
       validateStartAt(updatedStartAt);
@@ -92,69 +81,51 @@ public class DropsService {
         updatedTotalStock,
         updatedRemainStock,
         updatedPurchaseLimit,
-        updatedUseQueue
-    );
+        updatedUseQueue);
     return dropsRepository.save(drops);
   }
 
-  /**
-   * 드랍을 조회한다.
-   */
+  /** 드랍을 조회한다. */
   @Transactional(readOnly = true)
   public Drops findById(Long dropId) {
-    return dropsRepository.findById(dropId)
+    return dropsRepository
+        .findById(dropId)
         .orElseThrow(() -> new DropsException(ErrorCode.DROP_NOT_FOUND));
   }
 
-  /**
-   * 진행 중이거나 예정된 드랍 존재 여부를 확인한다.
-   */
+  /** 진행 중이거나 예정된 드랍 존재 여부를 확인한다. */
   @Transactional(readOnly = true)
   public boolean existsOngoingDropForProduct(Long productId) {
     return dropsRepository.existsByProductIdAndStatusIn(
-        productId,
-        DropsConstants.ONGOING_DROP_STATUSES
-    );
+        productId, DropsConstants.ONGOING_DROP_STATUSES);
   }
 
-  /**
-   * 상품 삭제를 막아야 하는 드랍 이력 존재 여부를 확인한다.
-   */
+  /** 상품 삭제를 막아야 하는 드랍 이력 존재 여부를 확인한다. */
   @Transactional(readOnly = true)
   public boolean existsDropHistoryForProduct(Long productId) {
     return dropsRepository.existsByProductIdAndStatusIn(
-        productId,
-        DropsConstants.NON_DELETABLE_DROP_STATUSES
-    );
+        productId, DropsConstants.NON_DELETABLE_DROP_STATUSES);
   }
 
-  /**
-   * 시작 시간이 도달한 예정 드랍 목록을 조회한다.
-   */
+  /** 시작 시간이 도달한 예정 드랍 목록을 조회한다. */
   @Transactional(readOnly = true)
   public List<Drops> findScheduledDropsToActivate(LocalDateTime baseTime) {
     return dropsRepository.findAllByStatusAndStartAtLessThanEqual(DropsStatus.SCHEDULED, baseTime);
   }
 
-  /**
-   * 종료되어야 하는 진행 중 드랍 목록을 조회한다.
-   */
+  /** 종료되어야 하는 진행 중 드랍 목록을 조회한다. */
   @Transactional(readOnly = true)
   public List<Drops> findActiveDropsToFinish(LocalDateTime baseTime) {
     return dropsRepository.findAllActiveDropsToFinish(DropsStatus.ACTIVE, baseTime);
   }
 
-  /**
-   * 특정 상품의 최신 드랍 1건을 조회한다.
-   */
+  /** 특정 상품의 최신 드랍 1건을 조회한다. */
   @Transactional(readOnly = true)
   public Optional<Drops> findLatestDropByProductId(Long productId) {
     return dropsRepository.findTopByProductIdOrderByStartAtDesc(productId);
   }
 
-  /**
-   * 상품별 최신 드랍 맵을 조회한다.
-   */
+  /** 상품별 최신 드랍 맵을 조회한다. */
   @Transactional(readOnly = true)
   public Map<Long, Drops> findLatestDropsByProductIds(Collection<Long> productIds) {
     List<Drops> dropsList =
@@ -166,9 +137,7 @@ public class DropsService {
     return latestDrops;
   }
 
-  /**
-   * 드랍을 삭제한다.
-   */
+  /** 드랍을 삭제한다. */
   @Transactional
   public void delete(Drops drops) {
     dropsRepository.delete(drops);
@@ -186,4 +155,3 @@ public class DropsService {
     }
   }
 }
-

@@ -16,48 +16,44 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
-/**
- * 상품 이미지 업로드 URL 발급 서비스.
- */
+/** 상품 이미지 업로드 URL 발급 서비스. */
 @Service
 @RequiredArgsConstructor
 public class ProductImageUploadService {
 
-  private static final Map<String, String> CONTENT_TYPE_MAP = Map.of(
-      "jpeg", "image/jpeg",
-      "jpg", "image/jpeg",
-      "png", "image/png",
-      "webp", "image/webp",
-      "image/jpeg", "image/jpeg",
-      "image/png", "image/png",
-      "image/webp", "image/webp"
-  );
+  private static final Map<String, String> CONTENT_TYPE_MAP =
+      Map.of(
+          "jpeg", "image/jpeg",
+          "jpg", "image/jpeg",
+          "png", "image/png",
+          "webp", "image/webp",
+          "image/jpeg", "image/jpeg",
+          "image/png", "image/png",
+          "image/webp", "image/webp");
 
   private final S3Presigner s3Presigner;
   private final ProductImageUploadProperties properties;
 
-  /**
-   * 상품 이미지 업로드를 위한 Presigned URL을 발급한다.
-   */
+  /** 상품 이미지 업로드를 위한 Presigned URL을 발급한다. */
   public PresignedUrlIssueResponse issuePresignedUrl(
-      Long sellerId,
-      PresignedUrlIssueRequest request
-  ) {
+      Long sellerId, PresignedUrlIssueRequest request) {
     String normalizedFileType = normalizeFileType(request.getFileType());
     String contentType = resolveContentType(normalizedFileType);
     String key = createObjectKey(sellerId, normalizedFileType);
 
     try {
-      PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-          .bucket(properties.getBucket())
-          .key(key)
-          .contentType(contentType)
-          .build();
+      PutObjectRequest putObjectRequest =
+          PutObjectRequest.builder()
+              .bucket(properties.getBucket())
+              .key(key)
+              .contentType(contentType)
+              .build();
 
-      PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-          .signatureDuration(Duration.ofSeconds(properties.getPresignedExpirationSeconds()))
-          .putObjectRequest(putObjectRequest)
-          .build();
+      PutObjectPresignRequest presignRequest =
+          PutObjectPresignRequest.builder()
+              .signatureDuration(Duration.ofSeconds(properties.getPresignedExpirationSeconds()))
+              .putObjectRequest(putObjectRequest)
+              .build();
 
       PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
 
@@ -98,8 +94,7 @@ public class ProductImageUploadService {
         today.getMonthValue(),
         today.getDayOfMonth(),
         UUID.randomUUID(),
-        fileType
-    );
+        fileType);
   }
 
   private String createImageUrl(String key) {
@@ -110,4 +105,3 @@ public class ProductImageUploadService {
     return cdnBaseUrl + "/" + key;
   }
 }
-

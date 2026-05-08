@@ -10,9 +10,7 @@ import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 상품 상세 응답 DTO.
- */
+/** 상품 상세 응답 DTO. */
 @Getter
 @Builder
 public class ProductDetailResponse {
@@ -38,15 +36,9 @@ public class ProductDetailResponse {
   private final LocalDateTime createdAt;
   private final LocalDateTime modifiedAt;
 
-  /**
-   * 상세 응답 객체를 생성한다.
-   */
+  /** 상세 응답 객체를 생성한다. */
   public static ProductDetailResponse of(
-      Product product,
-      Drops latestDrop,
-      User seller,
-      boolean isPurchasable
-  ) {
+      Product product, Drops latestDrop, User seller, boolean isPurchasable) {
     return ProductDetailResponse.builder()
         .productId(product.getId())
         .name(product.getName())
@@ -65,17 +57,13 @@ public class ProductDetailResponse {
         .isPurchasable(isPurchasable)
         .seller(SellerInfo.from(seller, product.getSellerId()))
         .latestDrop(DropInfo.from(latestDrop))
-        .images(product.getImages().stream()
-            .map(ProductImageResponse::from)
-            .toList())
+        .images(product.getImages().stream().map(ProductImageResponse::from).toList())
         .createdAt(product.getCreatedAt())
         .modifiedAt(product.getModifiedAt())
         .build();
   }
 
-  /**
-   * 판매자 정보 DTO.
-   */
+  /** 판매자 정보 DTO. */
   @Getter
   @Builder
   public static class SellerInfo {
@@ -84,16 +72,10 @@ public class ProductDetailResponse {
     private final String email;
     private final String nickname;
 
-    /**
-     * 사용자 엔티티로 판매자 정보를 생성한다.
-     */
+    /** 사용자 엔티티로 판매자 정보를 생성한다. */
     public static SellerInfo from(User user, Long sellerId) {
       if (user == null) {
-        return SellerInfo.builder()
-            .sellerId(sellerId)
-            .email(null)
-            .nickname(null)
-            .build();
+        return SellerInfo.builder().sellerId(sellerId).email(null).nickname(null).build();
       }
       return SellerInfo.builder()
           .sellerId(user.getId())
@@ -103,9 +85,7 @@ public class ProductDetailResponse {
     }
   }
 
-  /**
-   * 최신 드랍 정보 DTO.
-   */
+  /** 최신 드랍 정보 DTO. */
   @Getter
   @Builder
   public static class DropInfo {
@@ -119,9 +99,7 @@ public class ProductDetailResponse {
     private final Long purchaseLimit;
     private final boolean useQueue;
 
-    /**
-     * 드랍 엔티티로 최신 드랍 정보를 생성한다.
-     */
+    /** 드랍 엔티티로 최신 드랍 정보를 생성한다. */
     public static DropInfo from(Drops drops) {
       if (drops == null) {
         return null;
@@ -139,9 +117,7 @@ public class ProductDetailResponse {
     }
   }
 
-  /**
-   * 상세 이미지 DTO.
-   */
+  /** 상세 이미지 DTO. */
   @Getter
   @Builder
   public static class ProductImageResponse {
@@ -151,9 +127,7 @@ public class ProductDetailResponse {
     private final int sortOrder;
     private final boolean isThumbnail;
 
-    /**
-     * 상품 이미지 엔티티로 상세 이미지 정보를 생성한다.
-     */
+    /** 상품 이미지 엔티티로 상세 이미지 정보를 생성한다. */
     public static ProductImageResponse from(ProductImage image) {
       return ProductImageResponse.builder()
           .imageId(image.getId())
@@ -164,5 +138,3 @@ public class ProductDetailResponse {
     }
   }
 }
-
-

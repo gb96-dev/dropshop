@@ -21,21 +21,20 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-/**
- * 대기열 Entity.
- */
+/** 대기열 Entity. */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
     name = "queues",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_user_drop", columnNames = {"user_id", "drop_id"})
+      @UniqueConstraint(
+          name = "uk_user_drop",
+          columnNames = {"user_id", "drop_id"})
     },
     indexes = {
-        @Index(name = "idx_drop_status_entered", columnList = "drop_id, status, entered_at")
-    }
-)
+      @Index(name = "idx_drop_status_entered", columnList = "drop_id, status, entered_at")
+    })
 @EntityListeners(AuditingEntityListener.class)
 public class Queue {
 
@@ -77,23 +76,17 @@ public class Queue {
     this.enteredAt = LocalDateTime.now();
   }
 
-  /**
-   * 대기열 ready 변경.
-   */
+  /** 대기열 ready 변경. */
   public void ready() {
     this.status = QueueStatus.READY;
   }
 
-  /**
-   * 대기열 entered 변경.
-   */
+  /** 대기열 entered 변경. */
   public void enter() {
     this.status = QueueStatus.ENTERED;
   }
 
-  /**
-   * 대기열 expired 변경.
-   */
+  /** 대기열 expired 변경. */
   public void expire() {
     this.status = QueueStatus.EXPIRED;
     this.expiredAt = LocalDateTime.now();

@@ -4,9 +4,7 @@ import com.example.dropshop.domain.product.entity.ProductImage;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 상품 이미지 응답 DTO.
- */
+/** 상품 이미지 응답 DTO. */
 @Getter
 @Builder
 public class ProductImageResponse {
@@ -17,9 +15,7 @@ public class ProductImageResponse {
   private final int sortOrder;
   private final boolean isThumbnail;
 
-  /**
-   * ProductImage 엔티티를 이미지 응답 DTO로 변환한다.
-   */
+  /** ProductImage 엔티티를 이미지 응답 DTO로 변환한다. */
   public static ProductImageResponse from(ProductImage image) {
     return ProductImageResponse.builder()
         .imageId(image.getId())
@@ -30,4 +26,3 @@ public class ProductImageResponse {
         .build();
   }
 }
-

@@ -12,9 +12,8 @@ import org.springframework.stereotype.Service;
 /**
  * Redis 기반 분산 락 서비스.
  *
- * <p>락 키별로 단일 작업만 실행되도록 보장하며, 락 획득 실패 시 일정 시간 동안 재시도한다.
- * 락 해제는 저장된 토큰을 검증한 뒤 수행해, 만료된 락이 다른 요청에 의해 다시 획득된 경우에도
- * 이전 요청이 잘못된 락을 제거하지 않도록 보호한다.
+ * <p>락 키별로 단일 작업만 실행되도록 보장하며, 락 획득 실패 시 일정 시간 동안 재시도한다. 락 해제는 저장된 토큰을 검증한 뒤 수행해, 만료된 락이 다른 요청에 의해
+ * 다시 획득된 경우에도 이전 요청이 잘못된 락을 제거하지 않도록 보호한다.
  */
 @Service
 public class RedisLockService {
@@ -32,8 +31,7 @@ public class RedisLockService {
         "if redis.call('get', KEYS[1]) == ARGV[1] then\n"
             + "  return redis.call('del', KEYS[1])\n"
             + "end\n"
-            + "return 0"
-    );
+            + "return 0");
     UNLOCK_SCRIPT.setResultType(Long.class);
   }
 
@@ -51,8 +49,7 @@ public class RedisLockService {
   /**
    * 지정한 키에 대한 락을 획득한 뒤 콜백을 실행하고 결과를 반환한다.
    *
-   * <p>기본 대기 시간과 임대 시간을 사용하며, 제한 시간 내에 락을 얻지 못하면
-   * {@link ServiceException}을 던진다.
+   * <p>기본 대기 시간과 임대 시간을 사용하며, 제한 시간 내에 락을 얻지 못하면 {@link ServiceException}을 던진다.
    *
    * @param key 락 키
    * @param callback 락 획득 후 실행할 작업
@@ -120,15 +117,10 @@ public class RedisLockService {
   /**
    * 현재 저장된 토큰이 요청 토큰과 같을 때만 락을 해제한다.
    *
-   * <p>토큰 비교와 삭제를 Redis 안에서 원자적으로 수행해, 만료 후 다른 요청이 다시 잡은
-   * 락을 이전 요청이 지우지 않도록 보호한다.
+   * <p>토큰 비교와 삭제를 Redis 안에서 원자적으로 수행해, 만료 후 다른 요청이 다시 잡은 락을 이전 요청이 지우지 않도록 보호한다.
    */
   private void release(String key, String token) {
-    stringRedisTemplate.execute(
-        UNLOCK_SCRIPT,
-        Collections.singletonList(key),
-        token
-    );
+    stringRedisTemplate.execute(UNLOCK_SCRIPT, Collections.singletonList(key), token);
   }
 
   private void sleepRetryDelay() {
@@ -156,9 +148,7 @@ public class RedisLockService {
   @FunctionalInterface
   public interface LockRunnable {
 
-    /**
-     * 락을 획득한 구간에서 실행할 반환값 없는 작업.
-     */
+    /** 락을 획득한 구간에서 실행할 반환값 없는 작업. */
     void doInLock();
   }
 }

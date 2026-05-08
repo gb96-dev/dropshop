@@ -16,9 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 환불 REST 컨트롤러.
- */
+/** 환불 REST 컨트롤러. */
 @RestController
 @RequestMapping("/api/refunds")
 @RequiredArgsConstructor
@@ -35,13 +33,9 @@ public class RefundController {
    */
   @PostMapping
   public ResponseEntity<ApiResponse<RefundResponse>> createRefund(
-      @AuthenticationPrincipal String email,
-      @RequestBody @Valid RefundCreateRequest request
-  ) {
+      @AuthenticationPrincipal String email, @RequestBody @Valid RefundCreateRequest request) {
     return ResponseEntity.status(201)
-        .body(ApiResponse.created(
-            refundFacadeService.createRefund(email, request)
-        ));
+        .body(ApiResponse.created(refundFacadeService.createRefund(email, request)));
   }
 
   /**
@@ -53,12 +47,8 @@ public class RefundController {
    */
   @GetMapping("/{refundId}")
   public ResponseEntity<ApiResponse<RefundResponse>> getRefund(
-      @AuthenticationPrincipal String email,
-      @PathVariable Long refundId
-  ) {
-    return ResponseEntity.ok(ApiResponse.ok(
-        refundFacadeService.getRefund(refundId, email)
-    ));
+      @AuthenticationPrincipal String email, @PathVariable Long refundId) {
+    return ResponseEntity.ok(ApiResponse.ok(refundFacadeService.getRefund(refundId, email)));
   }
 
   /**
@@ -70,12 +60,9 @@ public class RefundController {
    */
   @GetMapping("/payments/{paymentId}")
   public ResponseEntity<ApiResponse<List<RefundResponse>>> getRefundsByPayment(
-      @AuthenticationPrincipal String email,
-      @PathVariable Long paymentId
-  ) {
-    return ResponseEntity.ok(ApiResponse.ok(
-        refundFacadeService.getRefundsByPayment(paymentId, email)
-    ));
+      @AuthenticationPrincipal String email, @PathVariable Long paymentId) {
+    return ResponseEntity.ok(
+        ApiResponse.ok(refundFacadeService.getRefundsByPayment(paymentId, email)));
   }
 
   /**
@@ -87,9 +74,7 @@ public class RefundController {
    */
   @PostMapping("/{refundId}/approve")
   public ResponseEntity<ApiResponse<RefundResponse>> approveRefund(
-      @AuthenticationPrincipal String email,
-      @PathVariable Long refundId
-  ) {
+      @AuthenticationPrincipal String email, @PathVariable Long refundId) {
     return ResponseEntity.ok(ApiResponse.ok(refundFacadeService.approveRefund(refundId, email)));
   }
 
@@ -102,9 +87,7 @@ public class RefundController {
    */
   @PostMapping("/{refundId}/complete")
   public ResponseEntity<ApiResponse<RefundResponse>> completeRefund(
-      @AuthenticationPrincipal String email,
-      @PathVariable Long refundId
-  ) {
+      @AuthenticationPrincipal String email, @PathVariable Long refundId) {
     return ResponseEntity.ok(ApiResponse.ok(refundFacadeService.completeRefund(refundId, email)));
   }
 
@@ -117,9 +100,7 @@ public class RefundController {
    */
   @PostMapping("/{refundId}/reject")
   public ResponseEntity<ApiResponse<RefundResponse>> rejectRefund(
-      @AuthenticationPrincipal String email,
-      @PathVariable Long refundId
-  ) {
+      @AuthenticationPrincipal String email, @PathVariable Long refundId) {
     return ResponseEntity.ok(ApiResponse.ok(refundFacadeService.rejectRefund(refundId, email)));
   }
 }

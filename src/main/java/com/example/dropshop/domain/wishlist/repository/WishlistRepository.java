@@ -5,11 +5,9 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-/**
- * 찜 JPA 리포지토리.
- */
-public interface WishlistRepository extends JpaRepository<Wishlist, Long>,
-    WishlistRepositoryCustom {
+/** 찜 JPA 리포지토리. */
+public interface WishlistRepository
+    extends JpaRepository<Wishlist, Long>, WishlistRepositoryCustom {
 
   boolean existsByUserIdAndDropId(Long userId, Long dropId);
 

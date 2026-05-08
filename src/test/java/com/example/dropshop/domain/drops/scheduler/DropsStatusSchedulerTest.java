@@ -15,14 +15,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DropsStatusSchedulerTest {
 
-  @Mock
-  private DropsStatusTransitionService dropsStatusTransitionService;
+  @Mock private DropsStatusTransitionService dropsStatusTransitionService;
 
-  @Mock
-  private DropsSchedulerProperties dropsSchedulerProperties;
+  @Mock private DropsSchedulerProperties dropsSchedulerProperties;
 
-  @InjectMocks
-  private DropsStatusScheduler dropsStatusScheduler;
+  @InjectMocks private DropsStatusScheduler dropsStatusScheduler;
 
   @Test
   @DisplayName("스케줄러 비활성화 시 상태 전이 서비스를 호출하지 않는다")
@@ -46,4 +43,3 @@ class DropsStatusSchedulerTest {
     verify(dropsStatusTransitionService).transitionActiveToFinished(any());
   }
 }
-

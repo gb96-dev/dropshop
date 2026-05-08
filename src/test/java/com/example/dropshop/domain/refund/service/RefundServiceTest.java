@@ -12,9 +12,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
-import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
@@ -37,36 +37,28 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class RefundServiceTest {
 
-  @Mock
-  private RefundRepository refundRepository;
+  @Mock private RefundRepository refundRepository;
 
-  @Mock
-  private PaymentRepository paymentRepository;
+  @Mock private PaymentRepository paymentRepository;
 
-  @Mock
-  private PortOneClient portOneClient;
+  @Mock private PortOneClient portOneClient;
 
-  @Mock
-  private OrderFacadeService orderFacadeService;
+  @Mock private OrderFacadeService orderFacadeService;
 
-  @Mock
-  private RefundCompletionWorker refundCompletionWorker;
+  @Mock private RefundCompletionWorker refundCompletionWorker;
 
-  @Mock
-  private RedisLockService redisLockService;
+  @Mock private RedisLockService redisLockService;
 
-  @Mock
-  private TransactionTemplate transactionTemplate;
+  @Mock private TransactionTemplate transactionTemplate;
 
-  @InjectMocks
-  private RefundService refundService;
+  @InjectMocks private RefundService refundService;
 
   private Payment payment;
   private Order order;
@@ -83,22 +75,26 @@ class RefundServiceTest {
 
     order = Order.create(1L, 10L);
     ReflectionTestUtils.setField(order, "id", 1L);
-    order.addOrderItem(OrderItem.create(
-        order,
-        100L,
-        new BigDecimal("100000"),
-        new BigDecimal("79000"),
-        new BigDecimal("21000"),
-        "https://dummy-image"
-    ));
+    order.addOrderItem(
+        OrderItem.create(
+            order,
+            100L,
+            new BigDecimal("100000"),
+            new BigDecimal("79000"),
+            new BigDecimal("21000"),
+            "https://dummy-image"));
     order.pay();
 
-    lenient().when(redisLockService.executeWithLock(anyString(), any())).thenAnswer(
-        invocation -> ((RedisLockService.LockCallback<?>) invocation.getArgument(1)).doInLock()
-    );
-    lenient().when(transactionTemplate.execute(any())).thenAnswer(
-        invocation -> ((TransactionCallback<?>) invocation.getArgument(0)).doInTransaction(null)
-    );
+    lenient()
+        .when(redisLockService.executeWithLock(anyString(), any()))
+        .thenAnswer(
+            invocation ->
+                ((RedisLockService.LockCallback<?>) invocation.getArgument(1)).doInLock());
+    lenient()
+        .when(transactionTemplate.execute(any()))
+        .thenAnswer(
+            invocation ->
+                ((TransactionCallback<?>) invocation.getArgument(0)).doInTransaction(null));
   }
 
   @Test
@@ -106,18 +102,15 @@ class RefundServiceTest {
   void createRefund_success() {
     given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
     given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
-    given(refundRepository.existsByPaymentIdAndStatusIn(
-        1L,
-        List.of(RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.PROCESSING)
-    )).willReturn(false);
-    given(refundRepository.save(any(Refund.class))).willAnswer(invocation -> invocation.getArgument(0));
+    given(
+            refundRepository.existsByPaymentIdAndStatusIn(
+                1L, List.of(RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.PROCESSING)))
+        .willReturn(false);
+    given(refundRepository.save(any(Refund.class)))
+        .willAnswer(invocation -> invocation.getArgument(0));
 
-    Refund result = refundService.createRefund(
-        "test@test.com",
-        1L,
-        new BigDecimal("79000"),
-        "단순 변심"
-    );
+    Refund result =
+        refundService.createRefund("test@test.com", 1L, new BigDecimal("79000"), "단순 변심");
 
     assertThat(result.getStatus()).isEqualTo(RefundStatus.PENDING);
     verify(refundRepository, times(1)).save(any(Refund.class));
@@ -133,12 +126,7 @@ class RefundServiceTest {
     processingRefund.startProcessing();
     RefundCompletionWorker.RefundCompletionCommand command =
         new RefundCompletionWorker.RefundCompletionCommand(
-            1L,
-            1L,
-            "payment-test-123",
-            new BigDecimal("79000"),
-            "단순 변심"
-        );
+            1L, 1L, "payment-test-123", new BigDecimal("79000"), "단순 변심");
 
     // completeRefundInternal의 transactionTemplate.execute 블록 내부에서 소유권 검증에 필요한 스텁
     given(refundRepository.findById(1L)).willReturn(Optional.of(processingRefund));
@@ -146,11 +134,13 @@ class RefundServiceTest {
     given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
 
     given(refundCompletionWorker.prepareRefundCompletion(1L, "test@test.com")).willReturn(command);
-    given(refundCompletionWorker.finalizeRefundCompletion(1L, 1L)).willAnswer(invocation -> {
-      processingRefund.complete();
-      order.refund();
-      return processingRefund;
-    });
+    given(refundCompletionWorker.finalizeRefundCompletion(1L, 1L))
+        .willAnswer(
+            invocation -> {
+              processingRefund.complete();
+              order.refund();
+              return processingRefund;
+            });
 
     Refund result = refundService.completeRefund(1L, "test@test.com");
 
@@ -167,12 +157,7 @@ class RefundServiceTest {
   void completeRefund_portOneFailure_throwsException() {
     RefundCompletionWorker.RefundCompletionCommand command =
         new RefundCompletionWorker.RefundCompletionCommand(
-            1L,
-            1L,
-            "payment-test-123",
-            new BigDecimal("79000"),
-            "단순 변심"
-        );
+            1L, 1L, "payment-test-123", new BigDecimal("79000"), "단순 변심");
     // completeRefundInternal의 transactionTemplate.execute 블록 내부에서 소유권 검증에 필요한 스텁
     given(refundRepository.findById(1L)).willReturn(Optional.of(refund));
     given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));

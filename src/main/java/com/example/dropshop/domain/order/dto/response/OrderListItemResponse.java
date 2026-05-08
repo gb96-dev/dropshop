@@ -6,9 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
-/**
- * 주문 목록 아이템 응답.
- */
+/** 주문 목록 아이템 응답. */
 @Getter
 public class OrderListItemResponse {
 

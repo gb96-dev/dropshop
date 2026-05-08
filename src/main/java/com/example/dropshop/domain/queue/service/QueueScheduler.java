@@ -18,9 +18,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/**
- * 대기열 스케쥴러.
- */
+/** 대기열 스케쥴러. */
 @Component
 @RequiredArgsConstructor
 public class QueueScheduler {
@@ -35,8 +33,8 @@ public class QueueScheduler {
   public void poll() throws JsonProcessingException {
     long now = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
 
-    Set<String> threadHoldResponses = stringRedisTemplate.opsForZSet()
-        .rangeByScore(KEY_DELAY_QUEUE_TOKEN, 0, now, 0, BATCH_SIZE);
+    Set<String> threadHoldResponses =
+        stringRedisTemplate.opsForZSet().rangeByScore(KEY_DELAY_QUEUE_TOKEN, 0, now, 0, BATCH_SIZE);
 
     if (threadHoldResponses == null || threadHoldResponses.isEmpty()) {
       return;
@@ -55,53 +53,53 @@ public class QueueScheduler {
     return objectMapper.readValue(json, ThreadHoldResponse.class);
   }
 
-//  /**
-//   * 토큰 만료 처리 (1초마다 실행).
-//   */
-//  @Scheduled(fixedDelay = 1000)
-//  @Transactional
-//  public void expireQueue() {
-//
-//    LocalDateTime now = LocalDateTime.now().minusMinutes(5);
-//
-//    List<QueueToken> expiredTokens =
-//        queueTokenRepository.findExpiredTokens(now);
-//
-//    for (QueueToken token : expiredTokens) {
-//      Queue queue = token.getQueue();
-//
-//      if (queue.getStatus() == QueueStatus.READY ||
-//          queue.getStatus() == QueueStatus.ENTERED) {
-//
-//        queue.expire();
-//      }
-//    }
-//  }
-//
-//  /**
-//   * READY → 1초 후 ENTERED 전환.
-//   */
-//  @Scheduled(fixedDelay = 1000)
-//  @Transactional
-//  public void processReadyToEntered() {
-//
-//    List<Queue> readyQueues =
-//        queueRepository.findReadyQueuesWithToken(QueueStatus.READY);
-//
-//    LocalDateTime now = LocalDateTime.now();
-//
-//    for (Queue queue : readyQueues) {
-//
-//      QueueToken token = queueTokenRepository
-//          .findByQueueId(queue.getId())
-//          .orElse(null);
-//
-//      if (token == null) continue;
-//
-//      // READY 된지 1초 지났으면 ENTERED
-//      if (token.getCreatedAt().plusSeconds(1).isBefore(now)) {
-//        queue.enter();
-//      }
-//    }
-//  }
+  //  /**
+  //   * 토큰 만료 처리 (1초마다 실행).
+  //   */
+  //  @Scheduled(fixedDelay = 1000)
+  //  @Transactional
+  //  public void expireQueue() {
+  //
+  //    LocalDateTime now = LocalDateTime.now().minusMinutes(5);
+  //
+  //    List<QueueToken> expiredTokens =
+  //        queueTokenRepository.findExpiredTokens(now);
+  //
+  //    for (QueueToken token : expiredTokens) {
+  //      Queue queue = token.getQueue();
+  //
+  //      if (queue.getStatus() == QueueStatus.READY ||
+  //          queue.getStatus() == QueueStatus.ENTERED) {
+  //
+  //        queue.expire();
+  //      }
+  //    }
+  //  }
+  //
+  //  /**
+  //   * READY → 1초 후 ENTERED 전환.
+  //   */
+  //  @Scheduled(fixedDelay = 1000)
+  //  @Transactional
+  //  public void processReadyToEntered() {
+  //
+  //    List<Queue> readyQueues =
+  //        queueRepository.findReadyQueuesWithToken(QueueStatus.READY);
+  //
+  //    LocalDateTime now = LocalDateTime.now();
+  //
+  //    for (Queue queue : readyQueues) {
+  //
+  //      QueueToken token = queueTokenRepository
+  //          .findByQueueId(queue.getId())
+  //          .orElse(null);
+  //
+  //      if (token == null) continue;
+  //
+  //      // READY 된지 1초 지났으면 ENTERED
+  //      if (token.getCreatedAt().plusSeconds(1).isBefore(now)) {
+  //        queue.enter();
+  //      }
+  //    }
+  //  }
 }

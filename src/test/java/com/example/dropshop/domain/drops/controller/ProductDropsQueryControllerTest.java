@@ -26,50 +26,41 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(ProductDropsQueryController.class)
 class ProductDropsQueryControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-  @MockitoBean
-  private JpaMetamodelMappingContext jpaMetamodelMappingContext;
+  @MockitoBean private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
-  @MockitoBean
-  private DropsQueryService dropsQueryService;
+  @MockitoBean private DropsQueryService dropsQueryService;
 
-  @MockitoBean
-  private TokenBlacklistService tokenBlacklistService;
+  @MockitoBean private TokenBlacklistService tokenBlacklistService;
 
   @Test
   @DisplayName("상품별 드롭 이력 조회 성공")
   void getDropsByProduct_success() throws Exception {
-    DropListItemResponse item = DropListItemResponse.builder()
-        .dropId(10L)
-        .productId(1L)
-        .productName("테스트 상품")
-        .thumbnailUrl("https://example.com/thumb.jpg")
-        .status("FINISHED")
-        .startAt(LocalDateTime.of(2026, 4, 25, 12, 0))
-        .endAt(LocalDateTime.of(2026, 4, 26, 12, 0))
-        .soldCount(30L)
-        .remainStock(0L)
-        .purchaseLimit(1L)
-        .useQueue(true)
-        .build();
+    DropListItemResponse item =
+        DropListItemResponse.builder()
+            .dropId(10L)
+            .productId(1L)
+            .productName("테스트 상품")
+            .thumbnailUrl("https://example.com/thumb.jpg")
+            .status("FINISHED")
+            .startAt(LocalDateTime.of(2026, 4, 25, 12, 0))
+            .endAt(LocalDateTime.of(2026, 4, 26, 12, 0))
+            .soldCount(30L)
+            .remainStock(0L)
+            .purchaseLimit(1L)
+            .useQueue(true)
+            .build();
 
-    Page<DropListItemResponse> page = new PageImpl<>(
-        List.of(item),
-        PageRequest.of(0, 20),
-        1
-    );
+    Page<DropListItemResponse> page = new PageImpl<>(List.of(item), PageRequest.of(0, 20), 1);
 
     given(dropsQueryService.findDropsByProduct(eq(1L), any())).willReturn(page);
 
-    mockMvc.perform(get("/api/products/{productId}/drops", 1L)
-            .param("page", "0")
-            .param("size", "20"))
+    mockMvc
+        .perform(get("/api/products/{productId}/drops", 1L).param("page", "0").param("size", "20"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.content[0].dropId").value(10L))
         .andExpect(jsonPath("$.data.content[0].soldCount").value(30L));
   }
 }
-

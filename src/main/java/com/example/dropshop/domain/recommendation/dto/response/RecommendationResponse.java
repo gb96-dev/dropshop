@@ -5,9 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 상품 추천 응답 DTO.
- */
+/** 상품 추천 응답 DTO. */
 @Getter
 @Builder(access = AccessLevel.PRIVATE)
 public class RecommendationResponse {
@@ -21,7 +19,8 @@ public class RecommendationResponse {
   /** 추천된 상품 ID 목록 */
   private final List<Long> productIds;
 
-  public static RecommendationResponse of(String query, String recommendation, List<Long> productIds) {
+  public static RecommendationResponse of(
+      String query, String recommendation, List<Long> productIds) {
     return RecommendationResponse.builder()
         .query(query)
         .recommendation(recommendation)

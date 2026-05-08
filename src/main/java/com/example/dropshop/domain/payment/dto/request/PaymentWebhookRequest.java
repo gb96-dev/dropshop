@@ -12,9 +12,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.Getter;
 
-/**
- * PortOne 웹훅 요청 바디.
- */
+/** PortOne 웹훅 요청 바디. */
 @Getter
 public class PaymentWebhookRequest {
 
@@ -46,9 +44,7 @@ public class PaymentWebhookRequest {
   @JsonProperty("signature_hash")
   private String signatureHash;
 
-  /**
-   * 웹훅 바디에서 PortOne 결제 식별자를 추출한다.
-   */
+  /** 웹훅 바디에서 PortOne 결제 식별자를 추출한다. */
   public String extractPortOnePaymentId() {
     if (hasText(id)) {
       return id;
@@ -87,8 +83,7 @@ public class PaymentWebhookRequest {
       String expectedSignature = Base64.getEncoder().encodeToString(digest);
       return MessageDigest.isEqual(
           expectedSignature.getBytes(StandardCharsets.UTF_8),
-          signatureHash.getBytes(StandardCharsets.UTF_8)
-      );
+          signatureHash.getBytes(StandardCharsets.UTF_8));
     } catch (Exception e) {
       return false;
     }

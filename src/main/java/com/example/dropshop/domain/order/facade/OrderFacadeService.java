@@ -15,9 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 주문 파사드 서비스.
- */
+/** 주문 파사드 서비스. */
 @Service
 @RequiredArgsConstructor
 public class OrderFacadeService {
@@ -37,21 +35,18 @@ public class OrderFacadeService {
   public OrderCreateResponse createOrder(String email, OrderCreateRequest request) {
     // TODO: QueueService 대기열 토큰 검증
     Long userId = getUserIdByEmail(email);
-    Drops drops = dropsFacadeService.reserveStockForOrder(
-        request.getDropId(),
-        request.getProductId(),
-        1
-    );
+    Drops drops =
+        dropsFacadeService.reserveStockForOrder(request.getDropId(), request.getProductId(), 1);
 
-    Order order = orderService.createOrder(
-        userId,
-        request.getDropId(),
-        request.getProductId(),
-        drops.getProduct().getPrice(),
-        drops.getProduct().getSalePrice(),
-        drops.getProduct().getDiscountAmount(),
-        drops.getProduct().getThumbnailUrl()
-    );
+    Order order =
+        orderService.createOrder(
+            userId,
+            request.getDropId(),
+            request.getProductId(),
+            drops.getProduct().getPrice(),
+            drops.getProduct().getSalePrice(),
+            drops.getProduct().getDiscountAmount(),
+            drops.getProduct().getThumbnailUrl());
 
     return OrderCreateResponse.from(order);
   }
@@ -129,7 +124,8 @@ public class OrderFacadeService {
    */
   @Transactional(readOnly = true)
   public Page<OrderListItemResponse> findOrdersByUserId(String email, Pageable pageable) {
-    return orderService.findAllOrdersByUserId(getUserIdByEmail(email), pageable)
+    return orderService
+        .findAllOrdersByUserId(getUserIdByEmail(email), pageable)
         .map(OrderListItemResponse::from);
   }
 

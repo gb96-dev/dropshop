@@ -3,9 +3,7 @@ package com.example.dropshop.domain.product.enums;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/**
- * 상품 목록 정렬 타입.
- */
+/** 상품 목록 정렬 타입. */
 @Getter
 @RequiredArgsConstructor
 public enum ProductListSortType {
@@ -15,7 +13,4 @@ public enum ProductListSortType {
   DROP_IMMINENT("드랍 임박순");
 
   private final String description;
-
 }
-
-

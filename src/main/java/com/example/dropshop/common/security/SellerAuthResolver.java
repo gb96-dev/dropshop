@@ -11,9 +11,7 @@ import com.example.dropshop.domain.user.service.UserFacadeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/**
- * 판매자 인증 컨텍스트를 해석한다.
- */
+/** 판매자 인증 컨텍스트를 해석한다. */
 @Component
 @RequiredArgsConstructor
 public class SellerAuthResolver {
@@ -23,9 +21,7 @@ public class SellerAuthResolver {
   private final UserFacadeService userFacadeService;
   private final SellerFacadeService sellerFacadeService;
 
-  /**
-   * JWT principal(email)을 기반으로 판매자 인증 컨텍스트를 해석한다.
-   */
+  /** JWT principal(email)을 기반으로 판매자 인증 컨텍스트를 해석한다. */
   public SellerAuthContext resolve(String email) {
     if (email == null || email.isBlank() || ANONYMOUS_USER.equals(email)) {
       throw new ServiceException(ErrorCode.SELLER_ROLE_REQUIRED);
@@ -39,15 +35,14 @@ public class SellerAuthResolver {
       throw new ServiceException(ErrorCode.SELLER_ROLE_REQUIRED);
     }
 
-    Seller seller = sellerFacadeService.findByUser(user)
-        .orElseThrow(() -> new ServiceException(ErrorCode.SELLER_NOT_FOUND));
+    Seller seller =
+        sellerFacadeService
+            .findByUser(user)
+            .orElseThrow(() -> new ServiceException(ErrorCode.SELLER_NOT_FOUND));
     boolean sellerApproved = seller.getStatus() == SellerStatus.APPROVED;
-    boolean sellerVerified = seller.getAccountInfo() != null
-        && !seller.getAccountInfo().isBlank();
+    boolean sellerVerified = seller.getAccountInfo() != null && !seller.getAccountInfo().isBlank();
 
     // Product/Drops 도메인의 sellerId는 Seller PK가 아니라 User PK 기준이다.
     return new SellerAuthContext(user.getId(), sellerApproved, sellerVerified);
   }
 }
-
-

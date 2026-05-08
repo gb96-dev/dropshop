@@ -6,9 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 찜 응답 DTO.
- */
+/** 찜 응답 DTO. */
 @Getter
 @AllArgsConstructor
 @Builder(access = AccessLevel.PRIVATE)
@@ -25,9 +23,6 @@ public class WishlistResponse {
    * @return 리턴.
    */
   public static WishlistResponse build(Long dropId, LocalDateTime time) {
-    return WishlistResponse.builder()
-        .dropId(dropId)
-        .createdAt(time)
-        .build();
+    return WishlistResponse.builder().dropId(dropId).createdAt(time).build();
   }
 }

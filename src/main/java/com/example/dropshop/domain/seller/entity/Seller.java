@@ -13,50 +13,50 @@ import lombok.*;
 @Builder
 public class Seller extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @Column(nullable = false)
-    private String companyName;
+  @Column(nullable = false)
+  private String companyName;
 
-    @Column(nullable = false)
-    private String representativeName;
+  @Column(nullable = false)
+  private String representativeName;
 
-    @Column(nullable = false)
-    private String phoneNumber;
+  @Column(nullable = false)
+  private String phoneNumber;
 
-    @Column(nullable = false, length = 10, unique = true)
-    private String businessNo;
+  @Column(nullable = false, length = 10, unique = true)
+  private String businessNo;
 
-    @Column(nullable = false)
-    private String brandName;
+  @Column(nullable = false)
+  private String brandName;
 
-    private String brandLogo;
+  private String brandLogo;
 
-    @Column(nullable = false)
-    private String accountInfo;
+  @Column(nullable = false)
+  private String accountInfo;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default // 빌더 사용 시 값이 없으면 PENDING으로 설정
-    private SellerStatus status = SellerStatus.PENDING;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  @Builder.Default // 빌더 사용 시 값이 없으면 PENDING으로 설정
+  private SellerStatus status = SellerStatus.PENDING;
 
-    public void updateInfo(String brandName, String brandLogo, String accountInfo) {
-        this.brandName = brandName;
-        this.brandLogo = brandLogo;
-        this.accountInfo = accountInfo;
-    }
+  public void updateInfo(String brandName, String brandLogo, String accountInfo) {
+    this.brandName = brandName;
+    this.brandLogo = brandLogo;
+    this.accountInfo = accountInfo;
+  }
 
-    public void approve() {
-        this.status = SellerStatus.APPROVED;
-    }
+  public void approve() {
+    this.status = SellerStatus.APPROVED;
+  }
 
-    public void suspend() {
-        this.status = SellerStatus.SUSPENDED;
-    }
+  public void suspend() {
+    this.status = SellerStatus.SUSPENDED;
+  }
 }

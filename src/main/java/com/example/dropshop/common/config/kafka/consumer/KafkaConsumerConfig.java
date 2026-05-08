@@ -1,21 +1,21 @@
 package com.example.dropshop.common.config.kafka.consumer;
 
-import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.QUEUE_GROUP_NAME;
-import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.READY_QUEUE_GROUP_NAME;
-import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.USER_LOGIN_GROUP_NAME;
-import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.USER_SIGNUP_GROUP_NAME;
-import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.SELLER_APPLY_GROUP_NAME;
 import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.NOTIFICATION_PAYMENT_GROUP_NAME;
 import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.PAYMENT_STATS_GROUP_NAME;
+import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.QUEUE_GROUP_NAME;
+import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.READY_QUEUE_GROUP_NAME;
+import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.SELLER_APPLY_GROUP_NAME;
+import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.USER_LOGIN_GROUP_NAME;
+import static com.example.dropshop.common.constant.kafka.group.KafkaGroups.USER_SIGNUP_GROUP_NAME;
 
 import com.example.dropshop.domain.auth.event.UserLoginEvent;
-import com.example.dropshop.domain.user.event.UserSignupEvent;
-import com.example.dropshop.domain.seller.event.SellerAppliedEvent;
 import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
+import com.example.dropshop.domain.seller.event.SellerAppliedEvent;
+import com.example.dropshop.domain.user.event.UserSignupEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -35,22 +35,15 @@ import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.ExponentialBackOff;
 
-/**
- * 카프카 소비자 설정.
- */
+/** 카프카 소비자 설정. */
 @Configuration
 public class KafkaConsumerConfig {
 
   @Value("${spring.kafka.bootstrap-servers}")
   private String bootstrapServers;
 
-  /**
-   * DLT 발행에 사용할 KafkaTemplate.
-   * ProducerConfig와의 순환 참조 방지를 위해 @Lazy 적용.
-   */
-  @Lazy
-  @Autowired
-  private KafkaTemplate<String, Object> activityEventKafkaTemplate;
+  /** DLT 발행에 사용할 KafkaTemplate. ProducerConfig와의 순환 참조 방지를 위해 @Lazy 적용. */
+  @Lazy @Autowired private KafkaTemplate<String, Object> activityEventKafkaTemplate;
 
   private Map<String, Object> getConsumerConfig(String groupName) {
     Map<String, Object> props = new HashMap<>();
@@ -59,9 +52,7 @@ public class KafkaConsumerConfig {
     props.put(ConsumerConfig.GROUP_ID_CONFIG, groupName);
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     props.put(
-        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-        ThreadHoldResponseKafkaDeserializer.class
-    );
+        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ThreadHoldResponseKafkaDeserializer.class);
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     return props;
@@ -72,13 +63,14 @@ public class KafkaConsumerConfig {
     return new DefaultKafkaConsumerFactory<>(
         getConsumerConfig(QUEUE_GROUP_NAME),
         new StringDeserializer(),
-        new ThreadHoldResponseKafkaDeserializer()
-    );
+        new ThreadHoldResponseKafkaDeserializer());
   }
 
   @Bean
-  public ConcurrentKafkaListenerContainerFactory<String, ThreadHoldResponse> threadHoldKafkaListenerContainerFactory() {
-    ConcurrentKafkaListenerContainerFactory<String, ThreadHoldResponse> factory = new ConcurrentKafkaListenerContainerFactory<>();
+  public ConcurrentKafkaListenerContainerFactory<String, ThreadHoldResponse>
+      threadHoldKafkaListenerContainerFactory() {
+    ConcurrentKafkaListenerContainerFactory<String, ThreadHoldResponse> factory =
+        new ConcurrentKafkaListenerContainerFactory<>();
 
     factory.setConsumerFactory(queueTokenConsumerFactory());
 
@@ -90,13 +82,14 @@ public class KafkaConsumerConfig {
     return new DefaultKafkaConsumerFactory<>(
         getConsumerConfig(READY_QUEUE_GROUP_NAME),
         new StringDeserializer(),
-        new ThreadHoldResponseKafkaDeserializer()
-    );
+        new ThreadHoldResponseKafkaDeserializer());
   }
 
   @Bean
-  public ConcurrentKafkaListenerContainerFactory<String, ThreadHoldResponse> readyThreadHoldKafkaListenerContainerFactory() {
-    ConcurrentKafkaListenerContainerFactory<String, ThreadHoldResponse> factory = new ConcurrentKafkaListenerContainerFactory<>();
+  public ConcurrentKafkaListenerContainerFactory<String, ThreadHoldResponse>
+      readyThreadHoldKafkaListenerContainerFactory() {
+    ConcurrentKafkaListenerContainerFactory<String, ThreadHoldResponse> factory =
+        new ConcurrentKafkaListenerContainerFactory<>();
 
     factory.setConsumerFactory(readyQueueTokenConsumerFactory());
 
@@ -117,8 +110,8 @@ public class KafkaConsumerConfig {
     deserializer.addTrustedPackages("com.example.dropshop.*");
 
     Map<String, Object> props = getConsumerConfig(groupId);
-    ConsumerFactory<String, T> consumerFactory = new DefaultKafkaConsumerFactory<>(
-        props, new StringDeserializer(), deserializer);
+    ConsumerFactory<String, T> consumerFactory =
+        new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
 
     // 실패한 메시지를 {topic}.DLT 토픽으로 발행하는 recoverer
     DeadLetterPublishingRecoverer recoverer =
@@ -132,8 +125,7 @@ public class KafkaConsumerConfig {
     // 역직렬화/직렬화 실패는 재시도해도 의미 없으므로 즉시 DLT로 라우팅
     errorHandler.addNotRetryableExceptions(
         DeserializationException.class,
-        org.apache.kafka.common.errors.SerializationException.class
-    );
+        org.apache.kafka.common.errors.SerializationException.class);
 
     ConcurrentKafkaListenerContainerFactory<String, T> factory =
         new ConcurrentKafkaListenerContainerFactory<>();
@@ -147,7 +139,8 @@ public class KafkaConsumerConfig {
   // -------------------------------------------------------------------------
 
   @Bean
-  public ConcurrentKafkaListenerContainerFactory<String, UserLoginEvent> userLoginKafkaListenerContainerFactory() {
+  public ConcurrentKafkaListenerContainerFactory<String, UserLoginEvent>
+      userLoginKafkaListenerContainerFactory() {
     return createActivityFactory(UserLoginEvent.class, USER_LOGIN_GROUP_NAME);
   }
 
@@ -156,7 +149,8 @@ public class KafkaConsumerConfig {
   // -------------------------------------------------------------------------
 
   @Bean
-  public ConcurrentKafkaListenerContainerFactory<String, UserSignupEvent> userSignupKafkaListenerContainerFactory() {
+  public ConcurrentKafkaListenerContainerFactory<String, UserSignupEvent>
+      userSignupKafkaListenerContainerFactory() {
     return createActivityFactory(UserSignupEvent.class, USER_SIGNUP_GROUP_NAME);
   }
 
@@ -165,7 +159,8 @@ public class KafkaConsumerConfig {
   // -------------------------------------------------------------------------
 
   @Bean
-  public ConcurrentKafkaListenerContainerFactory<String, SellerAppliedEvent> sellerApplyKafkaListenerContainerFactory() {
+  public ConcurrentKafkaListenerContainerFactory<String, SellerAppliedEvent>
+      sellerApplyKafkaListenerContainerFactory() {
     return createActivityFactory(SellerAppliedEvent.class, SELLER_APPLY_GROUP_NAME);
   }
 
@@ -174,7 +169,8 @@ public class KafkaConsumerConfig {
   // -------------------------------------------------------------------------
 
   @Bean
-  public ConcurrentKafkaListenerContainerFactory<String, PaymentStatusChangedEvent> paymentCompletedKafkaListenerContainerFactory() {
+  public ConcurrentKafkaListenerContainerFactory<String, PaymentStatusChangedEvent>
+      paymentCompletedKafkaListenerContainerFactory() {
     return createActivityFactory(PaymentStatusChangedEvent.class, PAYMENT_STATS_GROUP_NAME);
   }
 
@@ -184,7 +180,8 @@ public class KafkaConsumerConfig {
   // -------------------------------------------------------------------------
 
   @Bean
-  public ConcurrentKafkaListenerContainerFactory<String, PaymentStatusChangedEvent> notificationPaymentKafkaListenerContainerFactory() {
+  public ConcurrentKafkaListenerContainerFactory<String, PaymentStatusChangedEvent>
+      notificationPaymentKafkaListenerContainerFactory() {
     return createActivityFactory(PaymentStatusChangedEvent.class, NOTIFICATION_PAYMENT_GROUP_NAME);
   }
 }

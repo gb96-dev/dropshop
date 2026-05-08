@@ -16,21 +16,18 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-/**
- * 찜 Entity.
- */
+/** 찜 Entity. */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
     name = "wishlists",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_user_drop", columnNames = {"user_id", "drop_id"})
+      @UniqueConstraint(
+          name = "uk_user_drop",
+          columnNames = {"user_id", "drop_id"})
     },
-    indexes = {
-        @Index(name = "idx_drop", columnList = "drop_id")
-    }
-)
+    indexes = {@Index(name = "idx_drop", columnList = "drop_id")})
 @EntityListeners(AuditingEntityListener.class)
 public class Wishlist {
 

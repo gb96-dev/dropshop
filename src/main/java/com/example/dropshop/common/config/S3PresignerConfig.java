@@ -13,14 +13,12 @@ public class S3PresignerConfig {
 
   @Bean
   public S3Presigner s3Presigner(
-          ProductImageUploadProperties imageProperties,
-          AwsProperties awsProperties
-  ) {
+      ProductImageUploadProperties imageProperties, AwsProperties awsProperties) {
     AwsBasicCredentials credentials = AwsBasicCredentials.create("dummy", "dummy");
 
     return S3Presigner.builder()
-            .region(Region.AP_NORTHEAST_2)
-            .credentialsProvider(StaticCredentialsProvider.create(credentials))
-            .build();
+        .region(Region.AP_NORTHEAST_2)
+        .credentialsProvider(StaticCredentialsProvider.create(credentials))
+        .build();
   }
 }

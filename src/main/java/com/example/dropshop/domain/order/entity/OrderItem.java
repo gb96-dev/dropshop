@@ -15,9 +15,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 주문 아이템 엔티티.
- */
+/** 주문 아이템 엔티티. */
 @Entity
 @Table(name = "order_items")
 @Getter
@@ -50,10 +48,10 @@ public class OrderItem extends BaseEntity {
   @Column(nullable = false)
   private String thumbnailUrlSnapshot;
 
-  /**
-   * 주문 아이템 생성.
-   */
-  public static OrderItem create(Order order, Long productId,
+  /** 주문 아이템 생성. */
+  public static OrderItem create(
+      Order order,
+      Long productId,
       BigDecimal priceSnapshot,
       BigDecimal salePriceSnapshot,
       BigDecimal discountAmountSnapshot,

@@ -19,9 +19,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-/**
- * 알림 엔티티.
- */
+/** 알림 엔티티. */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -29,10 +27,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(
     name = "notifications",
     indexes = {
-        @Index(name = "idx_user_created", columnList = "user_id, created_at DESC"),
-        @Index(name = "idx_user_status_created", columnList = "user_id, status, created_at DESC")
-    }
-)
+      @Index(name = "idx_user_created", columnList = "user_id, created_at DESC"),
+      @Index(name = "idx_user_status_created", columnList = "user_id, status, created_at DESC")
+    })
 public class Notification {
 
   @Id
@@ -53,8 +50,7 @@ public class Notification {
   @Column(nullable = false)
   private NotificationStatus status;
 
-  @Column
-  private Long productId;
+  @Column private Long productId;
 
   @CreatedDate
   @Column(updatable = false)
@@ -72,13 +68,15 @@ public class Notification {
 
   /**
    * 알림 생성 팩토리 메서드.
+   *
    * @param userId 유저 아이디.
    * @param type 알림 타입 enum.
    * @param message 알림 메시지.
    * @param productId 상품 아이디 (null 허용).
    * @return 생성된 알림 엔티티.
    */
-  public static Notification create(Long userId, NotificationType type, String message, Long productId) {
+  public static Notification create(
+      Long userId, NotificationType type, String message, Long productId) {
     Notification notification = new Notification();
     notification.userId = userId;
     notification.type = type;
@@ -88,9 +86,7 @@ public class Notification {
     return notification;
   }
 
-  /**
-   * 알림을 읽음 처리한다.
-   */
+  /** 알림을 읽음 처리한다. */
   public void markAsRead() {
     this.status = NotificationStatus.READ;
     this.readAt = LocalDateTime.now();

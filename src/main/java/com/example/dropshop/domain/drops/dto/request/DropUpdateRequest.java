@@ -4,9 +4,7 @@ import jakarta.validation.constraints.Positive;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
-/**
- * 드랍 수정 요청 DTO.
- */
+/** 드랍 수정 요청 DTO. */
 @Getter
 public class DropUpdateRequest {
 
@@ -14,11 +12,9 @@ public class DropUpdateRequest {
 
   private LocalDateTime endAt;
 
-  @Positive
-  private Long totalStock;
+  @Positive private Long totalStock;
 
-  @Positive
-  private Long purchaseLimit;
+  @Positive private Long purchaseLimit;
 
   private Boolean useQueue;
 }

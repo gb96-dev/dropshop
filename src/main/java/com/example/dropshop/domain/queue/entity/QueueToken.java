@@ -1,7 +1,6 @@
 package com.example.dropshop.domain.queue.entity;
 
 import com.example.dropshop.domain.queue.enums.QueueStatus;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -55,7 +54,7 @@ public class QueueToken {
    *
    * @return 리턴.
    */
-  public boolean validateToken(){
+  public boolean validateToken() {
     return this.queue.getStatus() != QueueStatus.EXPIRED;
   }
 }

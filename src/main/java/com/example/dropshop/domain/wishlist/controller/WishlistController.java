@@ -17,9 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 찜 컨트롤러.
- */
+/** 찜 컨트롤러. */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/wishlists")
@@ -35,9 +33,7 @@ public class WishlistController {
    */
   @PostMapping
   public ResponseEntity<ApiResponse<WishlistResponse>> create(
-      @AuthenticationPrincipal String userEmail,
-      @RequestBody WishlistRequest request
-  ) {
+      @AuthenticationPrincipal String userEmail, @RequestBody WishlistRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.created(wishlistsFacadeService.create(userEmail, request)));
   }
@@ -50,9 +46,7 @@ public class WishlistController {
    */
   @DeleteMapping
   public ResponseEntity<ApiResponse<WishlistResponse>> cancel(
-      @AuthenticationPrincipal String userEmail,
-      @RequestBody WishlistRequest request
-  ) {
+      @AuthenticationPrincipal String userEmail, @RequestBody WishlistRequest request) {
     wishlistsFacadeService.cancel(userEmail, request);
 
     return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.noContent());
@@ -66,9 +60,7 @@ public class WishlistController {
    */
   @GetMapping
   public ResponseEntity<ApiResponse<List<WishlistResponse>>> getRecent(
-      @AuthenticationPrincipal String userEmail,
-      @RequestParam(defaultValue = "10") int size
-  ) {
+      @AuthenticationPrincipal String userEmail, @RequestParam(defaultValue = "10") int size) {
     return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.ok(wishlistsFacadeService.getRecent(userEmail, size)));
   }
