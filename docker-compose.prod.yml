@@ -8,38 +8,11 @@ services:
     env_file:
       - .env
     depends_on:
-      # AWS ElastiCache 사용 시: redis 제거
-      - redis
       - kafka-1
       - kafka-2
       - kafka-3
     networks:
       - dropshop-net
-
-  # ============================================
-  # Redis 설정
-  # ============================================
-  # 옵션 1: 로컬 Docker Redis (개발/테스트)
-  # 아래 서비스 활성화
-  redis:
-    image: redis:7-alpine
-    container_name: dropshop-redis
-    restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - redis_data:/data
-    networks:
-      - dropshop-net
-
-  # 옵션 2: AWS ElastiCache 사용 (프로덕션 권장)
-  # 1. 위 redis 서비스 제거
-  # 2. 위 app.depends_on에서 redis 제거
-  # 3. .env 파일에 다음 환경변수 설정:
-  #    REDIS_HOST=dropshop-redis.xxxx.cache.amazonaws.com
-  #    REDIS_PORT=6379
-  #    REDIS_PASSWORD={auth-token}
-  #    REDIS_USE_SSL=true
-  # 4. ELASTICACHE_SETUP.md 문서 참조
 
   kafka-1:
     image: bitnami/kafka:3.7
@@ -108,7 +81,6 @@ services:
           - kafka-3
 
 volumes:
-  redis_data:
   kafka_1_data:
   kafka_2_data:
   kafka_3_data:
