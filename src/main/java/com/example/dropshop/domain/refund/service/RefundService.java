@@ -22,9 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-/**
- * 환불 생성, 조회, 상태 변경을 처리하는 서비스.
- */
+/** 환불 생성, 조회, 상태 변경을 처리하는 서비스. */
 @Service
 @RequiredArgsConstructor
 public class RefundService {
@@ -50,20 +48,12 @@ public class RefundService {
    * @return 생성된 환불 엔티티
    */
   public Refund createRefund(
-      String email,
-      Long paymentId,
-      BigDecimal refundAmount,
-      String refundReason
-  ) {
+      String email, Long paymentId, BigDecimal refundAmount, String refundReason) {
     return redisLockService.executeWithLock(
         LockKeys.payment(paymentId),
-        () -> transactionTemplate.execute(status -> createRefundInternal(
-            email,
-            paymentId,
-            refundAmount,
-            refundReason
-        ))
-    );
+        () ->
+            transactionTemplate.execute(
+                status -> createRefundInternal(email, paymentId, refundAmount, refundReason)));
   }
 
   /**
@@ -119,9 +109,7 @@ public class RefundService {
    */
   public Refund completeRefund(Long refundId, String email) {
     return redisLockService.executeWithLock(
-        LockKeys.refund(refundId),
-        () -> completeRefundInternal(refundId, email)
-    );
+        LockKeys.refund(refundId), () -> completeRefundInternal(refundId, email));
   }
 
   /**
@@ -141,12 +129,14 @@ public class RefundService {
   }
 
   private Payment getPayment(Long paymentId) {
-    return paymentRepository.findById(paymentId)
+    return paymentRepository
+        .findById(paymentId)
         .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
   }
 
   private Refund findRefund(Long refundId) {
-    return refundRepository.findById(refundId)
+    return refundRepository
+        .findById(refundId)
         .orElseThrow(() -> new RefundException(ErrorCode.REFUND_NOT_FOUND));
   }
 
@@ -186,11 +176,7 @@ public class RefundService {
   }
 
   private Refund createRefundInternal(
-      String email,
-      Long paymentId,
-      BigDecimal refundAmount,
-      String refundReason
-  ) {
+      String email, Long paymentId, BigDecimal refundAmount, String refundReason) {
     Payment payment = getPayment(paymentId);
     Order order = orderFacadeService.findOrderForPayment(payment.getOrderId(), email);
 
@@ -203,11 +189,13 @@ public class RefundService {
   }
 
   private Refund completeRefundInternal(Long refundId, String email) {
-    Refund refund = transactionTemplate.execute(status -> {
-      Refund targetRefund = findRefund(refundId);
-      validateRefundOwnership(targetRefund, email);
-      return targetRefund;
-    });
+    Refund refund =
+        transactionTemplate.execute(
+            status -> {
+              Refund targetRefund = findRefund(refundId);
+              validateRefundOwnership(targetRefund, email);
+              return targetRefund;
+            });
 
     if (refund.getStatus() == RefundStatus.COMPLETED) {
       return refund;
@@ -218,10 +206,7 @@ public class RefundService {
 
     try {
       portOneClient.cancelPayment(
-          command.portOnePaymentId(),
-          command.refundAmount(),
-          command.refundReason()
-      );
+          command.portOnePaymentId(), command.refundAmount(), command.refundReason());
     } catch (PaymentException e) {
       refundCompletionWorker.revertRefundCompletion(command.refundId());
       throw new RefundException(ErrorCode.REFUND_PORTONE_API_ERROR, e.getMessage());

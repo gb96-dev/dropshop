@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 주문 이력 존재 여부 조회 서비스.
- */
+/** 주문 이력 존재 여부 조회 서비스. */
 @Service
 @RequiredArgsConstructor
 public class OrderHistoryQueryService {

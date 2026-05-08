@@ -11,9 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 결제 조회 서비스.
- */
+/** 결제 조회 서비스. */
 @Service
 @RequiredArgsConstructor
 public class PaymentQueryService {
@@ -31,8 +29,10 @@ public class PaymentQueryService {
    */
   @Transactional(readOnly = true)
   public Payment getPayment(Long paymentId, String email) {
-    Payment payment = paymentRepository.findById(paymentId)
-        .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
+    Payment payment =
+        paymentRepository
+            .findById(paymentId)
+            .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
     validateOrderOwnership(payment.getOrderId(), email);
     return payment;
   }

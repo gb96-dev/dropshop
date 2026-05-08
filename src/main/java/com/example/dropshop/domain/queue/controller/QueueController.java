@@ -12,9 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 대기열 컨트롤러.
- */
+/** 대기열 컨트롤러. */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/queues")
@@ -24,14 +22,13 @@ public class QueueController {
 
   /**
    * 대기열 여부 결정
+   *
    * @param dropId 드랍 아이디.
    * @param userEmail 유저 이메일.
    */
   @PostMapping
   public ResponseEntity<ApiResponse<ThreadHoldResponse>> decideQueue(
-      @RequestParam(name = "dropId") Long dropId,
-      @AuthenticationPrincipal String userEmail
-  ) {
+      @RequestParam(name = "dropId") Long dropId, @AuthenticationPrincipal String userEmail) {
     ThreadHoldResponse response = queueService.decideQueue(dropId, userEmail);
 
     return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(response));

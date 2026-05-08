@@ -45,14 +45,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class ProductQueryServiceTest {
 
-  @Mock
-  private ProductRepository productRepository;
+  @Mock private ProductRepository productRepository;
 
-  @Mock
-  private DropsFacadeService dropsFacadeService;
+  @Mock private DropsFacadeService dropsFacadeService;
 
-  @Mock
-  private UserFacadeService userFacadeService;
+  @Mock private UserFacadeService userFacadeService;
 
   private ProductQueryService productQueryService;
 
@@ -62,7 +59,8 @@ class ProductQueryServiceTest {
     constraints.setMaxImageCount(5);
     constraints.setPurchasableBlockHours(24);
     productQueryService =
-        new ProductQueryService(productRepository, dropsFacadeService, userFacadeService, constraints);
+        new ProductQueryService(
+            productRepository, dropsFacadeService, userFacadeService, constraints);
   }
 
   @Test
@@ -73,7 +71,9 @@ class ProductQueryServiceTest {
     Drops latestDrop = createDrop(product, dropStartAt);
     Page<Product> page = new PageImpl<Product>(List.of(product), PageRequest.of(0, 10), 1);
 
-    given(productRepository.findPublicProducts(anyCollection(), any(), any(LocalDateTime.class), any(Pageable.class)))
+    given(
+            productRepository.findPublicProducts(
+                anyCollection(), any(), any(LocalDateTime.class), any(Pageable.class)))
         .willReturn(page);
     given(dropsFacadeService.findLatestDropsByProductIds(List.of(11L)))
         .willReturn(Map.of(11L, latestDrop));
@@ -91,9 +91,9 @@ class ProductQueryServiceTest {
   @Test
   @DisplayName("공개 상품 목록 조회 시 status 값이 잘못되면 예외를 던진다")
   void findPublicProducts_invalidStatus_throwsException() {
-    assertThatThrownBy(() ->
-        productQueryService.findPublicProducts("WRONG_STATUS", null, PageRequest.of(0, 10))
-    )
+    assertThatThrownBy(
+            () ->
+                productQueryService.findPublicProducts("WRONG_STATUS", null, PageRequest.of(0, 10)))
         .isInstanceOf(ProductException.class)
         .hasMessageContaining("status는 READY, ON_SALE, OUT_OF_STOCK");
 
@@ -103,9 +103,8 @@ class ProductQueryServiceTest {
   @Test
   @DisplayName("공개 상품 목록에서 HIDDEN 상태는 조회할 수 없다")
   void findPublicProducts_hiddenStatus_throwsException() {
-    assertThatThrownBy(() ->
-        productQueryService.findPublicProducts("HIDDEN", null, PageRequest.of(0, 10))
-    )
+    assertThatThrownBy(
+            () -> productQueryService.findPublicProducts("HIDDEN", null, PageRequest.of(0, 10)))
         .isInstanceOf(ProductException.class)
         .hasMessageContaining("공개 목록에서는 READY, ON_SALE, OUT_OF_STOCK만 조회");
 
@@ -117,18 +116,16 @@ class ProductQueryServiceTest {
   void findPublicProducts_dropImminent_callsCustomQuery() {
     Page<Product> page = new PageImpl<Product>(List.of(), PageRequest.of(0, 10), 0);
 
-    given(productRepository.findPublicProducts(anyCollection(), any(), any(LocalDateTime.class),
-        any(Pageable.class))).willReturn(page);
+    given(
+            productRepository.findPublicProducts(
+                anyCollection(), any(), any(LocalDateTime.class), any(Pageable.class)))
+        .willReturn(page);
     given(dropsFacadeService.findLatestDropsByProductIds(List.of())).willReturn(Map.of());
 
     productQueryService.findPublicProducts("READY", "DROP_IMMINENT", PageRequest.of(0, 10));
 
-    verify(productRepository).findPublicProducts(
-        anyCollection(),
-        any(),
-        any(LocalDateTime.class),
-        any(Pageable.class)
-    );
+    verify(productRepository)
+        .findPublicProducts(anyCollection(), any(), any(LocalDateTime.class), any(Pageable.class));
     verify(productRepository, never()).findAllByStatusIn(anyCollection(), any(Pageable.class));
   }
 
@@ -184,33 +181,26 @@ class ProductQueryServiceTest {
   }
 
   private Product createProduct(Long id, ProductStatus status) {
-    Product product = Product.create(
-        1L,
-        "테스트 상품",
-        "SHOES",
-        BigDecimal.valueOf(100000),
-        10,
-        20,
-        "https://cdn.example.com/thumb.jpg",
-        "설명",
-        "스펙",
-        "배송 정책",
-        "환불 정책"
-    );
+    Product product =
+        Product.create(
+            1L,
+            "테스트 상품",
+            "SHOES",
+            BigDecimal.valueOf(100000),
+            10,
+            20,
+            "https://cdn.example.com/thumb.jpg",
+            "설명",
+            "스펙",
+            "배송 정책",
+            "환불 정책");
     ReflectionTestUtils.setField(product, "id", id);
     product.updateStatusByDrop(status);
     return product;
   }
 
   private Drops createDrop(Product product, LocalDateTime startAt) {
-    Drops drops = Drops.create(
-        product,
-        startAt,
-        startAt.plusDays(1),
-        30L,
-        1L,
-        true
-    );
+    Drops drops = Drops.create(product, startAt, startAt.plusDays(1), 30L, 1L, true);
     ReflectionTestUtils.setField(drops, "id", 900L);
     return drops;
   }

@@ -20,19 +20,20 @@ import org.springframework.stereotype.Component;
 public class NotificationKafkaConsumer {
 
   private static final String MSG_PAYMENT_SUCCESS = "결제가 완료되었습니다. 주문번호: %s";
-  private static final String MSG_PAYMENT_FAIL    = "결제에 실패했습니다. 주문번호: %s";
+  private static final String MSG_PAYMENT_FAIL = "결제에 실패했습니다. 주문번호: %s";
 
   private final NotificationService notificationService;
   private final OrderItemRepository orderItemRepository;
 
   @KafkaListener(
       topics = TOPIC_PAYMENT_COMPLETED,
-      groupId = "#{T(com.example.dropshop.common.constant.kafka.group.KafkaGroups).NOTIFICATION_PAYMENT_GROUP_NAME}",
-      containerFactory = "notificationPaymentKafkaListenerContainerFactory"
-  )
+      groupId =
+          "#{T(com.example.dropshop.common.constant.kafka.group.KafkaGroups).NOTIFICATION_PAYMENT_GROUP_NAME}",
+      containerFactory = "notificationPaymentKafkaListenerContainerFactory")
   public void handlePaymentCompleted(PaymentStatusChangedEvent event) {
     if (event.getPaymentStatus() != PaymentStatus.COMPLETED) {
-      log.warn("[NotificationConsumer] COMPLETED 아닌 이벤트 수신 - 스킵. status: {}", event.getPaymentStatus());
+      log.warn(
+          "[NotificationConsumer] COMPLETED 아닌 이벤트 수신 - 스킵. status: {}", event.getPaymentStatus());
       return;
     }
     Long userId = event.getBuyerUserId();
@@ -45,18 +46,18 @@ public class NotificationKafkaConsumer {
         userId,
         NotificationType.PURCHASE_SUCCESS,
         String.format(MSG_PAYMENT_SUCCESS, event.getMerchantPaymentId()),
-        resolveProductId(event.getOrderId())
-    );
+        resolveProductId(event.getOrderId()));
   }
 
   @KafkaListener(
       topics = TOPIC_PAYMENT_FAILED,
-      groupId = "#{T(com.example.dropshop.common.constant.kafka.group.KafkaGroups).NOTIFICATION_PAYMENT_GROUP_NAME}",
-      containerFactory = "notificationPaymentKafkaListenerContainerFactory"
-  )
+      groupId =
+          "#{T(com.example.dropshop.common.constant.kafka.group.KafkaGroups).NOTIFICATION_PAYMENT_GROUP_NAME}",
+      containerFactory = "notificationPaymentKafkaListenerContainerFactory")
   public void handlePaymentFailed(PaymentStatusChangedEvent event) {
     if (event.getPaymentStatus() != PaymentStatus.FAILED) {
-      log.warn("[NotificationConsumer] FAILED 아닌 이벤트 수신 - 스킵. status: {}", event.getPaymentStatus());
+      log.warn(
+          "[NotificationConsumer] FAILED 아닌 이벤트 수신 - 스킵. status: {}", event.getPaymentStatus());
       return;
     }
     Long userId = event.getBuyerUserId();
@@ -69,14 +70,14 @@ public class NotificationKafkaConsumer {
         userId,
         NotificationType.PURCHASE_FAIL,
         String.format(MSG_PAYMENT_FAIL, event.getMerchantPaymentId()),
-        resolveProductId(event.getOrderId())
-    );
+        resolveProductId(event.getOrderId()));
   }
 
   private Long resolveProductId(Long orderId) {
     if (orderId == null) return null;
     try {
-      return orderItemRepository.findFirstByOrder_IdOrderByIdAsc(orderId)
+      return orderItemRepository
+          .findFirstByOrder_IdOrderByIdAsc(orderId)
           .map(OrderItem::getProductId)
           .orElse(null);
     } catch (Exception e) {

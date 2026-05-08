@@ -19,9 +19,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 결제 엔티티.
- */
+/** 결제 엔티티. */
 @Entity
 @Table(name = "payments")
 @Getter
@@ -52,18 +50,11 @@ public class Payment extends BaseEntity {
   @Column(nullable = false)
   private PaymentStatus status;
 
-  @Column
-  private LocalDateTime paidAt;
+  @Column private LocalDateTime paidAt;
 
-  /**
-   * 결제 준비.
-   */
+  /** 결제 준비. */
   public static Payment prepare(
-      Long orderId,
-      String merchantPaymentId,
-      PaymentMethod paymentMethod,
-      BigDecimal amount
-  ) {
+      Long orderId, String merchantPaymentId, PaymentMethod paymentMethod, BigDecimal amount) {
     Payment payment = new Payment();
     payment.orderId = orderId;
     payment.merchantPaymentId = merchantPaymentId;
@@ -73,9 +64,7 @@ public class Payment extends BaseEntity {
     return payment;
   }
 
-  /**
-   * 결제 실패.
-   */
+  /** 결제 실패. */
   public void fail() {
     if (this.status != PaymentStatus.PENDING) {
       throw new PaymentException(ErrorCode.PAYMENT_FAIL_NOT_ALLOWED);
@@ -83,9 +72,7 @@ public class Payment extends BaseEntity {
     this.status = PaymentStatus.FAILED;
   }
 
-  /**
-   * 결제 완료.
-   */
+  /** 결제 완료. */
   public void complete(String portOneTransactionId) {
     if (this.status != PaymentStatus.PENDING) {
       throw new PaymentException(ErrorCode.PAYMENT_COMPLETE_NOT_ALLOWED);

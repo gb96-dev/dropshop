@@ -14,11 +14,12 @@ import org.springframework.stereotype.Service;
  * RAG 기반 상품 추천 서비스.
  *
  * <p>흐름:
+ *
  * <ol>
- *   <li>사용자 질의 → OpenAI 임베딩 변환</li>
- *   <li>Pinecone에서 유사 상품 검색 (RAG)</li>
- *   <li>검색된 상품 정보 → GPT에 컨텍스트로 전달</li>
- *   <li>GPT 추천 문구 → 사용자 반환</li>
+ *   <li>사용자 질의 → OpenAI 임베딩 변환
+ *   <li>Pinecone에서 유사 상품 검색 (RAG)
+ *   <li>검색된 상품 정보 → GPT에 컨텍스트로 전달
+ *   <li>GPT 추천 문구 → 사용자 반환
  * </ol>
  */
 @Slf4j
@@ -50,29 +51,33 @@ public class RecommendationService {
     }
 
     // 3. 검색된 상품 정보 추출
-    List<String> productInfos = matches.stream()
-        .map(match -> {
-          Map<String, Object> metadata = (Map<String, Object>) match.get("metadata");
-          if (metadata == null) return "";
-          return "- %s (%s): %s".formatted(
-              metadata.getOrDefault("name", ""),
-              metadata.getOrDefault("category", ""),
-              metadata.getOrDefault("description", "")
-          );
-        })
-        .filter(s -> !s.isEmpty())
-        .collect(Collectors.toList());
+    List<String> productInfos =
+        matches.stream()
+            .map(
+                match -> {
+                  Map<String, Object> metadata = (Map<String, Object>) match.get("metadata");
+                  if (metadata == null) return "";
+                  return "- %s (%s): %s"
+                      .formatted(
+                          metadata.getOrDefault("name", ""),
+                          metadata.getOrDefault("category", ""),
+                          metadata.getOrDefault("description", ""));
+                })
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.toList());
 
-    List<Long> productIds = matches.stream()
-        .map(match -> {
-          Map<String, Object> metadata = (Map<String, Object>) match.get("metadata");
-          if (metadata == null) return null;
-          Object id = metadata.get("productId");
-          if (id instanceof Number n) return n.longValue();
-          return null;
-        })
-        .filter(id -> id != null)
-        .collect(Collectors.toList());
+    List<Long> productIds =
+        matches.stream()
+            .map(
+                match -> {
+                  Map<String, Object> metadata = (Map<String, Object>) match.get("metadata");
+                  if (metadata == null) return null;
+                  Object id = metadata.get("productId");
+                  if (id instanceof Number n) return n.longValue();
+                  return null;
+                })
+            .filter(id -> id != null)
+            .collect(Collectors.toList());
 
     // 4. GPT 추천 문구 생성
     String recommendation = openAiClient.recommend(query, productInfos);

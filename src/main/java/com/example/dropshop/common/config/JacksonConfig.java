@@ -6,9 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * LocalDateTime 직렬화 설정.
- */
+/** LocalDateTime 직렬화 설정. */
 @Configuration
 public class JacksonConfig {
 

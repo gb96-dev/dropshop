@@ -4,9 +4,7 @@ import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.exception.ServiceException;
 import lombok.Getter;
 
-/**
- * Auth 도메인 예외.
- */
+/** Auth 도메인 예외. */
 @Getter
 public class AuthException extends ServiceException {
 

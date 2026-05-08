@@ -1,28 +1,28 @@
-//package com.example.dropshop.common.initializer;
+// package com.example.dropshop.common.initializer;
 //
-//import com.example.dropshop.domain.drops.entity.Drops;
-//import com.example.dropshop.domain.drops.repository.DropsRepository;
-//import com.example.dropshop.domain.product.entity.Product;
-//import com.example.dropshop.domain.product.repository.ProductRepository;
-//import com.example.dropshop.domain.queue.entity.Queue;
-//import com.example.dropshop.domain.queue.repository.QueueRepository;
-//import com.example.dropshop.domain.queue.repository.QueueTokenRepository;
-//import com.example.dropshop.domain.queue.service.QueueService;
-//import com.example.dropshop.domain.user.entity.User;
-//import com.example.dropshop.domain.user.repository.UserRepository;
-//import java.math.BigDecimal;
-//import java.time.LocalDateTime;
-//import java.util.concurrent.CountDownLatch;
-//import java.util.concurrent.ExecutorService;
-//import java.util.concurrent.Executors;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.boot.CommandLineRunner;
-//import org.springframework.security.crypto.password.PasswordEncoder;
-//import org.springframework.stereotype.Component;
+// import com.example.dropshop.domain.drops.entity.Drops;
+// import com.example.dropshop.domain.drops.repository.DropsRepository;
+// import com.example.dropshop.domain.product.entity.Product;
+// import com.example.dropshop.domain.product.repository.ProductRepository;
+// import com.example.dropshop.domain.queue.entity.Queue;
+// import com.example.dropshop.domain.queue.repository.QueueRepository;
+// import com.example.dropshop.domain.queue.repository.QueueTokenRepository;
+// import com.example.dropshop.domain.queue.service.QueueService;
+// import com.example.dropshop.domain.user.entity.User;
+// import com.example.dropshop.domain.user.repository.UserRepository;
+// import java.math.BigDecimal;
+// import java.time.LocalDateTime;
+// import java.util.concurrent.CountDownLatch;
+// import java.util.concurrent.ExecutorService;
+// import java.util.concurrent.Executors;
+// import lombok.RequiredArgsConstructor;
+// import org.springframework.boot.CommandLineRunner;
+// import org.springframework.security.crypto.password.PasswordEncoder;
+// import org.springframework.stereotype.Component;
 //
-//@Component
-//@RequiredArgsConstructor
-//public class DataInitializer implements CommandLineRunner {
+// @Component
+// @RequiredArgsConstructor
+// public class DataInitializer implements CommandLineRunner {
 //
 //  private final ProductRepository productRepository;
 //  private final DropsRepository dropsRepository;
@@ -113,4 +113,4 @@
 //////      queueRepository.save(queue);
 ////    }
 //  }
-//}
+// }

@@ -1,23 +1,21 @@
 package com.example.dropshop.common.config.kafka.consumer;
 
 import com.example.dropshop.domain.queue.dto.response.ThreadHoldResponse;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.util.Map;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 
-/**
- * Kafka value deserializer for {@link ThreadHoldResponse} JSON payloads.
- */
+/** Kafka value deserializer for {@link ThreadHoldResponse} JSON payloads. */
 public class ThreadHoldResponseKafkaDeserializer implements Deserializer<ThreadHoldResponse> {
 
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper()
-        .registerModule(new JavaTimeModule())
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+          .registerModule(new JavaTimeModule())
+          .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
   @Override
   public void configure(Map<String, ?> configs, boolean isKey) {
@@ -42,4 +40,3 @@ public class ThreadHoldResponseKafkaDeserializer implements Deserializer<ThreadH
     // no-op
   }
 }
-

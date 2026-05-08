@@ -11,9 +11,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import lombok.Getter;
 
-/**
- * 상품 등록 요청 DTO.
- */
+/** 상품 등록 요청 DTO. */
 @Getter
 public class ProductCreateRequest {
 
@@ -21,34 +19,24 @@ public class ProductCreateRequest {
   @Size(max = 100)
   private String name;
 
-  @NotNull
-  private BigDecimal price;
+  @NotNull private BigDecimal price;
 
-  @NotNull
-  private Integer discountRate;
+  @NotNull private Integer discountRate;
 
-  @NotNull
-  @Positive
-  private Integer stock;
+  @NotNull @Positive private Integer stock;
 
   @NotBlank
   @Size(max = 100)
   private String category;
 
-  @NotBlank
-  private String description;
+  @NotBlank private String description;
 
-  @NotBlank
-  private String specification;
+  @NotBlank private String specification;
 
-  /**
-   * 배송 안내. 입력하지 않으면 공통 기본 배송 정책이 적용된다.
-   */
+  /** 배송 안내. 입력하지 않으면 공통 기본 배송 정책이 적용된다. */
   private String deliveryInfo;
 
-  /**
-   * 환불 정책. 입력하지 않으면 공통 기본 환불 정책이 적용된다.
-   */
+  /** 환불 정책. 입력하지 않으면 공통 기본 환불 정책이 적용된다. */
   private String refundPolicy;
 
   @Valid
@@ -56,9 +44,7 @@ public class ProductCreateRequest {
   @Size(max = 5)
   private List<ImageRequest> images;
 
-  /**
-   * 상품 이미지 등록 요청 DTO.
-   */
+  /** 상품 이미지 등록 요청 DTO. */
   @Getter
   public static class ImageRequest {
 
@@ -70,7 +56,6 @@ public class ProductCreateRequest {
     @Min(1)
     private Integer sortOrder;
 
-    @NotNull
-    private Boolean isThumbnail;
+    @NotNull private Boolean isThumbnail;
   }
 }

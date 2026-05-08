@@ -4,9 +4,7 @@ import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.exception.ServiceException;
 import lombok.Getter;
 
-/**
- * 환불 도메인 예외.
- */
+/** 환불 도메인 예외. */
 @Getter
 public class RefundException extends ServiceException {
 

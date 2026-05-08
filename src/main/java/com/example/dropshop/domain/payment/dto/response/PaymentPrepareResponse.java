@@ -7,9 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
-/**
- * 결제 준비 응답.
- */
+/** 결제 준비 응답. */
 @Getter
 public class PaymentPrepareResponse {
 

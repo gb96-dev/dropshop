@@ -9,38 +9,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-/**
- * 주문 레포지토리.
- */
+/** 주문 레포지토리. */
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-  /**
-   * 주문 ID와 사용자 ID로 주문 조회.
-   */
+  /** 주문 ID와 사용자 ID로 주문 조회. */
   Optional<Order> findByIdAndUserId(Long id, Long userId);
 
-  /**
-   * 사용자 ID와 드롭 ID, 상태 목록으로 주문 존재 여부 확인.
-   */
-  boolean existsByUserIdAndDropIdAndStatusIn(
-      Long userId,
-      Long dropId,
-      List<OrderStatus> statuses
-  );
+  /** 사용자 ID와 드롭 ID, 상태 목록으로 주문 존재 여부 확인. */
+  boolean existsByUserIdAndDropIdAndStatusIn(Long userId, Long dropId, List<OrderStatus> statuses);
 
-  /**
-   * 드랍 기준 주문 존재 여부 확인.
-   */
+  /** 드랍 기준 주문 존재 여부 확인. */
   boolean existsByDropId(Long dropId);
 
-  /**
-   * 만료된 주문 목록 조회.
-   */
+  /** 만료된 주문 목록 조회. */
   List<Order> findAllByStatusAndHoldExpiredAtBefore(OrderStatus status, LocalDateTime now);
 
-  /**
-   * 사용자 주문 목록 페이지 조회.
-   */
+  /** 사용자 주문 목록 페이지 조회. */
   Page<Order> findAllByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
-
 }

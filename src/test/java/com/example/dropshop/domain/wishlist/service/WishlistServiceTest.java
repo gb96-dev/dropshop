@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.doubleThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.BDDMockito.given;
@@ -26,7 +25,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -39,17 +37,13 @@ import org.springframework.data.redis.core.ZSetOperations;
 @ExtendWith(MockitoExtension.class)
 class WishlistServiceTest {
 
-  @Mock
-  private RedisTemplate<String, Long> redisTemplate;
+  @Mock private RedisTemplate<String, Long> redisTemplate;
 
-  @Mock
-  private ZSetOperations<String, Long> zSetOperations;
+  @Mock private ZSetOperations<String, Long> zSetOperations;
 
-  @Mock
-  private WishlistRepository wishlistRepository;
+  @Mock private WishlistRepository wishlistRepository;
 
-  @InjectMocks
-  private WishlistService wishlistService;
+  @InjectMocks private WishlistService wishlistService;
 
   private static final Long USER_ID = 1L;
   private static final Long DROP_ID = 1L;
@@ -62,12 +56,10 @@ class WishlistServiceTest {
     // given
     WishlistRequest request = new WishlistRequest(DROP_ID);
 
-    given(wishlistRepository.existsByUserIdAndDropId(USER_ID, DROP_ID))
-        .willReturn(false);
+    given(wishlistRepository.existsByUserIdAndDropId(USER_ID, DROP_ID)).willReturn(false);
 
     Wishlist saved = new Wishlist(USER_ID, DROP_ID);
-    given(wishlistRepository.saveAndFlush(any()))
-        .willReturn(saved);
+    given(wishlistRepository.saveAndFlush(any())).willReturn(saved);
 
     when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
@@ -77,8 +69,7 @@ class WishlistServiceTest {
     // then
     verify(wishlistRepository, times(1)).saveAndFlush(any());
 
-    verify(zSetOperations, times(1))
-        .add(startsWith(WISHLIST_USER_KEY), eq(DROP_ID), anyDouble());
+    verify(zSetOperations, times(1)).add(startsWith(WISHLIST_USER_KEY), eq(DROP_ID), anyDouble());
   }
 
   @Test
@@ -86,8 +77,7 @@ class WishlistServiceTest {
     // given
     WishlistRequest request = new WishlistRequest(DROP_ID);
 
-    given(wishlistRepository.existsByUserIdAndDropId(USER_ID, DROP_ID))
-        .willReturn(true);
+    given(wishlistRepository.existsByUserIdAndDropId(USER_ID, DROP_ID)).willReturn(true);
 
     // when && then
     assertThatThrownBy(() -> wishlistService.create(USER_ID, request))
@@ -102,8 +92,7 @@ class WishlistServiceTest {
     // given
     WishlistRequest request = new WishlistRequest(DROP_ID);
 
-    given(wishlistRepository.existsByDropId(DROP_ID))
-        .willReturn(true);
+    given(wishlistRepository.existsByDropId(DROP_ID)).willReturn(true);
 
     when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
@@ -111,11 +100,9 @@ class WishlistServiceTest {
     wishlistService.cancel(USER_ID, request);
 
     // then
-    verify(wishlistRepository, times(1))
-        .deleteByUserIdAndDropId(USER_ID, DROP_ID);
+    verify(wishlistRepository, times(1)).deleteByUserIdAndDropId(USER_ID, DROP_ID);
 
-    verify(zSetOperations, times(1))
-        .remove(anyString(), eq(DROP_ID));
+    verify(zSetOperations, times(1)).remove(anyString(), eq(DROP_ID));
   }
 
   @Test
@@ -123,8 +110,7 @@ class WishlistServiceTest {
     // given
     WishlistRequest request = new WishlistRequest(1L);
 
-    given(wishlistRepository.existsByDropId(1L))
-        .willReturn(false);
+    given(wishlistRepository.existsByDropId(1L)).willReturn(false);
 
     // when && then
     assertThatThrownBy(() -> wishlistService.cancel(USER_ID, request))
@@ -139,12 +125,10 @@ class WishlistServiceTest {
     // given
     WishlistRequest request = new WishlistRequest(DROP_ID2);
 
-    given(wishlistRepository.existsByUserIdAndDropId(USER_ID, DROP_ID2))
-        .willReturn(false);
+    given(wishlistRepository.existsByUserIdAndDropId(USER_ID, DROP_ID2)).willReturn(false);
 
     Wishlist saved = new Wishlist(USER_ID, DROP_ID2);
-    given(wishlistRepository.saveAndFlush(any(Wishlist.class)))
-        .willReturn(saved);
+    given(wishlistRepository.saveAndFlush(any(Wishlist.class))).willReturn(saved);
 
     when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
@@ -190,11 +174,7 @@ class WishlistServiceTest {
     assertThat(response.getDropId()).isEqualTo(DROP_ID);
 
     assertThat(response.getCreatedAt())
-        .isEqualTo(
-            Instant.ofEpochMilli(now)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime()
-        );
+        .isEqualTo(Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).toLocalDateTime());
 
     verify(zSetOperations, times(1))
         .reverseRangeWithScores(eq(key), eq(0L), eq((long) VIEW_SIZE - 1));

@@ -6,28 +6,24 @@ import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.exception.DropsException;
 import com.example.dropshop.domain.product.entity.Product;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-/**
- * 드랍 엔티티.
- */
+/** 드랍 엔티티. */
 @Getter
 @Entity
 @Table(
     name = "drops",
     indexes = {
-        @Index(name = "idx_drops_product_id", columnList = "product_id"),
-        @Index(name = "idx_drops_product_created_at", columnList = "product_id, created_at"),
-        @Index(name = "idx_drops_status_start_at", columnList = "status, start_at"),
-        @Index(name = "idx_drops_status_end_at", columnList = "status, end_at"),
-        @Index(name = "idx_drops_status_remain_stock", columnList = "status, remain_stock")
-    }
-)
+      @Index(name = "idx_drops_product_id", columnList = "product_id"),
+      @Index(name = "idx_drops_product_created_at", columnList = "product_id, created_at"),
+      @Index(name = "idx_drops_status_start_at", columnList = "status, start_at"),
+      @Index(name = "idx_drops_status_end_at", columnList = "status, end_at"),
+      @Index(name = "idx_drops_status_remain_stock", columnList = "status, remain_stock")
+    })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Drops extends BaseEntity {
 
@@ -64,8 +60,7 @@ public class Drops extends BaseEntity {
   @Column(name = "view_count", nullable = false)
   private Long viewCount;
 
-  @Version
-  private Long version;
+  @Version private Long version;
 
   @Builder(access = AccessLevel.PRIVATE)
   private Drops(
@@ -75,8 +70,7 @@ public class Drops extends BaseEntity {
       Long totalStock,
       Long remainStock,
       Long purchaseLimit,
-      boolean useQueue
-  ) {
+      boolean useQueue) {
     this.product = product;
     this.startAt = startAt;
     this.endAt = endAt;
@@ -92,17 +86,14 @@ public class Drops extends BaseEntity {
     validatePurchaseLimit(purchaseLimit);
   }
 
-  /**
-   * 도메인 규칙을 검증하여 드랍을 생성한다.
-   */
+  /** 도메인 규칙을 검증하여 드랍을 생성한다. */
   public static Drops create(
       Product product,
       LocalDateTime startAt,
       LocalDateTime endAt,
       Long totalStock,
       Long purchaseLimit,
-      boolean useQueue
-  ) {
+      boolean useQueue) {
     return Drops.builder()
         .product(product)
         .startAt(startAt)
@@ -114,31 +105,24 @@ public class Drops extends BaseEntity {
         .build();
   }
 
-  /**
-   * 드랍 상태를 진행 중으로 변경한다.
-   */
+  /** 드랍 상태를 진행 중으로 변경한다. */
   public void activate() {
     this.status = DropsStatus.ACTIVE;
   }
 
-  /**
-   * 드랍 상태를 종료로 변경한다.
-   */
+  /** 드랍 상태를 종료로 변경한다. */
   public void finish() {
     this.status = DropsStatus.FINISHED;
   }
 
-  /**
-   * 드랍 정보를 수정한다.
-   */
+  /** 드랍 정보를 수정한다. */
   public void update(
       LocalDateTime startAt,
       LocalDateTime endAt,
       Long totalStock,
       Long remainStock,
       Long purchaseLimit,
-      boolean useQueue
-  ) {
+      boolean useQueue) {
     validateDateRange(startAt, endAt);
     validateStock(totalStock, remainStock);
     validatePurchaseLimit(purchaseLimit);
@@ -151,30 +135,22 @@ public class Drops extends BaseEntity {
     this.useQueue = useQueue;
   }
 
-  /**
-   * 예정 상태 여부를 반환한다.
-   */
+  /** 예정 상태 여부를 반환한다. */
   public boolean isScheduled() {
     return this.status == DropsStatus.SCHEDULED;
   }
 
-  /**
-   * 진행 상태 여부를 반환한다.
-   */
+  /** 진행 상태 여부를 반환한다. */
   public boolean isActive() {
     return this.status == DropsStatus.ACTIVE;
   }
 
-  /**
-   * 종료 상태 여부를 반환한다.
-   */
+  /** 종료 상태 여부를 반환한다. */
   public boolean isFinished() {
     return this.status == DropsStatus.FINISHED;
   }
 
-  /**
-   * 잔여 재고를 차감한다.
-   */
+  /** 잔여 재고를 차감한다. */
   public void decrementRemainStock(long quantity) {
     if (this.remainStock < quantity) {
       throw new DropsException(ErrorCode.INVALID_DROP_REMAIN_STOCK);
@@ -182,9 +158,7 @@ public class Drops extends BaseEntity {
     this.remainStock -= quantity;
   }
 
-  /**
-   * 잔여 재고를 복구한다.
-   */
+  /** 잔여 재고를 복구한다. */
   public void restoreRemainStock(long quantity) {
     this.remainStock += quantity;
     if (this.remainStock > this.totalStock) {
@@ -192,9 +166,7 @@ public class Drops extends BaseEntity {
     }
   }
 
-  /**
-   * 조회수를 1 증가시킨다.
-   */
+  /** 조회수를 1 증가시킨다. */
   public void increaseViewCount() {
     this.viewCount += 1;
   }
@@ -220,9 +192,7 @@ public class Drops extends BaseEntity {
     }
   }
 
-  /**
-   * 남은 재고를 차감한다.
-   */
+  /** 남은 재고를 차감한다. */
   public void removeRemainStock(int quantity) {
     // [추가] 수량이 0 이하인 비정상적인 요청 차단
     if (quantity <= 0) {

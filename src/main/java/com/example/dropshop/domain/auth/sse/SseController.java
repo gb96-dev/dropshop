@@ -11,10 +11,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 /**
  * SSE 구독 엔드포인트.
  *
- * <p>클라이언트는 로그인 직후 GET /api/sse/subscribe 를 호출해
- * 서버로부터 실시간 이벤트(force-logout 등)를 수신할 수 있다.
+ * <p>클라이언트는 로그인 직후 GET /api/sse/subscribe 를 호출해 서버로부터 실시간 이벤트(force-logout 등)를 수신할 수 있다.
  *
  * <p>프론트엔드 사용 예시:
+ *
  * <pre>
  *   const es = new EventSource('/api/sse/subscribe');
  *   es.addEventListener('force-logout', () => {
@@ -28,16 +28,16 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequiredArgsConstructor
 public class SseController {
 
-    private final SseEmitterService sseEmitterService;
+  private final SseEmitterService sseEmitterService;
 
-    /**
-     * SSE 구독. Spring Security가 설정한 인증 정보에서 이메일을 추출한다.
-     *
-     * @param principal JWT 인증된 사용자 정보
-     * @return SseEmitter (text/event-stream)
-     */
-    @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(Principal principal) {
-        return sseEmitterService.subscribe(principal.getName());
-    }
+  /**
+   * SSE 구독. Spring Security가 설정한 인증 정보에서 이메일을 추출한다.
+   *
+   * @param principal JWT 인증된 사용자 정보
+   * @return SseEmitter (text/event-stream)
+   */
+  @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+  public SseEmitter subscribe(Principal principal) {
+    return sseEmitterService.subscribe(principal.getName());
+  }
 }

@@ -5,9 +5,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 드랍 응답 DTO.
- */
+/** 드랍 응답 DTO. */
 @Getter
 @Builder
 public class DropResponse {
@@ -25,16 +23,12 @@ public class DropResponse {
   private final LocalDateTime createdAt;
   private final LocalDateTime modifiedAt;
 
-  /**
-   * 드랍 엔티티를 응답 DTO로 변환한다.
-   */
+  /** 드랍 엔티티를 응답 DTO로 변환한다. */
   public static DropResponse from(Drops drops) {
     return from(drops, drops.getViewCount());
   }
 
-  /**
-   * 드랍 엔티티를 응답 DTO로 변환한다.
-   */
+  /** 드랍 엔티티를 응답 DTO로 변환한다. */
   public static DropResponse from(Drops drops, Long viewCount) {
     return DropResponse.builder()
         .dropId(drops.getId())
@@ -52,4 +46,3 @@ public class DropResponse {
         .build();
   }
 }
-

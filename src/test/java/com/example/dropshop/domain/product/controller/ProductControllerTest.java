@@ -12,10 +12,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.dropshop.common.exception.ErrorCode;
-import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.common.exception.ServiceException;
 import com.example.dropshop.common.security.SellerAuthContext;
 import com.example.dropshop.common.security.SellerAuthResolver;
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.domain.product.dto.request.ProductCreateRequest;
 import com.example.dropshop.domain.product.dto.response.ProductCreateResponse;
 import com.example.dropshop.domain.product.service.ProductFacadeService;
@@ -32,48 +32,43 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(ProductController.class)
 class ProductControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-  @MockitoBean
-  private JpaMetamodelMappingContext jpaMetamodelMappingContext;
+  @MockitoBean private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
-  @MockitoBean
-  private ProductFacadeService productFacadeService;
+  @MockitoBean private ProductFacadeService productFacadeService;
 
-  @MockitoBean
-  private SellerAuthResolver sellerAuthResolver;
+  @MockitoBean private SellerAuthResolver sellerAuthResolver;
 
-  @MockitoBean
-  private TokenBlacklistService tokenBlacklistService;
+  @MockitoBean private TokenBlacklistService tokenBlacklistService;
 
   @Test
   @DisplayName("상품 등록 성공 - @AuthenticationPrincipal email 사용")
   void createProduct_success() throws Exception {
     SellerAuthContext sellerAuth = new SellerAuthContext(1L, true, true);
-    ProductCreateResponse response = ProductCreateResponse.builder()
-        .productId(42L)
-        .name("한정판 스니커즈")
-        .price(BigDecimal.valueOf(250000))
-        .discountRate(10)
-        .discountAmount(BigDecimal.valueOf(25000))
-        .salePrice(BigDecimal.valueOf(225000))
-        .stock(100)
-        .category("SHOES")
-        .status("HIDDEN")
-        .thumbnailUrl("https://cdn.example.com/img1.jpg")
-        .createdAt(LocalDateTime.of(2026, 4, 10, 10, 0, 0))
-        .build();
+    ProductCreateResponse response =
+        ProductCreateResponse.builder()
+            .productId(42L)
+            .name("한정판 스니커즈")
+            .price(BigDecimal.valueOf(250000))
+            .discountRate(10)
+            .discountAmount(BigDecimal.valueOf(25000))
+            .salePrice(BigDecimal.valueOf(225000))
+            .stock(100)
+            .category("SHOES")
+            .status("HIDDEN")
+            .thumbnailUrl("https://cdn.example.com/img1.jpg")
+            .createdAt(LocalDateTime.of(2026, 4, 10, 10, 0, 0))
+            .build();
 
     given(sellerAuthResolver.resolve(any())).willReturn(sellerAuth);
-    given(productFacadeService.createSellerProduct(
-        eq(1L),
-        eq(true),
-        eq(true),
-        any(ProductCreateRequest.class)
-    )).willReturn(response);
+    given(
+            productFacadeService.createSellerProduct(
+                eq(1L), eq(true), eq(true), any(ProductCreateRequest.class)))
+        .willReturn(response);
 
-    String request = """
+    String request =
+        """
         {
           "name": "한정판 스니커즈",
           "price": 250000,
@@ -92,10 +87,12 @@ class ProductControllerTest {
         }
         """;
 
-    mockMvc.perform(post("/api/sellers/products")
-            .with(csrf())
-            .contentType(APPLICATION_JSON)
-            .content(request))
+    mockMvc
+        .perform(
+            post("/api/sellers/products")
+                .with(csrf())
+                .contentType(APPLICATION_JSON)
+                .content(request))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.code").value(201))
@@ -113,7 +110,8 @@ class ProductControllerTest {
   @Test
   @DisplayName("상품 등록 실패 - 유효성 검증 실패 시 400")
   void createProduct_validationFail() throws Exception {
-    String invalidRequest = """
+    String invalidRequest =
+        """
         {
           "name": "",
           "price": 250000,
@@ -126,10 +124,12 @@ class ProductControllerTest {
         }
         """;
 
-    mockMvc.perform(post("/api/sellers/products")
-            .with(csrf())
-            .contentType(APPLICATION_JSON)
-            .content(invalidRequest))
+    mockMvc
+        .perform(
+            post("/api/sellers/products")
+                .with(csrf())
+                .contentType(APPLICATION_JSON)
+                .content(invalidRequest))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
         .andExpect(jsonPath("$.code").value(400))
@@ -144,7 +144,8 @@ class ProductControllerTest {
     given(sellerAuthResolver.resolve(any()))
         .willThrow(new ServiceException(ErrorCode.SELLER_ROLE_REQUIRED));
 
-    String request = """
+    String request =
+        """
         {
           "name": "한정판 스니커즈",
           "price": 250000,
@@ -157,10 +158,12 @@ class ProductControllerTest {
         }
         """;
 
-    mockMvc.perform(post("/api/sellers/products")
-            .with(csrf())
-            .contentType(APPLICATION_JSON)
-            .content(request))
+    mockMvc
+        .perform(
+            post("/api/sellers/products")
+                .with(csrf())
+                .contentType(APPLICATION_JSON)
+                .content(request))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.errorCode").value(403));
 
@@ -172,14 +175,13 @@ class ProductControllerTest {
   void createProduct_serviceException() throws Exception {
     SellerAuthContext sellerAuth = new SellerAuthContext(1L, true, true);
     given(sellerAuthResolver.resolve(any())).willReturn(sellerAuth);
-    given(productFacadeService.createSellerProduct(
-        eq(1L),
-        eq(true),
-        eq(true),
-        any(ProductCreateRequest.class)
-    )).willThrow(new ServiceException(ErrorCode.SELLER_NOT_APPROVED));
+    given(
+            productFacadeService.createSellerProduct(
+                eq(1L), eq(true), eq(true), any(ProductCreateRequest.class)))
+        .willThrow(new ServiceException(ErrorCode.SELLER_NOT_APPROVED));
 
-    String request = """
+    String request =
+        """
         {
           "name": "한정판 스니커즈",
           "price": 250000,
@@ -192,10 +194,12 @@ class ProductControllerTest {
         }
         """;
 
-    mockMvc.perform(post("/api/sellers/products")
-            .with(csrf())
-            .contentType(APPLICATION_JSON)
-            .content(request))
+    mockMvc
+        .perform(
+            post("/api/sellers/products")
+                .with(csrf())
+                .contentType(APPLICATION_JSON)
+                .content(request))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.errorCode").value(403))
         .andExpect(jsonPath("$.message").value(ErrorCode.SELLER_NOT_APPROVED.getMessage()));
@@ -203,6 +207,3 @@ class ProductControllerTest {
     verify(productFacadeService).createSellerProduct(eq(1L), eq(true), eq(true), any());
   }
 }
-
-
-

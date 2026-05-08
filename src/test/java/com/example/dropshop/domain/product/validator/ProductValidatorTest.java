@@ -73,4 +73,3 @@ class ProductValidatorTest {
     return request;
   }
 }
-

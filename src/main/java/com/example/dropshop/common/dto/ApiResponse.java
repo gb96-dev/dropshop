@@ -9,9 +9,7 @@ import lombok.Getter;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 
-/**
- * 공통 API 응답.
- */
+/** 공통 API 응답. */
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -49,9 +47,7 @@ public class ApiResponse<T> {
     return new ApiResponse<>(true, 200, PageResponse.of(page));
   }
 
-  /**
-   * 페이지 응답.
-   */
+  /** 페이지 응답. */
   @Getter
   @AllArgsConstructor(access = AccessLevel.PRIVATE)
   public static class PageResponse<T> {
@@ -60,24 +56,12 @@ public class ApiResponse<T> {
     private final PageInfo pageInfo;
 
     public static <T> PageResponse<T> of(Page<T> page) {
-      return new PageResponse<>(
-          page.getContent(),
-          PageInfo.of(page)
-      );
+      return new PageResponse<>(page.getContent(), PageInfo.of(page));
     }
   }
 
-  /**
-   * 페이지 정보.
-   */
-  @JsonPropertyOrder({
-      "page",
-      "size",
-      "totalElements",
-      "totalPages",
-      "isFirst",
-      "isLast"
-  })
+  /** 페이지 정보. */
+  @JsonPropertyOrder({"page", "size", "totalElements", "totalPages", "isFirst", "isLast"})
   @AllArgsConstructor(access = AccessLevel.PRIVATE)
   public static class PageInfo {
 
@@ -95,8 +79,7 @@ public class ApiResponse<T> {
           page.getTotalElements(),
           page.getTotalPages(),
           page.isFirst(),
-          page.isLast()
-      );
+          page.isLast());
     }
 
     public int getPage() {

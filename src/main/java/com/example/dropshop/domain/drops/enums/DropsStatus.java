@@ -3,9 +3,7 @@ package com.example.dropshop.domain.drops.enums;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/**
- * 드랍 진행 상태.
- */
+/** 드랍 진행 상태. */
 @Getter
 @RequiredArgsConstructor
 public enum DropsStatus {

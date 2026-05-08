@@ -14,18 +14,16 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class SellerController {
 
-    private final SellerService sellerService;
+  private final SellerService sellerService;
 
-    @PostMapping("/apply")
-    public ResponseEntity<SellerResponse> applySeller(
-            @AuthenticationPrincipal String email,
-            @Valid @RequestBody SellerApplyRequest request) {
-        return ResponseEntity.ok(sellerService.applySeller(email, request));
-    }
+  @PostMapping("/apply")
+  public ResponseEntity<SellerResponse> applySeller(
+      @AuthenticationPrincipal String email, @Valid @RequestBody SellerApplyRequest request) {
+    return ResponseEntity.ok(sellerService.applySeller(email, request));
+  }
 
-    @GetMapping("/me/status")
-    public ResponseEntity<SellerResponse> getMyStatus(
-            @AuthenticationPrincipal String email) {
-        return ResponseEntity.ok(sellerService.getMySellerStatus(email));
-    }
+  @GetMapping("/me/status")
+  public ResponseEntity<SellerResponse> getMyStatus(@AuthenticationPrincipal String email) {
+    return ResponseEntity.ok(sellerService.getMySellerStatus(email));
+  }
 }

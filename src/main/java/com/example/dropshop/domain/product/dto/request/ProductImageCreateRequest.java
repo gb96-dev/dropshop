@@ -6,9 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 
-/**
- * 상품 이미지 추가 요청 DTO.
- */
+/** 상품 이미지 추가 요청 DTO. */
 @Getter
 public class ProductImageCreateRequest {
 
@@ -20,6 +18,5 @@ public class ProductImageCreateRequest {
   @Min(1)
   private Integer sortOrder;
 
-  @NotNull
-  private Boolean isThumbnail;
+  @NotNull private Boolean isThumbnail;
 }

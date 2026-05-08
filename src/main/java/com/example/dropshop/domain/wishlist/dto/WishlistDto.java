@@ -5,9 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 찜
- */
+/** 찜 */
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

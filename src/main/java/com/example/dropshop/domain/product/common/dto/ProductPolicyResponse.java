@@ -6,9 +6,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 상품 공통 정책 응답 DTO
- */
+/** 상품 공통 정책 응답 DTO */
 @Getter
 @Builder
 public class ProductPolicyResponse {
@@ -25,9 +23,7 @@ public class ProductPolicyResponse {
   @JsonProperty("modifiedAt")
   private LocalDateTime modifiedAt;
 
-  /**
-   * ProductPolicy 엔티티를 DTO로 변환한다.
-   */
+  /** ProductPolicy 엔티티를 DTO로 변환한다. */
   public static ProductPolicyResponse from(ProductPolicy policy) {
     return ProductPolicyResponse.builder()
         .id(policy.getId())
@@ -37,4 +33,3 @@ public class ProductPolicyResponse {
         .build();
   }
 }
-

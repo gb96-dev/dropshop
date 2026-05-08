@@ -32,17 +32,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class RefundCompletionWorkerTest {
 
-  @Mock
-  private RefundRepository refundRepository;
+  @Mock private RefundRepository refundRepository;
 
-  @Mock
-  private PaymentRepository paymentRepository;
+  @Mock private PaymentRepository paymentRepository;
 
-  @Mock
-  private OrderFacadeService orderFacadeService;
+  @Mock private OrderFacadeService orderFacadeService;
 
-  @InjectMocks
-  private RefundCompletionWorker refundCompletionWorker;
+  @InjectMocks private RefundCompletionWorker refundCompletionWorker;
 
   private Refund refund;
   private Payment payment;
@@ -60,14 +56,14 @@ class RefundCompletionWorkerTest {
 
     order = Order.create(1L, 10L);
     ReflectionTestUtils.setField(order, "id", 1L);
-    order.addOrderItem(OrderItem.create(
-        order,
-        100L,
-        new BigDecimal("100000"),
-        new BigDecimal("79000"),
-        new BigDecimal("21000"),
-        "https://dummy-image"
-    ));
+    order.addOrderItem(
+        OrderItem.create(
+            order,
+            100L,
+            new BigDecimal("100000"),
+            new BigDecimal("79000"),
+            new BigDecimal("21000"),
+            "https://dummy-image"));
     order.pay();
   }
 
@@ -110,10 +106,12 @@ class RefundCompletionWorkerTest {
 
     given(refundRepository.findById(1L)).willReturn(Optional.of(refund));
     given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
-    given(orderFacadeService.refundOrderByRefund(order)).willAnswer(invocation -> {
-      order.refund();
-      return order;
-    });
+    given(orderFacadeService.refundOrderByRefund(order))
+        .willAnswer(
+            invocation -> {
+              order.refund();
+              return order;
+            });
 
     Refund result = refundCompletionWorker.finalizeRefundCompletion(1L, 1L);
 

@@ -12,9 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 상품 추천 컨트롤러.
- */
+/** 상품 추천 컨트롤러. */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/recommendations")

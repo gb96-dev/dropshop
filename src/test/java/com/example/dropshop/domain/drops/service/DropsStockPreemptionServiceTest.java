@@ -39,38 +39,41 @@ class DropsStockPreemptionServiceTest {
   private static final Long DROP_ID = 1L;
   private static final Long REMAIN_STOCK = 10L;
 
-  @Mock
-  private StringRedisTemplate stringRedisTemplate;
+  @Mock private StringRedisTemplate stringRedisTemplate;
 
-  @Mock
-  private DropsService dropsService;
+  @Mock private DropsService dropsService;
 
-  @Mock
-  private ValueOperations<String, String> valueOperations;
+  @Mock private ValueOperations<String, String> valueOperations;
 
-  @InjectMocks
-  private DropsStockPreemptionService dropsStockPreemptionService;
+  @InjectMocks private DropsStockPreemptionService dropsStockPreemptionService;
 
   private Drops drops;
 
   @BeforeEach
   void setUp() {
-    Product product = Product.create(
-        1L, "한정판 스니커즈", "SHOES",
-        new BigDecimal("250000"), 10, 100,
-        "https://cdn.example.com/thumb.jpg",
-        "<p>설명</p>", "사이즈: 255", "배송 안내", "환불 정책"
-    );
+    Product product =
+        Product.create(
+            1L,
+            "한정판 스니커즈",
+            "SHOES",
+            new BigDecimal("250000"),
+            10,
+            100,
+            "https://cdn.example.com/thumb.jpg",
+            "<p>설명</p>",
+            "사이즈: 255",
+            "배송 안내",
+            "환불 정책");
     ReflectionTestUtils.setField(product, "id", 1L);
 
-    drops = Drops.create(
-        product,
-        LocalDateTime.now().minusHours(1),
-        LocalDateTime.now().plusHours(1),
-        REMAIN_STOCK,
-        1L,
-        true
-    );
+    drops =
+        Drops.create(
+            product,
+            LocalDateTime.now().minusHours(1),
+            LocalDateTime.now().plusHours(1),
+            REMAIN_STOCK,
+            1L,
+            true);
     ReflectionTestUtils.setField(drops, "id", DROP_ID);
     ReflectionTestUtils.setField(drops, "status", DropsStatus.ACTIVE);
   }
@@ -199,16 +202,15 @@ class DropsStockPreemptionServiceTest {
         .willReturn(0L);
     given(dropsService.findById(DROP_ID)).willReturn(drops);
     given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-    given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
+    given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class)))
+        .willReturn(true);
 
     dropsStockPreemptionService.increaseStockAfterRestore(DROP_ID, 1);
 
     verify(dropsService).findById(DROP_ID);
-    verify(valueOperations).setIfAbsent(
-        eq("stock:drop:" + DROP_ID),
-        eq(String.valueOf(REMAIN_STOCK)),
-        any(Duration.class)
-    );
+    verify(valueOperations)
+        .setIfAbsent(
+            eq("stock:drop:" + DROP_ID), eq(String.valueOf(REMAIN_STOCK)), any(Duration.class));
   }
 
   @Test
@@ -216,14 +218,13 @@ class DropsStockPreemptionServiceTest {
   void preloadStockKey_usesSetIfAbsent() {
     given(dropsService.findById(DROP_ID)).willReturn(drops);
     given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-    given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
+    given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class)))
+        .willReturn(true);
 
     dropsStockPreemptionService.preloadStockKey(DROP_ID);
 
-    verify(valueOperations).setIfAbsent(
-        eq("stock:drop:" + DROP_ID),
-        eq(String.valueOf(REMAIN_STOCK)),
-        any(Duration.class)
-    );
+    verify(valueOperations)
+        .setIfAbsent(
+            eq("stock:drop:" + DROP_ID), eq(String.valueOf(REMAIN_STOCK)), any(Duration.class));
   }
 }

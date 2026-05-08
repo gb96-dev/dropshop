@@ -17,34 +17,26 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
-@EmbeddedKafka(partitions = 1, topics = {"test-topic"})
+@EmbeddedKafka(
+    partitions = 1,
+    topics = {"test-topic"})
 @Transactional
 class ProductPolicyServiceIntegrationTest {
 
-  @Autowired
-  private ProductPolicyService policyService;
+  @Autowired private ProductPolicyService policyService;
 
-  @Autowired
-  private ProductPolicyRepository policyRepository;
+  @Autowired private ProductPolicyRepository policyRepository;
 
-  @MockitoBean
-  private StringRedisTemplate stringRedisTemplate;
+  @MockitoBean private StringRedisTemplate stringRedisTemplate;
 
-  @MockitoBean
-  private TokenBlacklistService tokenBlacklistService;
+  @MockitoBean private TokenBlacklistService tokenBlacklistService;
 
   @BeforeEach
   void setUp() {
     policyRepository.deleteAll();
 
-    policyRepository.save(ProductPolicy.create(
-        ProductPolicyType.DELIVERY,
-        "기본 배송 정책"
-    ));
-    policyRepository.save(ProductPolicy.create(
-        ProductPolicyType.REFUND,
-        "기본 환불 정책"
-    ));
+    policyRepository.save(ProductPolicy.create(ProductPolicyType.DELIVERY, "기본 배송 정책"));
+    policyRepository.save(ProductPolicy.create(ProductPolicyType.REFUND, "기본 환불 정책"));
   }
 
   @Test

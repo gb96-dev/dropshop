@@ -23,9 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 주문 컨트롤러.
- */
+/** 주문 컨트롤러. */
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -42,15 +40,11 @@ public class OrderController {
    */
   @PostMapping
   public ResponseEntity<ApiResponse<OrderCreateResponse>> createOrder(
-      @AuthenticationPrincipal String email,
-      @RequestBody @Valid OrderCreateRequest request) {
+      @AuthenticationPrincipal String email, @RequestBody @Valid OrderCreateRequest request) {
 
-    OrderCreateResponse response =
-        orderFacadeService.createOrder(email, request);
+    OrderCreateResponse response = orderFacadeService.createOrder(email, request);
 
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(ApiResponse.created(response));
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
   }
 
   /**
@@ -62,11 +56,8 @@ public class OrderController {
    */
   @GetMapping("/{orderId}")
   public ResponseEntity<ApiResponse<OrderDetailResponse>> findOrderById(
-      @AuthenticationPrincipal String email,
-      @PathVariable Long orderId) {
-    return ResponseEntity.ok(ApiResponse.ok(
-        orderFacadeService.findOrderById(orderId, email)
-    ));
+      @AuthenticationPrincipal String email, @PathVariable Long orderId) {
+    return ResponseEntity.ok(ApiResponse.ok(orderFacadeService.findOrderById(orderId, email)));
   }
 
   /**
@@ -81,12 +72,10 @@ public class OrderController {
   public ResponseEntity<ApiResponse<ApiResponse.PageResponse<OrderListItemResponse>>> findOrders(
       @AuthenticationPrincipal String email,
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size
-  ) {
+      @RequestParam(defaultValue = "20") int size) {
     Pageable pageable = PageRequest.of(page, size);
 
-    Page<OrderListItemResponse> response =
-        orderFacadeService.findOrdersByUserId(email, pageable);
+    Page<OrderListItemResponse> response = orderFacadeService.findOrdersByUserId(email, pageable);
 
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
@@ -100,10 +89,7 @@ public class OrderController {
    */
   @PatchMapping("/{orderId}/cancel")
   public ResponseEntity<ApiResponse<OrderDetailResponse>> cancelOrder(
-      @AuthenticationPrincipal String email,
-      @PathVariable Long orderId) {
-    return ResponseEntity.ok(ApiResponse.ok(
-        orderFacadeService.cancelOrder(orderId, email)
-    ));
+      @AuthenticationPrincipal String email, @PathVariable Long orderId) {
+    return ResponseEntity.ok(ApiResponse.ok(orderFacadeService.cancelOrder(orderId, email)));
   }
 }

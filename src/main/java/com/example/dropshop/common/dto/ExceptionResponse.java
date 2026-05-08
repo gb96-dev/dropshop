@@ -4,9 +4,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 예외 응답.
- */
+/** 예외 응답. */
 @Getter
 @Builder
 public class ExceptionResponse {

@@ -5,9 +5,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 드랍 목록 조회 응답 DTO.
- */
+/** 드랍 목록 조회 응답 DTO. */
 @Getter
 @Builder
 public class DropListItemResponse {
@@ -25,9 +23,7 @@ public class DropListItemResponse {
   private final Long purchaseLimit;
   private final boolean useQueue;
 
-  /**
-   * 드랍 엔티티를 목록 응답 DTO로 변환한다.
-   */
+  /** 드랍 엔티티를 목록 응답 DTO로 변환한다. */
   public static DropListItemResponse from(Drops drops) {
     return DropListItemResponse.builder()
         .dropId(drops.getId())
@@ -45,5 +41,3 @@ public class DropListItemResponse {
         .build();
   }
 }
-
-

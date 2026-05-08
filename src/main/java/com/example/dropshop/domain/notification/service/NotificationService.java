@@ -38,14 +38,17 @@ public class NotificationService {
 
   @Transactional(readOnly = true)
   public long countUnread(String email) {
-    return notificationRepository.countByUserIdAndStatus(findUserId(email), NotificationStatus.UNREAD);
+    return notificationRepository.countByUserIdAndStatus(
+        findUserId(email), NotificationStatus.UNREAD);
   }
 
   @Transactional
   public void markAsRead(String email, Long notificationId) {
     Long userId = findUserId(email);
-    Notification notification = notificationRepository.findById(notificationId)
-        .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다. id=" + notificationId));
+    Notification notification =
+        notificationRepository
+            .findById(notificationId)
+            .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다. id=" + notificationId));
 
     if (!notification.getUserId().equals(userId)) {
       throw new IllegalArgumentException("본인의 알림만 읽음 처리할 수 있습니다.");
@@ -58,13 +61,16 @@ public class NotificationService {
   @Transactional
   public int markAllAsRead(String email) {
     Long userId = findUserId(email);
-    int count = notificationRepository.markAllAsRead(userId, NotificationStatus.READ, NotificationStatus.UNREAD);
+    int count =
+        notificationRepository.markAllAsRead(
+            userId, NotificationStatus.READ, NotificationStatus.UNREAD);
     log.info("[Notification] 전체 읽음 처리 - userId: {}, count: {}", userId, count);
     return count;
   }
 
   private Long findUserId(String email) {
-    return userRepository.findByEmail(email)
+    return userRepository
+        .findByEmail(email)
         .map(User::getId)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다. email=" + email));
   }
