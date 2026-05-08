@@ -51,6 +51,16 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(), e.getMessage(), request.getRequestURI()));
   }
 
+  /** 도메인 상태 충돌 예외를 처리한다 (예: 이미 승인된 판매자, 이미 완료된 주문 등). */
+  @ExceptionHandler(IllegalStateException.class)
+  public ResponseEntity<ExceptionResponse> handleIllegalStateException(
+      IllegalStateException e, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(
+            ExceptionResponse.from(
+                HttpStatus.CONFLICT.value(), e.getMessage(), request.getRequestURI()));
+  }
+
   /** 처리되지 않은 예외 공통 처리. */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ExceptionResponse> handleException(

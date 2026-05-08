@@ -56,7 +56,9 @@ public class RecommendationService {
             .map(
                 match -> {
                   Map<String, Object> metadata = (Map<String, Object>) match.get("metadata");
-                  if (metadata == null) return "";
+                  if (metadata == null) {
+                    return "";
+                  }
                   return "- %s (%s): %s"
                       .formatted(
                           metadata.getOrDefault("name", ""),
@@ -71,9 +73,13 @@ public class RecommendationService {
             .map(
                 match -> {
                   Map<String, Object> metadata = (Map<String, Object>) match.get("metadata");
-                  if (metadata == null) return null;
+                  if (metadata == null) {
+                    return null;
+                  }
                   Object id = metadata.get("productId");
-                  if (id instanceof Number n) return n.longValue();
+                  if (id instanceof Number n) {
+                    return n.longValue();
+                  }
                   return null;
                 })
             .filter(id -> id != null)

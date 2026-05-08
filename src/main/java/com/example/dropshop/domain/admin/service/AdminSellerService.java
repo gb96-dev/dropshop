@@ -4,6 +4,8 @@ import com.example.dropshop.domain.seller.dto.response.SellerResponse;
 import com.example.dropshop.domain.seller.entity.Seller;
 import com.example.dropshop.domain.seller.enums.SellerStatus;
 import com.example.dropshop.domain.seller.repository.SellerRepository;
+import com.example.dropshop.domain.user.entity.User;
+import com.example.dropshop.domain.user.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminSellerService {
 
   private final SellerRepository sellerRepository;
+  private final UserRepository userRepository;
 
   /** 전체 판매자 목록 조회. */
   public List<SellerResponse> getAllSellers() {
@@ -45,6 +48,11 @@ public class AdminSellerService {
     }
 
     seller.approve();
+
+    // users.role도 SELLER로 승격
+    User user = seller.getUser();
+    user.promoteToSeller();
+
     return new SellerResponse(seller);
   }
 

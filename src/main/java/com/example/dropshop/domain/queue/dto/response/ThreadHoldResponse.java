@@ -55,7 +55,9 @@ public class ThreadHoldResponse {
     response.admissionToken = admissionToken;
     response.expiresInSeconds = (int) Duration.between(LocalDateTime.now(), expiresAt).getSeconds();
 
-    if (response.expiresInSeconds < 0) response.expiresInSeconds = 0;
+    if (response.expiresInSeconds < 0) {
+      response.expiresInSeconds = 0;
+    }
 
     response.queueId = queueId;
 
@@ -83,7 +85,9 @@ public class ThreadHoldResponse {
     response.admissionToken = admissionToken;
     response.expiresInSeconds = (int) Duration.between(LocalDateTime.now(), expiresAt).getSeconds();
 
-    if (response.expiresInSeconds < 0) response.expiresInSeconds = 0;
+    if (response.expiresInSeconds < 0) {
+      response.expiresInSeconds = 0;
+    }
 
     response.queueId = queueId;
 
