@@ -2,6 +2,7 @@ package com.example.dropshop.domain.wishlist.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.exception.ServiceException;
+import com.example.dropshop.domain.wishlist.dto.WishlistDto;
 import com.example.dropshop.domain.wishlist.dto.request.WishlistRequest;
 import com.example.dropshop.domain.wishlist.dto.response.WishlistResponse;
 import com.example.dropshop.domain.wishlist.entity.Wishlist;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

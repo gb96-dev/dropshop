@@ -48,6 +48,7 @@ public class SseEmitterService {
   private final DropsRepository dropsRepository;
   private final UserFacadeService userFacadeService;
   private final SellerFacadeService sellerFacadeService;
+  private final DropsFacadeService dropsFacadeService;
 
   /**
    * 클라이언트의 SSE 구독 요청을 처리한다. 기존 연결이 있으면 교체한다.
