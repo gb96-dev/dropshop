@@ -115,6 +115,8 @@ jobs:
           envs: APP_NAME,DEPLOY_DIR,MIN_DISK_MB
           script: |
             set -euo pipefail
+            trap 'echo "[deploy] failed at line $LINENO" >&2' ERR
+            set -x
             sudo mkdir -p "${DEPLOY_DIR}"
             sudo mv "/tmp/${APP_NAME}/docker-compose.prod.yml" "${DEPLOY_DIR}/docker-compose.yml"
             sudo mv "/tmp/${APP_NAME}/.env" "${DEPLOY_DIR}/.env"
@@ -127,7 +129,7 @@ jobs:
             "${DEPLOY_DIR}/scripts/ec2-preflight.sh" "${DEPLOY_DIR}" "${MIN_DISK_MB}"
 
             PREV_IMAGE=""
-            if docker ps -a --format '{{.Names}}' | grep -qx 'dropshop-app'; then
+            if docker container inspect dropshop-app >/dev/null 2>&1; then
               PREV_IMAGE="$(docker inspect --format='{{.Config.Image}}' dropshop-app || true)"
               echo "Detected previous image: ${PREV_IMAGE}"
             else
@@ -166,7 +168,7 @@ jobs:
               exit 1
             fi
 
-            APP_PORT=$(grep '^APP_PORT=' .env | cut -d '=' -f2)
+            APP_PORT="$(awk -F= '/^APP_PORT=/{print $2}' .env | tail -n1)"
             APP_PORT="${APP_PORT:-8080}"
             health_status=0
             for i in $(seq 1 12); do
