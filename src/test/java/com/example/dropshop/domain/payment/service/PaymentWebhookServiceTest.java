@@ -24,9 +24,9 @@ import com.example.dropshop.domain.payment.client.PortOneClient;
 import com.example.dropshop.domain.payment.dto.request.PaymentWebhookRequest;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
-import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.enums.PaymentStatus;
+import com.example.dropshop.domain.payment.event.PaymentStatusChangedEvent;
 import com.example.dropshop.domain.payment.exception.PaymentException;
 import com.example.dropshop.domain.payment.outbox.PaymentOutboxPublisher;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
@@ -45,36 +45,29 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentWebhookServiceTest {
 
-  @Mock
-  private PaymentRepository paymentRepository;
+  @Mock private PaymentRepository paymentRepository;
 
-  @Mock
-  private OrderFacadeService orderFacadeService;
+  @Mock private OrderFacadeService orderFacadeService;
 
-  @Mock
-  private PortOneClient portOneClient;
+  @Mock private PortOneClient portOneClient;
 
-  @Mock
-  private PortOneProperties portOneProperties;
+  @Mock private PortOneProperties portOneProperties;
 
-  @Mock
-  private RedisLockService redisLockService;
+  @Mock private RedisLockService redisLockService;
 
-  @Mock
-  private TransactionTemplate transactionTemplate;
+  @Mock private TransactionTemplate transactionTemplate;
 
   @Spy
   private PaymentVerificationService paymentVerificationService = new PaymentVerificationService();
 
-  @Mock
-  private PaymentOutboxPublisher paymentOutboxPublisher;
+  @Mock private PaymentOutboxPublisher paymentOutboxPublisher;
 
   @Mock
   private SellerDashboardRefreshService sellerDashboardRefreshService;
@@ -90,36 +83,44 @@ class PaymentWebhookServiceTest {
     order = Order.create(1L, 10L);
     ReflectionTestUtils.setField(order, "id", 1L);
     ReflectionTestUtils.setField(order, "holdExpiredAt", LocalDateTime.now().plusMinutes(5));
-    order.addOrderItem(OrderItem.create(
-        order,
-        100L,
-        new BigDecimal("100000"),
-        new BigDecimal("79000"),
-        new BigDecimal("21000"),
-        "https://dummy-image"
-    ));
+    order.addOrderItem(
+        OrderItem.create(
+            order,
+            100L,
+            new BigDecimal("100000"),
+            new BigDecimal("79000"),
+            new BigDecimal("21000"),
+            "https://dummy-image"));
 
     payment = Payment.prepare(1L, "payment-test-123", PaymentMethod.CARD, new BigDecimal("79000"));
     ReflectionTestUtils.setField(payment, "id", 1L);
 
-    lenient().when(redisLockService.executeWithLock(anyString(), any())).thenAnswer(
-        invocation -> ((RedisLockService.LockCallback<?>) invocation.getArgument(1)).doInLock()
-    );
-    lenient().when(transactionTemplate.execute(any())).thenAnswer(
-        invocation -> ((TransactionCallback<?>) invocation.getArgument(0)).doInTransaction(null)
-    );
+    lenient()
+        .when(redisLockService.executeWithLock(anyString(), any()))
+        .thenAnswer(
+            invocation ->
+                ((RedisLockService.LockCallback<?>) invocation.getArgument(1)).doInLock());
+    lenient()
+        .when(transactionTemplate.execute(any()))
+        .thenAnswer(
+            invocation ->
+                ((TransactionCallback<?>) invocation.getArgument(0)).doInTransaction(null));
   }
 
   @Test
   @DisplayName("웹훅 처리 성공 - PortOne 결제 완료면 Payment와 Order가 완료 상태가 된다")
   void handleWebhook_success() {
-    given(paymentRepository.findByMerchantPaymentId("payment-test-123")).willReturn(Optional.of(payment));
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.of(payment));
     given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
-    given(orderFacadeService.payOrderByPayment(order)).willAnswer(invocation -> {
-      order.pay();
-      return order;
-    });
-    given(portOneClient.getPayment("payment-test-123")).willReturn(portOnePayment("PAID", "tx-webhook", "79000"));
+    given(orderFacadeService.payOrderByPayment(order))
+        .willAnswer(
+            invocation -> {
+              order.pay();
+              return order;
+            });
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(portOnePayment("PAID", "tx-webhook", "79000"));
 
     Payment result = paymentWebhookService.handleWebhook("payment-test-123");
 
@@ -137,7 +138,8 @@ class PaymentWebhookServiceTest {
     payment.complete("tx-123");
     order.pay();
 
-    given(paymentRepository.findByMerchantPaymentId("payment-test-123")).willReturn(Optional.of(payment));
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.of(payment));
     Payment result = paymentWebhookService.handleWebhook("payment-test-123");
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
@@ -150,9 +152,11 @@ class PaymentWebhookServiceTest {
   @Test
   @DisplayName("웹훅 실패 상태는 결제만 실패 처리하고 주문은 즉시 취소하지 않는다")
   void handleWebhook_failedStatus_failsPaymentOnly() {
-    given(paymentRepository.findByMerchantPaymentId("payment-test-123")).willReturn(Optional.of(payment));
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.of(payment));
     given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
-    given(portOneClient.getPayment("payment-test-123")).willReturn(portOnePayment("FAILED", "tx-failed", "79000"));
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(portOnePayment("FAILED", "tx-failed", "79000"));
 
     Payment result = paymentWebhookService.handleWebhook("payment-test-123");
 
@@ -168,9 +172,11 @@ class PaymentWebhookServiceTest {
     PaymentWebhookRequest request = signedWebhookRequest();
 
     given(portOneProperties.resolvedWebhookSecret()).willReturn("webhook-secret");
-    given(paymentRepository.findByMerchantPaymentId("payment-test-123")).willReturn(Optional.of(payment));
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.of(payment));
     given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
-    given(portOneClient.getPayment("payment-test-123")).willReturn(portOnePayment("FAILED", "tx-failed", "79000"));
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(portOnePayment("FAILED", "tx-failed", "79000"));
 
     Payment result = paymentWebhookService.handleWebhook(request);
 
@@ -206,7 +212,8 @@ class PaymentWebhookServiceTest {
   @Test
   @DisplayName("웹훅 대상 결제가 없으면 웹훅 전용 예외가 발생한다")
   void handleWebhook_paymentNotFound_throwsException() {
-    given(paymentRepository.findByMerchantPaymentId("payment-test-123")).willReturn(Optional.empty());
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.empty());
 
     assertThatThrownBy(() -> paymentWebhookService.handleWebhook("payment-test-123"))
         .isInstanceOf(PaymentException.class)
@@ -220,9 +227,11 @@ class PaymentWebhookServiceTest {
   void handleWebhook_paidButOrderExpired_throwsException() {
     ReflectionTestUtils.setField(order, "holdExpiredAt", LocalDateTime.now().minusMinutes(1));
 
-    given(paymentRepository.findByMerchantPaymentId("payment-test-123")).willReturn(Optional.of(payment));
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.of(payment));
     given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
-    given(portOneClient.getPayment("payment-test-123")).willReturn(portOnePayment("PAID", "tx-expired", "79000"));
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(portOnePayment("PAID", "tx-expired", "79000"));
 
     assertThatThrownBy(() -> paymentWebhookService.handleWebhook("payment-test-123"))
         .isInstanceOf(OrderException.class);
@@ -231,7 +240,8 @@ class PaymentWebhookServiceTest {
   @Test
   @DisplayName("웹훅 PortOne 조회 실패는 예외가 전파된다")
   void handleWebhook_portOneError_throwsException() {
-    given(paymentRepository.findByMerchantPaymentId("payment-test-123")).willReturn(Optional.of(payment));
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.of(payment));
     given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
     given(portOneClient.getPayment("payment-test-123"))
         .willThrow(new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR));
@@ -240,13 +250,13 @@ class PaymentWebhookServiceTest {
         .isInstanceOf(PaymentException.class);
   }
 
-  private PortOnePaymentResponse portOnePayment(String status, String transactionId, String amount) {
+  private PortOnePaymentResponse portOnePayment(
+      String status, String transactionId, String amount) {
     return new PortOnePaymentResponse(
         "payment-test-123",
         status,
         transactionId,
-        new PortOnePaymentResponse.Amount(new BigDecimal(amount))
-    );
+        new PortOnePaymentResponse.Amount(new BigDecimal(amount)));
   }
 
   private PaymentWebhookRequest signedWebhookRequest() throws Exception {
@@ -264,11 +274,11 @@ class PaymentWebhookServiceTest {
     ReflectionTestUtils.setField(
         request,
         "signatureHash",
-        signature("webhook-secret",
+        signature(
+            "webhook-secret",
             "amount=79000&channel_key=channel-test&channel_order_ref=channel-order"
                 + "&country_code=KR&currency=KRW&merchant_order_ref=merchant-order"
-                + "&method_name=CARD&order_ref=payment-test-123&status=FAILED")
-    );
+                + "&method_name=CARD&order_ref=payment-test-123&status=FAILED"));
     return request;
   }
 

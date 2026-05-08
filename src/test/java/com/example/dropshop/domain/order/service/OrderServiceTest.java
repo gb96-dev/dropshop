@@ -13,10 +13,10 @@ import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
-import com.example.dropshop.domain.order.event.OrderStatusChangedEvent;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
+import com.example.dropshop.domain.order.event.OrderStatusChangedEvent;
 import com.example.dropshop.domain.order.event.StockRestoreEvent;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.repository.OrderRepository;
@@ -41,23 +41,17 @@ import org.springframework.transaction.support.TransactionTemplate;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
-  @Mock
-  private OrderRepository orderRepository;
+  @Mock private OrderRepository orderRepository;
 
-  @Mock
-  private ApplicationEventPublisher eventPublisher;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
-  @Mock
-  private RedisLockService redisLockService;
+  @Mock private RedisLockService redisLockService;
 
-  @Mock
-  private TransactionTemplate transactionTemplate;
+  @Mock private TransactionTemplate transactionTemplate;
 
-  @Mock
-  private PopularProductRedisService popularProductRedisService;
+  @Mock private PopularProductRedisService popularProductRedisService;
 
-  @InjectMocks
-  private OrderService orderService;
+  @InjectMocks private OrderService orderService;
 
   private Long userId;
   private Long dropId;
@@ -77,43 +71,49 @@ class OrderServiceTest {
     discountAmountSnapshot = new BigDecimal("21000");
     thumbnailUrlSnapshot = "https://dummy-image";
 
-    lenient().when(redisLockService.executeWithLock(anyString(), any())).thenAnswer(
-        invocation -> ((RedisLockService.LockCallback<?>) invocation.getArgument(1)).doInLock()
-    );
-    lenient().when(redisLockService.tryExecuteWithLock(anyString(), any())).thenAnswer(
-        invocation -> {
-          ((RedisLockService.LockRunnable) invocation.getArgument(1)).doInLock();
-          return true;
-        }
-    );
-    lenient().when(transactionTemplate.execute(any())).thenAnswer(
-        invocation -> ((TransactionCallback<?>) invocation.getArgument(0)).doInTransaction(null)
-    );
+    lenient()
+        .when(redisLockService.executeWithLock(anyString(), any()))
+        .thenAnswer(
+            invocation ->
+                ((RedisLockService.LockCallback<?>) invocation.getArgument(1)).doInLock());
+    lenient()
+        .when(redisLockService.tryExecuteWithLock(anyString(), any()))
+        .thenAnswer(
+            invocation -> {
+              ((RedisLockService.LockRunnable) invocation.getArgument(1)).doInLock();
+              return true;
+            });
+    lenient()
+        .when(transactionTemplate.execute(any()))
+        .thenAnswer(
+            invocation ->
+                ((TransactionCallback<?>) invocation.getArgument(0)).doInTransaction(null));
   }
 
   @Test
   @DisplayName("주문 생성 성공")
   void createOrder_success() {
-    given(orderRepository.existsByUserIdAndDropIdAndStatusIn(
-        userId,
-        dropId,
-        List.of(OrderStatus.PENDING, OrderStatus.PAID)
-    )).willReturn(false);
-    given(orderRepository.save(any(Order.class))).willAnswer(invocation -> {
-      Order savedOrder = invocation.getArgument(0);
-      ReflectionTestUtils.setField(savedOrder, "id", 1L);
-      return savedOrder;
-    });
+    given(
+            orderRepository.existsByUserIdAndDropIdAndStatusIn(
+                userId, dropId, List.of(OrderStatus.PENDING, OrderStatus.PAID)))
+        .willReturn(false);
+    given(orderRepository.save(any(Order.class)))
+        .willAnswer(
+            invocation -> {
+              Order savedOrder = invocation.getArgument(0);
+              ReflectionTestUtils.setField(savedOrder, "id", 1L);
+              return savedOrder;
+            });
 
-    Order order = orderService.createOrder(
-        userId,
-        dropId,
-        productId,
-        priceSnapshot,
-        salePriceSnapshot,
-        discountAmountSnapshot,
-        thumbnailUrlSnapshot
-    );
+    Order order =
+        orderService.createOrder(
+            userId,
+            dropId,
+            productId,
+            priceSnapshot,
+            salePriceSnapshot,
+            discountAmountSnapshot,
+            thumbnailUrlSnapshot);
 
     assertThat(order.getId()).isEqualTo(1L);
     assertThat(order.getUserId()).isEqualTo(userId);
@@ -128,21 +128,22 @@ class OrderServiceTest {
   @Test
   @DisplayName("중복 주문이면 예외 발생")
   void createOrder_duplicate_throwsException() {
-    given(orderRepository.existsByUserIdAndDropIdAndStatusIn(
-        userId,
-        dropId,
-        List.of(OrderStatus.PENDING, OrderStatus.PAID)
-    )).willReturn(true);
+    given(
+            orderRepository.existsByUserIdAndDropIdAndStatusIn(
+                userId, dropId, List.of(OrderStatus.PENDING, OrderStatus.PAID)))
+        .willReturn(true);
 
-    assertThatThrownBy(() -> orderService.createOrder(
-        userId,
-        dropId,
-        productId,
-        priceSnapshot,
-        salePriceSnapshot,
-        discountAmountSnapshot,
-        thumbnailUrlSnapshot
-    )).isInstanceOf(OrderException.class);
+    assertThatThrownBy(
+            () ->
+                orderService.createOrder(
+                    userId,
+                    dropId,
+                    productId,
+                    priceSnapshot,
+                    salePriceSnapshot,
+                    discountAmountSnapshot,
+                    thumbnailUrlSnapshot))
+        .isInstanceOf(OrderException.class);
 
     verify(orderRepository, never()).save(any(Order.class));
   }
@@ -175,12 +176,13 @@ class OrderServiceTest {
   @DisplayName("만료된 주문은 취소되고 재고 복원 이벤트가 발행된다")
   void cancelExpiredOrders_success() {
     Order expiredOrder = createPendingOrder();
-    ReflectionTestUtils.setField(expiredOrder, "holdExpiredAt", LocalDateTime.now().minusMinutes(1));
+    ReflectionTestUtils.setField(
+        expiredOrder, "holdExpiredAt", LocalDateTime.now().minusMinutes(1));
 
-    given(orderRepository.findAllByStatusAndHoldExpiredAtBefore(
-        eq(OrderStatus.PENDING),
-        any(LocalDateTime.class)
-    )).willReturn(List.of(expiredOrder));
+    given(
+            orderRepository.findAllByStatusAndHoldExpiredAtBefore(
+                eq(OrderStatus.PENDING), any(LocalDateTime.class)))
+        .willReturn(List.of(expiredOrder));
     given(orderRepository.findById(1L)).willReturn(Optional.of(expiredOrder));
 
     orderService.cancelExpiredOrders();
@@ -190,14 +192,19 @@ class OrderServiceTest {
     ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
     verify(eventPublisher, times(2)).publishEvent(eventCaptor.capture());
     List<Object> events = eventCaptor.getAllValues();
-    assertThat(events).anySatisfy(event -> {
-      assertThat(event).isInstanceOf(OrderStatusChangedEvent.class);
-      assertThat(((OrderStatusChangedEvent) event).getOrderStatus()).isEqualTo(OrderStatus.CANCELLED);
-    });
-    assertThat(events).anySatisfy(event -> {
-      assertThat(event).isInstanceOf(StockRestoreEvent.class);
-      assertThat(((StockRestoreEvent) event).getDropId()).isEqualTo(dropId);
-    });
+    assertThat(events)
+        .anySatisfy(
+            event -> {
+              assertThat(event).isInstanceOf(OrderStatusChangedEvent.class);
+              assertThat(((OrderStatusChangedEvent) event).getOrderStatus())
+                  .isEqualTo(OrderStatus.CANCELLED);
+            });
+    assertThat(events)
+        .anySatisfy(
+            event -> {
+              assertThat(event).isInstanceOf(StockRestoreEvent.class);
+              assertThat(((StockRestoreEvent) event).getDropId()).isEqualTo(dropId);
+            });
   }
 
   @Test
@@ -212,15 +219,14 @@ class OrderServiceTest {
     org.springframework.data.domain.Page<Order> page =
         new org.springframework.data.domain.PageImpl<>(List.of(order1, order2));
 
-    given(orderRepository.findAllByUserIdOrderByCreatedAtDesc(
-        eq(userId),
-        any(org.springframework.data.domain.Pageable.class)
-    )).willReturn(page);
+    given(
+            orderRepository.findAllByUserIdOrderByCreatedAtDesc(
+                eq(userId), any(org.springframework.data.domain.Pageable.class)))
+        .willReturn(page);
 
-    org.springframework.data.domain.Page<Order> result = orderService.findAllOrdersByUserId(
-        userId,
-        org.springframework.data.domain.PageRequest.of(0, 20)
-    );
+    org.springframework.data.domain.Page<Order> result =
+        orderService.findAllOrdersByUserId(
+            userId, org.springframework.data.domain.PageRequest.of(0, 20));
 
     assertThat(result.getContent()).hasSize(2);
   }
@@ -238,14 +244,19 @@ class OrderServiceTest {
     ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
     verify(eventPublisher, times(2)).publishEvent(eventCaptor.capture());
     List<Object> events = eventCaptor.getAllValues();
-    assertThat(events).anySatisfy(event -> {
-      assertThat(event).isInstanceOf(OrderStatusChangedEvent.class);
-      assertThat(((OrderStatusChangedEvent) event).getOrderStatus()).isEqualTo(OrderStatus.CANCELLED);
-    });
-    assertThat(events).anySatisfy(event -> {
-      assertThat(event).isInstanceOf(StockRestoreEvent.class);
-      assertThat(((StockRestoreEvent) event).getQuantity()).isEqualTo(1);
-    });
+    assertThat(events)
+        .anySatisfy(
+            event -> {
+              assertThat(event).isInstanceOf(OrderStatusChangedEvent.class);
+              assertThat(((OrderStatusChangedEvent) event).getOrderStatus())
+                  .isEqualTo(OrderStatus.CANCELLED);
+            });
+    assertThat(events)
+        .anySatisfy(
+            event -> {
+              assertThat(event).isInstanceOf(StockRestoreEvent.class);
+              assertThat(((StockRestoreEvent) event).getQuantity()).isEqualTo(1);
+            });
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
   }
 
@@ -288,14 +299,19 @@ class OrderServiceTest {
     ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
     verify(eventPublisher, times(2)).publishEvent(eventCaptor.capture());
     List<Object> events = eventCaptor.getAllValues();
-    assertThat(events).anySatisfy(event -> {
-      assertThat(event).isInstanceOf(OrderStatusChangedEvent.class);
-      assertThat(((OrderStatusChangedEvent) event).getOrderStatus()).isEqualTo(OrderStatus.REFUNDED);
-    });
-    assertThat(events).anySatisfy(event -> {
-      assertThat(event).isInstanceOf(StockRestoreEvent.class);
-      assertThat(((StockRestoreEvent) event).getQuantity()).isEqualTo(1);
-    });
+    assertThat(events)
+        .anySatisfy(
+            event -> {
+              assertThat(event).isInstanceOf(OrderStatusChangedEvent.class);
+              assertThat(((OrderStatusChangedEvent) event).getOrderStatus())
+                  .isEqualTo(OrderStatus.REFUNDED);
+            });
+    assertThat(events)
+        .anySatisfy(
+            event -> {
+              assertThat(event).isInstanceOf(StockRestoreEvent.class);
+              assertThat(((StockRestoreEvent) event).getQuantity()).isEqualTo(1);
+            });
   }
 
   @Test
@@ -316,10 +332,10 @@ class OrderServiceTest {
   @Test
   @DisplayName("만료된 주문이 없으면 아무 일도 일어나지 않는다")
   void cancelExpiredOrders_noExpiredOrders() {
-    given(orderRepository.findAllByStatusAndHoldExpiredAtBefore(
-        eq(OrderStatus.PENDING),
-        any(LocalDateTime.class)
-    )).willReturn(List.of());
+    given(
+            orderRepository.findAllByStatusAndHoldExpiredAtBefore(
+                eq(OrderStatus.PENDING), any(LocalDateTime.class)))
+        .willReturn(List.of());
 
     orderService.cancelExpiredOrders();
 
@@ -330,12 +346,13 @@ class OrderServiceTest {
   @DisplayName("만료 주문 취소 - 락을 획득하지 못하면 해당 주문은 건너뛴다")
   void cancelExpiredOrders_lockNotAcquired_skipsOrder() {
     Order expiredOrder = createPendingOrder();
-    ReflectionTestUtils.setField(expiredOrder, "holdExpiredAt", LocalDateTime.now().minusMinutes(1));
+    ReflectionTestUtils.setField(
+        expiredOrder, "holdExpiredAt", LocalDateTime.now().minusMinutes(1));
 
-    given(orderRepository.findAllByStatusAndHoldExpiredAtBefore(
-        eq(OrderStatus.PENDING),
-        any(LocalDateTime.class)
-    )).willReturn(List.of(expiredOrder));
+    given(
+            orderRepository.findAllByStatusAndHoldExpiredAtBefore(
+                eq(OrderStatus.PENDING), any(LocalDateTime.class)))
+        .willReturn(List.of(expiredOrder));
     given(redisLockService.tryExecuteWithLock(eq(LockKeys.order(1L)), any())).willReturn(false);
 
     orderService.cancelExpiredOrders();
@@ -348,14 +365,14 @@ class OrderServiceTest {
   private Order createPendingOrder() {
     Order order = Order.create(userId, dropId);
     ReflectionTestUtils.setField(order, "id", 1L);
-    order.addOrderItem(OrderItem.create(
-        order,
-        productId,
-        priceSnapshot,
-        salePriceSnapshot,
-        discountAmountSnapshot,
-        thumbnailUrlSnapshot
-    ));
+    order.addOrderItem(
+        OrderItem.create(
+            order,
+            productId,
+            priceSnapshot,
+            salePriceSnapshot,
+            discountAmountSnapshot,
+            thumbnailUrlSnapshot));
     return order;
   }
 }

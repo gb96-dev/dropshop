@@ -10,8 +10,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.common.security.SellerAuthResolver;
+import com.example.dropshop.domain.auth.service.TokenBlacklistService;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.payment.dto.request.PaymentConfirmRequest;
 import com.example.dropshop.domain.payment.dto.request.PaymentPrepareRequest;
@@ -22,6 +22,7 @@ import com.example.dropshop.domain.payment.dto.response.PaymentPrepareResponse;
 import com.example.dropshop.domain.payment.entity.Payment;
 import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.facade.PaymentFacadeService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -35,27 +36,21 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(PaymentController.class)
 class PaymentControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  @MockitoBean
-  private JpaMetamodelMappingContext jpaMetamodelMappingContext;
+  @MockitoBean private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
-  @MockitoBean
-  private PaymentFacadeService paymentFacadeService;
+  @MockitoBean private PaymentFacadeService paymentFacadeService;
 
-  @MockitoBean
-  private TokenBlacklistService tokenBlacklistService;
+  @MockitoBean private TokenBlacklistService tokenBlacklistService;
 
-  @MockitoBean
-  private SellerAuthResolver sellerAuthResolver;
+  @MockitoBean private SellerAuthResolver sellerAuthResolver;
 
   @Test
   @DisplayName("결제 준비 성공")
@@ -72,10 +67,12 @@ class PaymentControllerTest {
     given(paymentFacadeService.preparePayment(any(), any(PaymentPrepareRequest.class)))
         .willReturn(response);
 
-    mockMvc.perform(post("/api/payments/prepare")
-            .with(authentication(testAuthentication()))
-            .contentType(APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            post("/api/payments/prepare")
+                .with(authentication(testAuthentication()))
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.paymentId").value(1L))
@@ -88,18 +85,20 @@ class PaymentControllerTest {
   @DisplayName("PortOne 결제 요청 정보 조회 성공")
   void getPortOneRequest_success() throws Exception {
     Payment payment = createPayment();
-    PaymentPortOneRequestResponse response = PaymentPortOneRequestResponse.of(
-        payment,
-        "store-test",
-        "channel-test",
-        "ORDER-TEST",
-        "http://localhost:3000/payments/redirect"
-    );
+    PaymentPortOneRequestResponse response =
+        PaymentPortOneRequestResponse.of(
+            payment,
+            "store-test",
+            "channel-test",
+            "ORDER-TEST",
+            "http://localhost:3000/payments/redirect");
 
     given(paymentFacadeService.getPortOneRequest(eq(1L), any())).willReturn(response);
 
-    mockMvc.perform(get("/api/payments/{paymentId}/portone-request", 1L)
-            .with(authentication(testAuthentication())))
+    mockMvc
+        .perform(
+            get("/api/payments/{paymentId}/portone-request", 1L)
+                .with(authentication(testAuthentication())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.paymentId").value(1L))
@@ -122,10 +121,12 @@ class PaymentControllerTest {
     given(paymentFacadeService.confirmPayment(eq(1L), any(), any(PaymentConfirmRequest.class)))
         .willReturn(response);
 
-    mockMvc.perform(post("/api/payments/{paymentId}/confirm", 1L)
-            .with(authentication(testAuthentication()))
-            .contentType(APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            post("/api/payments/{paymentId}/confirm", 1L)
+                .with(authentication(testAuthentication()))
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.paymentId").value(1L))
@@ -140,9 +141,11 @@ class PaymentControllerTest {
     PaymentWebhookRequest request = new PaymentWebhookRequest();
     ReflectionTestUtils.setField(request, "id", "payment-test-123");
 
-    mockMvc.perform(post("/api/payments/webhook")
-            .contentType(APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            post("/api/payments/webhook")
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true));
   }
@@ -153,9 +156,11 @@ class PaymentControllerTest {
     PaymentWebhookRequest request = new PaymentWebhookRequest();
     ReflectionTestUtils.setField(request, "data", Map.of("paymentId", "payment-test-123"));
 
-    mockMvc.perform(post("/api/payments/webhook")
-            .contentType(APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            post("/api/payments/webhook")
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true));
   }
@@ -163,30 +168,26 @@ class PaymentControllerTest {
   @Test
   @DisplayName("결제 준비 실패 - 필수값이 없으면 400을 반환한다")
   void preparePayment_validationFail() throws Exception {
-    mockMvc.perform(post("/api/payments/prepare")
-            .with(authentication(testAuthentication()))
-            .contentType(APPLICATION_JSON)
-            .content("{}"))
+    mockMvc
+        .perform(
+            post("/api/payments/prepare")
+                .with(authentication(testAuthentication()))
+                .contentType(APPLICATION_JSON)
+                .content("{}"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false));
   }
 
   private Payment createPayment() {
-    Payment payment = Payment.prepare(
-        1L,
-        "payment-test-123",
-        PaymentMethod.CARD,
-        java.math.BigDecimal.valueOf(79000)
-    );
+    Payment payment =
+        Payment.prepare(
+            1L, "payment-test-123", PaymentMethod.CARD, java.math.BigDecimal.valueOf(79000));
     ReflectionTestUtils.setField(payment, "id", 1L);
     return payment;
   }
 
   private static Authentication testAuthentication() {
     return new UsernamePasswordAuthenticationToken(
-        "test@test.com",
-        null,
-        List.of(new SimpleGrantedAuthority("ROLE_USER"))
-    );
+        "test@test.com", null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
   }
 }

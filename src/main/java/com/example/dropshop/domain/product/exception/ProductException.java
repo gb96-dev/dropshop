@@ -4,9 +4,7 @@ import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.exception.ServiceException;
 import lombok.Getter;
 
-/**
- * 상품 도메인 전용 예외.
- */
+/** 상품 도메인 전용 예외. */
 @Getter
 public class ProductException extends ServiceException {
 

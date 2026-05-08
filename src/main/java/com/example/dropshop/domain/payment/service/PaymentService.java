@@ -23,9 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-/**
- * 결제 생성, 검증, 확정 로직을 처리하는 도메인 서비스.
- */
+/** 결제 생성, 검증, 확정 로직을 처리하는 도메인 서비스. */
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -45,8 +43,7 @@ public class PaymentService {
    * @param payment 결제 엔티티
    * @param orderStatus 주문 상태
    */
-  public record PaymentConfirmResult(Payment payment, OrderStatus orderStatus) {
-  }
+  public record PaymentConfirmResult(Payment payment, OrderStatus orderStatus) {}
 
   /**
    * 주문에 대한 결제를 준비한다.
@@ -65,18 +62,14 @@ public class PaymentService {
       Long orderId,
       BigDecimal amount,
       String merchantPaymentId,
-      PaymentMethod paymentMethod
-  ) {
+      PaymentMethod paymentMethod) {
     return redisLockService.executeWithLock(
         LockKeys.order(orderId),
-        () -> transactionTemplate.execute(status -> preparePaymentInternal(
-            email,
-            orderId,
-            amount,
-            merchantPaymentId,
-            paymentMethod
-        ))
-    );
+        () ->
+            transactionTemplate.execute(
+                status ->
+                    preparePaymentInternal(
+                        email, orderId, amount, merchantPaymentId, paymentMethod)));
   }
 
   /**
@@ -102,20 +95,14 @@ public class PaymentService {
    * @return 결제와 주문 상태
    */
   public PaymentConfirmResult confirmPaymentWithOrderStatus(
-      Long paymentId,
-      String email,
-      String portOnePaymentId
-  ) {
+      Long paymentId, String email, String portOnePaymentId) {
     Long orderId = findAccessiblePayment(paymentId, email).getOrderId();
 
     return redisLockService.executeWithLock(
         LockKeys.order(orderId),
-        () -> transactionTemplate.execute(status -> confirmPaymentInternal(
-            paymentId,
-            email,
-            portOnePaymentId
-        ))
-    );
+        () ->
+            transactionTemplate.execute(
+                status -> confirmPaymentInternal(paymentId, email, portOnePaymentId)));
   }
 
   private Payment preparePaymentInternal(
@@ -123,17 +110,18 @@ public class PaymentService {
       Long orderId,
       BigDecimal amount,
       String merchantPaymentId,
-      PaymentMethod paymentMethod
-  ) {
+      PaymentMethod paymentMethod) {
     Order order = orderFacadeService.findOrderForPayment(orderId, email);
 
     paymentVerificationService.validatePendingOrder(order);
     paymentVerificationService.validateOrderNotExpired(order);
     validatePaymentAmount(order, amount);
 
-    Optional<Payment> existingPayment = paymentRepository.findByMerchantPaymentId(merchantPaymentId);
+    Optional<Payment> existingPayment =
+        paymentRepository.findByMerchantPaymentId(merchantPaymentId);
     if (existingPayment.isPresent()) {
-      return validateIdempotentPreparedPayment(existingPayment.get(), orderId, amount, paymentMethod);
+      return validateIdempotentPreparedPayment(
+          existingPayment.get(), orderId, amount, paymentMethod);
     }
 
     validatePaymentNotExists(orderId);
@@ -143,10 +131,7 @@ public class PaymentService {
   }
 
   private PaymentConfirmResult confirmPaymentInternal(
-      Long paymentId,
-      String email,
-      String portOnePaymentId
-  ) {
+      Long paymentId, String email, String portOnePaymentId) {
     Payment payment = findAccessiblePayment(paymentId, email);
     Order order = orderFacadeService.findOrderForPayment(payment.getOrderId(), email);
 
@@ -165,21 +150,20 @@ public class PaymentService {
   }
 
   private Payment findAccessiblePayment(Long paymentId, String email) {
-    Payment payment = paymentRepository.findById(paymentId)
-        .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
+    Payment payment =
+        paymentRepository
+            .findById(paymentId)
+            .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
     orderFacadeService.findOrderForPayment(payment.getOrderId(), email);
     return payment;
   }
 
   private Payment validateIdempotentPreparedPayment(
-      Payment existingPayment,
-      Long orderId,
-      BigDecimal amount,
-      PaymentMethod paymentMethod
-  ) {
-    boolean matchesSameRequest = existingPayment.getOrderId().equals(orderId)
-        && existingPayment.getAmount().compareTo(amount) == 0
-        && existingPayment.getPaymentMethod() == paymentMethod;
+      Payment existingPayment, Long orderId, BigDecimal amount, PaymentMethod paymentMethod) {
+    boolean matchesSameRequest =
+        existingPayment.getOrderId().equals(orderId)
+            && existingPayment.getAmount().compareTo(amount) == 0
+            && existingPayment.getPaymentMethod() == paymentMethod;
 
     if (!matchesSameRequest) {
       throw new PaymentException(ErrorCode.PAYMENT_IDEMPOTENCY_KEY_CONFLICT);
@@ -189,10 +173,7 @@ public class PaymentService {
   }
 
   private void applyConfirmationResult(
-      Payment payment,
-      Order order,
-      PortOnePaymentResponse portOnePayment
-  ) {
+      Payment payment, Order order, PortOnePaymentResponse portOnePayment) {
     paymentVerificationService.validatePortOneResponse(payment, portOnePayment);
 
     if (paymentVerificationService.isPaidStatus(portOnePayment.status())) {
@@ -228,11 +209,8 @@ public class PaymentService {
   }
 
   private void publishPaymentStatusChanged(
-      Payment payment,
-      OrderStatus orderStatus,
-      String source,
-      Long buyerUserId
-  ) {
-    paymentOutboxPublisher.save(new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
+      Payment payment, OrderStatus orderStatus, String source, Long buyerUserId) {
+    paymentOutboxPublisher.save(
+        new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
   }
 }

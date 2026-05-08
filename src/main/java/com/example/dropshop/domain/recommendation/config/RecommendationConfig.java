@@ -6,9 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
-/**
- * OpenAI / Pinecone RestClient 설정.
- */
+/** OpenAI / Pinecone RestClient 설정. */
 @Configuration
 @ConditionalOnProperty(prefix = "recommendation", name = "enabled", havingValue = "true")
 public class RecommendationConfig {

@@ -14,26 +14,24 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
+  private final UserService userService;
 
-    @PostMapping("/signup")
-    public ApiResponse<Void> signup(@Valid @RequestBody SignupRequest request) {
-        userService.signup(request);
-        return ApiResponse.ok();
-    }
+  @PostMapping("/signup")
+  public ApiResponse<Void> signup(@Valid @RequestBody SignupRequest request) {
+    userService.signup(request);
+    return ApiResponse.ok();
+  }
 
-    @PatchMapping("/password")
-    public ApiResponse<Void> updatePassword(
-            @AuthenticationPrincipal String email,
-            @RequestBody PasswordUpdateRequest request) {
-        userService.updatePassword(email, request);
-        return ApiResponse.ok();
-    }
+  @PatchMapping("/password")
+  public ApiResponse<Void> updatePassword(
+      @AuthenticationPrincipal String email, @RequestBody PasswordUpdateRequest request) {
+    userService.updatePassword(email, request);
+    return ApiResponse.ok();
+  }
 
-    @DeleteMapping("/withdraw")
-    public ApiResponse<Void> withdraw(
-            @AuthenticationPrincipal String email) {
-        userService.withdraw(email);
-        return ApiResponse.ok();
-    }
+  @DeleteMapping("/withdraw")
+  public ApiResponse<Void> withdraw(@AuthenticationPrincipal String email) {
+    userService.withdraw(email);
+    return ApiResponse.ok();
+  }
 }

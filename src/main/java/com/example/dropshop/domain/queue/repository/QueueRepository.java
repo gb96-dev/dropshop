@@ -11,22 +11,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-/**
- * 대기열 리포지토리.
- */
+/** 대기열 리포지토리. */
 public interface QueueRepository extends JpaRepository<Queue, Integer> {
 
-  List<Queue> findByDropIdAndUserId(Long dropId, Long userId);
+  Optional<Queue> findByDropIdAndUserId(Long dropId, Long userId);
 
   long countByDropIdAndStatusIn(Long dropId, List<QueueStatus> status);
 
   long countByDropIdAndStatusAndEnteredAtBefore(
-      Long dropId,
-      QueueStatus status,
-      LocalDateTime enteredAt
-  );
+      Long dropId, QueueStatus status, LocalDateTime enteredAt);
 
-  List<Queue> findByDropIdAndUserIdAndStatusIn(Long dropId, Long userId, Collection<QueueStatus> statuses);
+  List<Queue> findByDropIdAndUserIdAndStatusIn(
+      Long dropId, Long userId, Collection<QueueStatus> statuses);
 
   // READY 상태 조회
   List<Queue> findByStatus(QueueStatus status);
@@ -34,7 +30,8 @@ public interface QueueRepository extends JpaRepository<Queue, Integer> {
   // EXPIRED 대상 조회 (expiredAt 기준)
   List<Queue> findByStatusAndExpiredAtBefore(QueueStatus status, LocalDateTime time);
 
-  @Query("""
+  @Query(
+      """
     SELECT q
     FROM Queue q
     JOIN FETCH q.queueToken qt
@@ -42,7 +39,8 @@ public interface QueueRepository extends JpaRepository<Queue, Integer> {
 """)
   List<Queue> findReadyQueuesWithToken(@Param("status") QueueStatus status);
 
-  @Query("""
+  @Query(
+      """
     SELECT q
     FROM Queue q
     JOIN FETCH q.queueToken qt

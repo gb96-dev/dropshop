@@ -7,9 +7,7 @@ import java.util.Map;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
 
-/**
- * Kafka value serializer for JSON payloads.
- */
+/** Kafka value serializer for JSON payloads. */
 public class ObjectJsonKafkaSerializer implements Serializer<Object> {
 
   private static final ObjectMapper OBJECT_MAPPER =
@@ -38,5 +36,3 @@ public class ObjectJsonKafkaSerializer implements Serializer<Object> {
     // no-op
   }
 }
-
-

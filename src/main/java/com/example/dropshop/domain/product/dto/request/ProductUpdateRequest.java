@@ -8,9 +8,7 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import lombok.Getter;
 
-/**
- * 상품 정보 수정 요청 DTO.
- */
+/** 상품 정보 수정 요청 DTO. */
 @Getter
 public class ProductUpdateRequest {
 
@@ -24,8 +22,7 @@ public class ProductUpdateRequest {
   @Max(99)
   private Integer discountRate;
 
-  @Positive
-  private Integer stock;
+  @Positive private Integer stock;
 
   @Size(min = 1, max = 100)
   private String category;

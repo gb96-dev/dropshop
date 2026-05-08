@@ -11,27 +11,25 @@ import lombok.Getter;
 @Getter
 public class RefreshToken {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+  @Column(nullable = false, unique = true)
+  private String email;
 
-    @Column(nullable = false)
-    private String hashedToken;
+  @Column(nullable = false)
+  private String hashedToken;
 
-    public RefreshToken(String email, String hashedToken) {
-        this.email = email;
-        this.hashedToken = hashedToken;
-    }
+  public RefreshToken(String email, String hashedToken) {
+    this.email = email;
+    this.hashedToken = hashedToken;
+  }
 
-    protected RefreshToken() {}
+  protected RefreshToken() {}
 
-    /**
-     * 기존 리프레시 토큰을 갱신한다 (upsert 패턴용).
-     */
-    public void updateToken(String newHashedToken) {
-        this.hashedToken = newHashedToken;
-    }
+  /** 기존 리프레시 토큰을 갱신한다 (upsert 패턴용). */
+  public void updateToken(String newHashedToken) {
+    this.hashedToken = newHashedToken;
+  }
 }

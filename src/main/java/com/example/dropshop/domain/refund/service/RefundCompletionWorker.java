@@ -19,9 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 환불 완료 트랜잭션 분리 처리 서비스.
- */
+/** 환불 완료 트랜잭션 분리 처리 서비스. */
 @Service
 @RequiredArgsConstructor
 public class RefundCompletionWorker {
@@ -57,8 +55,7 @@ public class RefundCompletionWorker {
         order.getId(),
         payment.getMerchantPaymentId(),
         refund.getRefundAmount(),
-        refund.getRefundReason() == null ? "환불 요청" : refund.getRefundReason()
-    );
+        refund.getRefundReason() == null ? "환불 요청" : refund.getRefundReason());
   }
 
   /**
@@ -102,12 +99,14 @@ public class RefundCompletionWorker {
   }
 
   private Payment getPayment(Long paymentId) {
-    return paymentRepository.findById(paymentId)
+    return paymentRepository
+        .findById(paymentId)
         .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
   }
 
   private Refund findRefund(Long refundId) {
-    return refundRepository.findById(refundId)
+    return refundRepository
+        .findById(refundId)
         .orElseThrow(() -> new RefundException(ErrorCode.REFUND_NOT_FOUND));
   }
 
@@ -140,7 +139,5 @@ public class RefundCompletionWorker {
       Long orderId,
       String portOnePaymentId,
       BigDecimal refundAmount,
-      String refundReason
-  ) {
-  }
+      String refundReason) {}
 }

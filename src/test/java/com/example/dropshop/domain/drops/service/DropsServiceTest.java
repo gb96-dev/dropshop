@@ -27,25 +27,23 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class DropsServiceTest {
 
-  @Mock
-  private DropsRepository dropsRepository;
+  @Mock private DropsRepository dropsRepository;
 
-  @InjectMocks
-  private DropsService dropsService;
+  @InjectMocks private DropsService dropsService;
 
   @Test
   @DisplayName("드랍 생성 성공")
   void create_success() {
     // given
     Product product = createProduct(1L, 100);
-    DropCreateRequest request = createDropCreateRequest(
-        product.getId(),
-        LocalDateTime.now().plusDays(1),
-        LocalDateTime.now().plusDays(2),
-        30L,
-        1L,
-        true
-    );
+    DropCreateRequest request =
+        createDropCreateRequest(
+            product.getId(),
+            LocalDateTime.now().plusDays(1),
+            LocalDateTime.now().plusDays(2),
+            30L,
+            1L,
+            true);
 
     given(dropsRepository.save(any(Drops.class)))
         .willAnswer(invocation -> invocation.getArgument(0));
@@ -68,13 +66,8 @@ class DropsServiceTest {
     // given
     Drops drops = createDrop(createProduct(1L, 100), 20L, 20L);
     drops.activate();
-    DropUpdateRequest request = createDropUpdateRequest(
-        LocalDateTime.now().plusDays(3),
-        null,
-        null,
-        null,
-        null
-    );
+    DropUpdateRequest request =
+        createDropUpdateRequest(LocalDateTime.now().plusDays(3), null, null, null, null);
 
     // when & then
     assertThatThrownBy(() -> dropsService.update(drops, 100, request))
@@ -87,13 +80,8 @@ class DropsServiceTest {
   void update_totalStockLessThanSoldCount_throwsException() {
     // given
     Drops drops = createDrop(createProduct(1L, 100), 10L, 8L);
-    DropUpdateRequest request = createDropUpdateRequest(
-        null,
-        LocalDateTime.now().plusDays(3),
-        1L,
-        1L,
-        false
-    );
+    DropUpdateRequest request =
+        createDropUpdateRequest(null, LocalDateTime.now().plusDays(3), 1L, 1L, false);
 
     // when & then
     assertThatThrownBy(() -> dropsService.update(drops, 100, request))
@@ -119,32 +107,32 @@ class DropsServiceTest {
   }
 
   private Product createProduct(Long sellerId, int stock) {
-    Product product = Product.create(
-        sellerId,
-        "한정판 스니커즈",
-        "SHOES",
-        new BigDecimal("250000"),
-        10,
-        stock,
-        "https://cdn.example.com/thumb.jpg",
-        "<p>상품 설명</p>",
-        "사이즈: 255",
-        "배송 안내",
-        "환불 정책"
-    );
+    Product product =
+        Product.create(
+            sellerId,
+            "한정판 스니커즈",
+            "SHOES",
+            new BigDecimal("250000"),
+            10,
+            stock,
+            "https://cdn.example.com/thumb.jpg",
+            "<p>상품 설명</p>",
+            "사이즈: 255",
+            "배송 안내",
+            "환불 정책");
     ReflectionTestUtils.setField(product, "id", 1L);
     return product;
   }
 
   private Drops createDrop(Product product, Long totalStock, Long remainStock) {
-    Drops drops = Drops.create(
-        product,
-        LocalDateTime.now().plusDays(1),
-        LocalDateTime.now().plusDays(2),
-        totalStock,
-        1L,
-        true
-    );
+    Drops drops =
+        Drops.create(
+            product,
+            LocalDateTime.now().plusDays(1),
+            LocalDateTime.now().plusDays(2),
+            totalStock,
+            1L,
+            true);
     ReflectionTestUtils.setField(drops, "remainStock", remainStock);
     return drops;
   }
@@ -155,8 +143,7 @@ class DropsServiceTest {
       LocalDateTime endAt,
       Long totalStock,
       Long purchaseLimit,
-      boolean useQueue
-  ) {
+      boolean useQueue) {
     DropCreateRequest request = new DropCreateRequest();
     ReflectionTestUtils.setField(request, "productId", productId);
     ReflectionTestUtils.setField(request, "startAt", startAt);
@@ -172,8 +159,7 @@ class DropsServiceTest {
       LocalDateTime endAt,
       Long totalStock,
       Long purchaseLimit,
-      Boolean useQueue
-  ) {
+      Boolean useQueue) {
     DropUpdateRequest request = new DropUpdateRequest();
     ReflectionTestUtils.setField(request, "startAt", startAt);
     ReflectionTestUtils.setField(request, "endAt", endAt);
@@ -183,4 +169,3 @@ class DropsServiceTest {
     return request;
   }
 }
-

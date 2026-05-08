@@ -31,18 +31,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 상품 읽기 도메인 서비스.
- */
+/** 상품 읽기 도메인 서비스. */
 @Service
 @RequiredArgsConstructor
 public class ProductQueryService {
 
-  private static final Collection<ProductStatus> PUBLIC_PRODUCT_STATUSES = EnumSet.of(
-      ProductStatus.READY,
-      ProductStatus.ON_SALE,
-      ProductStatus.OUT_OF_STOCK
-  );
+  private static final Collection<ProductStatus> PUBLIC_PRODUCT_STATUSES =
+      EnumSet.of(ProductStatus.READY, ProductStatus.ON_SALE, ProductStatus.OUT_OF_STOCK);
 
   private final ProductRepository productRepository;
   private final DropsFacadeService dropsFacadeService;
@@ -52,30 +47,28 @@ public class ProductQueryService {
   /**
    * 공개 상품 목록을 조회한다.
    *
-   * <p>동일 파라미터(status, sort, page, size)로 반복 요청 시 Redis 캐시에서 반환한다.
-   * TTL: 30초 / 상품·드랍 변경 시 {@code product:list} 캐시 전체 무효화.
+   * <p>동일 파라미터(status, sort, page, size)로 반복 요청 시 Redis 캐시에서 반환한다. TTL: 30초 / 상품·드랍 변경 시 {@code
+   * product:list} 캐시 전체 무효화.
    */
   @Cacheable(
       value = CacheNames.PRODUCT_LIST,
-      key = "'status=' + #status + ':sort=' + #sort + ':page=' + #pageable.pageNumber + ':size=' + #pageable.pageSize"
-  )
+      key =
+          "'status=' + #status + ':sort=' + #sort + ':page=' + #pageable.pageNumber + ':size=' + #pageable.pageSize")
   @Transactional(readOnly = true)
   public Page<ProductListItemResponse> findPublicProducts(
-      String status,
-      String sort,
-      Pageable pageable
-  ) {
+      String status, String sort, Pageable pageable) {
     Collection<ProductStatus> filterStatuses = parsePublicStatusFilter(status);
     ProductListSortType sortType = parseSortType(sort);
 
     Page<Product> products = findPublicProductsBySort(filterStatuses, sortType, pageable);
-    Map<Long, Drops> latestDrops = dropsFacadeService.findLatestDropsByProductIds(
-        products.stream().map(Product::getId).toList()
-    );
+    Map<Long, Drops> latestDrops =
+        dropsFacadeService.findLatestDropsByProductIds(
+            products.stream().map(Product::getId).toList());
 
-    List<ProductListItemResponse> content = products.getContent().stream()
-        .map(product -> ProductListItemResponse.of(product, latestDrops.get(product.getId())))
-        .toList();
+    List<ProductListItemResponse> content =
+        products.getContent().stream()
+            .map(product -> ProductListItemResponse.of(product, latestDrops.get(product.getId())))
+            .toList();
 
     return new PageImpl<>(content, products.getPageable(), products.getTotalElements());
   }
@@ -83,14 +76,15 @@ public class ProductQueryService {
   /**
    * 공개 상품 상세를 조회한다.
    *
-   * <p>상품 ID 기준으로 Redis 캐시에서 반환한다.
-   * TTL: 60초 / 상품 수정·이미지 변경·드랍 변경 시 해당 상품 캐시 무효화.
+   * <p>상품 ID 기준으로 Redis 캐시에서 반환한다. TTL: 60초 / 상품 수정·이미지 변경·드랍 변경 시 해당 상품 캐시 무효화.
    */
   @Cacheable(value = CacheNames.PRODUCT_DETAIL, key = "#productId")
   @Transactional(readOnly = true)
   public ProductDetailResponse findPublicProductDetail(Long productId) {
-    Product product = productRepository.findDetailById(productId)
-        .orElseThrow(() -> new ProductException(ErrorCode.PRODUCT_NOT_FOUND));
+    Product product =
+        productRepository
+            .findDetailById(productId)
+            .orElseThrow(() -> new ProductException(ErrorCode.PRODUCT_NOT_FOUND));
 
     if (product.getStatus() == ProductStatus.HIDDEN) {
       throw new ProductException(ErrorCode.PRODUCT_NOT_FOUND);
@@ -103,36 +97,20 @@ public class ProductQueryService {
     return ProductDetailResponse.of(product, latestDrop, seller, isPurchasable);
   }
 
-  /**
-   * 판매자 본인 상품 목록을 조회한다.
-   */
+  /** 판매자 본인 상품 목록을 조회한다. */
   @Transactional(readOnly = true)
-  public Page<SellerProductListItemResponse> findSellerProducts(
-      Long sellerId,
-      Pageable pageable
-  ) {
-    Page<Product> products = productRepository.findAllBySellerId(
-        sellerId,
-        applySort(pageable, Sort.by(Sort.Direction.DESC, "createdAt"))
-    );
+  public Page<SellerProductListItemResponse> findSellerProducts(Long sellerId, Pageable pageable) {
+    Page<Product> products =
+        productRepository.findAllBySellerId(
+            sellerId, applySort(pageable, Sort.by(Sort.Direction.DESC, "createdAt")));
     return products.map(SellerProductListItemResponse::from);
   }
 
   private Page<Product> findPublicProductsBySort(
-      Collection<ProductStatus> statuses,
-      ProductListSortType sortType,
-      Pageable pageable
-  ) {
-    Pageable normalizedPageable = PageRequest.of(
-        pageable.getPageNumber(),
-        pageable.getPageSize()
-    );
+      Collection<ProductStatus> statuses, ProductListSortType sortType, Pageable pageable) {
+    Pageable normalizedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     return productRepository.findPublicProducts(
-        statuses,
-        sortType,
-        LocalDateTime.now(),
-        normalizedPageable
-    );
+        statuses, sortType, LocalDateTime.now(), normalizedPageable);
   }
 
   private Collection<ProductStatus> parsePublicStatusFilter(String status) {
@@ -145,16 +123,12 @@ public class ProductQueryService {
       parsedStatus = ProductStatus.valueOf(status.toUpperCase());
     } catch (IllegalArgumentException exception) {
       throw new ProductException(
-          ErrorCode.VALIDATION_ERROR,
-          "status는 READY, ON_SALE, OUT_OF_STOCK 중 하나여야 합니다."
-      );
+          ErrorCode.VALIDATION_ERROR, "status는 READY, ON_SALE, OUT_OF_STOCK 중 하나여야 합니다.");
     }
 
     if (!PUBLIC_PRODUCT_STATUSES.contains(parsedStatus)) {
       throw new ProductException(
-          ErrorCode.VALIDATION_ERROR,
-          "공개 목록에서는 READY, ON_SALE, OUT_OF_STOCK만 조회할 수 있습니다."
-      );
+          ErrorCode.VALIDATION_ERROR, "공개 목록에서는 READY, ON_SALE, OUT_OF_STOCK만 조회할 수 있습니다.");
     }
     return EnumSet.of(parsedStatus);
   }
@@ -168,8 +142,7 @@ public class ProductQueryService {
     } catch (IllegalArgumentException exception) {
       throw new ProductException(
           ErrorCode.VALIDATION_ERROR,
-          "sort는 LATEST, PRICE_HIGH, PRICE_LOW, DROP_IMMINENT 중 하나여야 합니다."
-      );
+          "sort는 LATEST, PRICE_HIGH, PRICE_LOW, DROP_IMMINENT 중 하나여야 합니다.");
     }
   }
 

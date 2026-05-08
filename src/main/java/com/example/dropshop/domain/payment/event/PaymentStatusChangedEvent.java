@@ -10,9 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
-/**
- * 결제 상태 변경 이벤트.
- */
+/** 결제 상태 변경 이벤트. */
 @Getter
 public class PaymentStatusChangedEvent {
 
@@ -26,6 +24,7 @@ public class PaymentStatusChangedEvent {
   private final OrderStatus orderStatus;
   private final String source;
   private final String occurredAt;
+
   /** 구매자 userId — 월별 순 구매자 수(HyperLogLog) 집계에 사용한다. */
   private final Long buyerUserId;
 
@@ -37,7 +36,8 @@ public class PaymentStatusChangedEvent {
    * @param source 이벤트 발생 출처
    * @param buyerUserId 구매자 userId
    */
-  public PaymentStatusChangedEvent(Payment payment, OrderStatus orderStatus, String source, Long buyerUserId) {
+  public PaymentStatusChangedEvent(
+      Payment payment, OrderStatus orderStatus, String source, Long buyerUserId) {
     this.paymentId = payment.getId();
     this.orderId = payment.getOrderId();
     this.merchantPaymentId = payment.getMerchantPaymentId();
@@ -51,23 +51,20 @@ public class PaymentStatusChangedEvent {
     this.buyerUserId = buyerUserId;
   }
 
-  /**
-   * Jackson 역직렬화용 생성자. 아웃박스 payload JSON → 이벤트 객체 복원에 사용한다.
-   */
+  /** Jackson 역직렬화용 생성자. 아웃박스 payload JSON → 이벤트 객체 복원에 사용한다. */
   @JsonCreator
   public PaymentStatusChangedEvent(
-      @JsonProperty("paymentId")           Long paymentId,
-      @JsonProperty("orderId")             Long orderId,
-      @JsonProperty("merchantPaymentId")   String merchantPaymentId,
+      @JsonProperty("paymentId") Long paymentId,
+      @JsonProperty("orderId") Long orderId,
+      @JsonProperty("merchantPaymentId") String merchantPaymentId,
       @JsonProperty("portOneTransactionId") String portOneTransactionId,
-      @JsonProperty("amount")              BigDecimal amount,
-      @JsonProperty("paymentMethod")       PaymentMethod paymentMethod,
-      @JsonProperty("paymentStatus")       PaymentStatus paymentStatus,
-      @JsonProperty("orderStatus")         OrderStatus orderStatus,
-      @JsonProperty("source")              String source,
-      @JsonProperty("occurredAt")          String occurredAt,
-      @JsonProperty("buyerUserId")         Long buyerUserId
-  ) {
+      @JsonProperty("amount") BigDecimal amount,
+      @JsonProperty("paymentMethod") PaymentMethod paymentMethod,
+      @JsonProperty("paymentStatus") PaymentStatus paymentStatus,
+      @JsonProperty("orderStatus") OrderStatus orderStatus,
+      @JsonProperty("source") String source,
+      @JsonProperty("occurredAt") String occurredAt,
+      @JsonProperty("buyerUserId") Long buyerUserId) {
     this.paymentId = paymentId;
     this.orderId = orderId;
     this.merchantPaymentId = merchantPaymentId;
@@ -81,9 +78,7 @@ public class PaymentStatusChangedEvent {
     this.buyerUserId = buyerUserId;
   }
 
-  /**
-   * 파티셔닝용 메시지 키를 반환한다.
-   */
+  /** 파티셔닝용 메시지 키를 반환한다. */
   public String eventKey() {
     return String.valueOf(paymentId);
   }

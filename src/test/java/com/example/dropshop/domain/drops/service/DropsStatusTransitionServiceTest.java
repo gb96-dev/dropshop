@@ -24,14 +24,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class DropsStatusTransitionServiceTest {
 
-  @Mock
-  private DropsService dropsService;
+  @Mock private DropsService dropsService;
 
-  @Mock
-  private DropsStatusTransitionWorker transitionWorker;
+  @Mock private DropsStatusTransitionWorker transitionWorker;
 
-  @InjectMocks
-  private DropsStatusTransitionService dropsStatusTransitionService;
+  @InjectMocks private DropsStatusTransitionService dropsStatusTransitionService;
 
   @Test
   @DisplayName("예정 드랍 전이 성공 건수를 반환한다")
@@ -91,19 +88,19 @@ class DropsStatusTransitionServiceTest {
   }
 
   private Drops createDrop(Long dropId, Long sellerId, LocalDateTime startAt, LocalDateTime endAt) {
-    Product product = Product.create(
-        sellerId,
-        "테스트 상품",
-        "TEST",
-        new BigDecimal("100000"),
-        10,
-        100,
-        "https://example.com/thumb.jpg",
-        "상품 설명",
-        "상품 상세",
-        "배송 안내",
-        "환불 정책"
-    );
+    Product product =
+        Product.create(
+            sellerId,
+            "테스트 상품",
+            "TEST",
+            new BigDecimal("100000"),
+            10,
+            100,
+            "https://example.com/thumb.jpg",
+            "상품 설명",
+            "상품 상세",
+            "배송 안내",
+            "환불 정책");
     ReflectionTestUtils.setField(product, "id", 100L + dropId);
 
     Drops drops = Drops.create(product, startAt, endAt, 10L, 1L, false);

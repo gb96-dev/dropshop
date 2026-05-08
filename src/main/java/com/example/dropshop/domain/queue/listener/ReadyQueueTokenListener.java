@@ -12,9 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-/**
- * 준비된 대기열 토큰 리스너.
- */
+/** 준비된 대기열 토큰 리스너. */
 @Component
 @RequiredArgsConstructor
 public class ReadyQueueTokenListener {
@@ -26,8 +24,7 @@ public class ReadyQueueTokenListener {
   @KafkaListener(
       topics = TOPIC_READY_QUEUE_TOKEN,
       groupId = READY_QUEUE_GROUP_NAME,
-      containerFactory = "readyThreadHoldKafkaListenerContainerFactory"
-  )
+      containerFactory = "readyThreadHoldKafkaListenerContainerFactory")
   public void consume(ThreadHoldResponse threadHoldResponse) {
     QueueToken token = queueTokenRepository.findByQueueId(threadHoldResponse.getQueueId()).get();
 

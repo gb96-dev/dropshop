@@ -7,9 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-/**
- * ShedLock JDBC LockProvider 설정.
- */
+/** ShedLock JDBC LockProvider 설정. */
 @Configuration
 public class ShedLockConfig {
 
@@ -20,9 +18,6 @@ public class ShedLockConfig {
             .withJdbcTemplate(new JdbcTemplate(dataSource))
             .usingDbTime()
             .withTableName("shedlock")
-            .build()
-    );
+            .build());
   }
 }
-
-

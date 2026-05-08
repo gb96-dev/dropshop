@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.Arrays;
 import lombok.Getter;
 
-/**
- * 알림 타입 enum.
- */
+/** 알림 타입 enum. */
 @Getter
 public enum NotificationType {
   DROP_IMPENDING("드랍 임박"),
@@ -24,6 +22,7 @@ public enum NotificationType {
 
   /**
    * 알림 타입을 설정되있는 한글 description으로 받아 enum타입으로 바꾼다.
+   *
    * @param value 한글 description.
    * @return 리턴.
    */

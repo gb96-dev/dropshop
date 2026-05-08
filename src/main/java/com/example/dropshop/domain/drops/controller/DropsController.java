@@ -27,9 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 판매자 드랍 API 컨트롤러.
- */
+/** 판매자 드랍 API 컨트롤러. */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/sellers/drops")
@@ -39,95 +37,67 @@ public class DropsController {
   private final DropsQueryService dropsQueryService;
   private final SellerAuthResolver sellerAuthResolver;
 
-  /**
-   * 판매자가 새로운 드랍을 생성한다.
-   */
+  /** 판매자가 새로운 드랍을 생성한다. */
   @PostMapping
   public ResponseEntity<ApiResponse<DropResponse>> createDrop(
-      @AuthenticationPrincipal String email,
-      @Valid @RequestBody DropCreateRequest request
-  ) {
+      @AuthenticationPrincipal String email, @Valid @RequestBody DropCreateRequest request) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
-    DropResponse response = dropsFacadeService.createSellerDrop(
-        sellerAuth.sellerId(),
-        sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified(),
-        request
-    );
+    DropResponse response =
+        dropsFacadeService.createSellerDrop(
+            sellerAuth.sellerId(),
+            sellerAuth.sellerApproved(),
+            sellerAuth.sellerVerified(),
+            request);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
   }
 
-  /**
-   * 판매자가 본인 드랍을 수정한다.
-   */
+  /** 판매자가 본인 드랍을 수정한다. */
   @PatchMapping("/{id}")
   public ResponseEntity<ApiResponse<DropResponse>> updateDrop(
       @PathVariable Long id,
       @AuthenticationPrincipal String email,
-      @Valid @RequestBody DropUpdateRequest request
-  ) {
+      @Valid @RequestBody DropUpdateRequest request) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
-    DropResponse response = dropsFacadeService.updateSellerDrop(
-        id,
-        sellerAuth.sellerId(),
-        sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified(),
-        request
-    );
+    DropResponse response =
+        dropsFacadeService.updateSellerDrop(
+            id,
+            sellerAuth.sellerId(),
+            sellerAuth.sellerApproved(),
+            sellerAuth.sellerVerified(),
+            request);
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 
-  /**
-   * 판매자가 본인 드랍을 삭제한다.
-   */
+  /** 판매자가 본인 드랍을 삭제한다. */
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteDrop(
-      @PathVariable Long id,
-      @AuthenticationPrincipal String email
-  ) {
+      @PathVariable Long id, @AuthenticationPrincipal String email) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
     dropsFacadeService.deleteSellerDrop(
-        id,
-        sellerAuth.sellerId(),
-        sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified()
-    );
+        id, sellerAuth.sellerId(), sellerAuth.sellerApproved(), sellerAuth.sellerVerified());
     return ResponseEntity.ok(ApiResponse.ok());
   }
 
-  /**
-   * 판매자가 드랍을 강제 종료한다.
-   */
+  /** 판매자가 드랍을 강제 종료한다. */
   @PatchMapping("/{id}/stop")
   public ResponseEntity<ApiResponse<DropResponse>> stopDrop(
-      @PathVariable Long id,
-      @AuthenticationPrincipal String email
-  ) {
+      @PathVariable Long id, @AuthenticationPrincipal String email) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
-    DropResponse response = dropsFacadeService.stopSellerDrop(
-        id,
-        sellerAuth.sellerId(),
-        sellerAuth.sellerApproved(),
-        sellerAuth.sellerVerified()
-    );
+    DropResponse response =
+        dropsFacadeService.stopSellerDrop(
+            id, sellerAuth.sellerId(), sellerAuth.sellerApproved(), sellerAuth.sellerVerified());
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 
-  /**
-   * 판매자 본인 드롭 목록 조회.
-   */
+  /** 판매자 본인 드롭 목록 조회. */
   @GetMapping("/mine")
-  public ResponseEntity<
-      ApiResponse<ApiResponse.PageResponse<DropListItemResponse>>> getMyDrops(
+  public ResponseEntity<ApiResponse<ApiResponse.PageResponse<DropListItemResponse>>> getMyDrops(
       @AuthenticationPrincipal String email,
       @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-      Pageable pageable
-  ) {
+          Pageable pageable) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
-    Page<DropListItemResponse> response = dropsQueryService.findSellerDrops(
-        sellerAuth.sellerId(),
-        pageable
-    );
+    Page<DropListItemResponse> response =
+        dropsQueryService.findSellerDrops(sellerAuth.sellerId(), pageable);
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 }

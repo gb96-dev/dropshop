@@ -21,9 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-/**
- * PortOne 웹훅 동기화를 처리한다.
- */
+/** PortOne 웹훅 동기화를 처리한다. */
 @Service
 @RequiredArgsConstructor
 public class PaymentWebhookService {
@@ -49,13 +47,14 @@ public class PaymentWebhookService {
       throw new PaymentException(ErrorCode.PAYMENT_WEBHOOK_PAYMENT_ID_REQUIRED);
     }
 
-    Payment payment = paymentRepository.findByMerchantPaymentId(portOnePaymentId)
-        .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_WEBHOOK_PAYMENT_NOT_FOUND));
+    Payment payment =
+        paymentRepository
+            .findByMerchantPaymentId(portOnePaymentId)
+            .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_WEBHOOK_PAYMENT_NOT_FOUND));
 
     return redisLockService.executeWithLock(
         LockKeys.order(payment.getOrderId()),
-        () -> transactionTemplate.execute(status -> handleWebhookInternal(portOnePaymentId))
-    );
+        () -> transactionTemplate.execute(status -> handleWebhookInternal(portOnePaymentId)));
   }
 
   /**
@@ -72,10 +71,7 @@ public class PaymentWebhookService {
   }
 
   private void applyWebhookResult(
-      Payment payment,
-      Order order,
-      PortOnePaymentResponse portOnePayment
-  ) {
+      Payment payment, Order order, PortOnePaymentResponse portOnePayment) {
     if (payment.getStatus() != PaymentStatus.PENDING) {
       return;
     }
@@ -102,8 +98,10 @@ public class PaymentWebhookService {
   }
 
   private Payment handleWebhookInternal(String portOnePaymentId) {
-    Payment payment = paymentRepository.findByMerchantPaymentId(portOnePaymentId)
-        .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_WEBHOOK_PAYMENT_NOT_FOUND));
+    Payment payment =
+        paymentRepository
+            .findByMerchantPaymentId(portOnePaymentId)
+            .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_WEBHOOK_PAYMENT_NOT_FOUND));
 
     if (payment.getStatus() != PaymentStatus.PENDING) {
       return payment;
@@ -116,11 +114,8 @@ public class PaymentWebhookService {
   }
 
   private void publishPaymentStatusChanged(
-      Payment payment,
-      OrderStatus orderStatus,
-      String source,
-      Long buyerUserId
-  ) {
-    paymentOutboxPublisher.save(new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
+      Payment payment, OrderStatus orderStatus, String source, Long buyerUserId) {
+    paymentOutboxPublisher.save(
+        new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
   }
 }

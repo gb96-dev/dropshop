@@ -7,8 +7,7 @@ import java.time.LocalDate;
  */
 public final class LockKeys {
 
-  private LockKeys() {
-  }
+  private LockKeys() {}
 
   public static String order(Long orderId) {
     return "lock:order:" + orderId;
