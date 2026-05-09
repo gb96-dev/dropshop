@@ -10,9 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-/**
- * DB에 있는 상품을 일괄 임베딩하여 Pinecone에 저장하는 배치 서비스.
- */
+/** DB에 있는 상품을 일괄 임베딩하여 Pinecone에 저장하는 배치 서비스. */
 @Slf4j
 @Service
 @ConditionalOnProperty(prefix = "recommendation", name = "enabled", havingValue = "true")
@@ -25,8 +23,7 @@ public class EmbeddingBatchService {
   public EmbeddingBatchService(
       ProductRepository productRepository,
       OpenAiClient openAiClient,
-      PineconeClient pineconeClient
-  ) {
+      PineconeClient pineconeClient) {
     this.productRepository = productRepository;
     this.openAiClient = openAiClient;
     this.pineconeClient = pineconeClient;
@@ -43,15 +40,16 @@ public class EmbeddingBatchService {
 
     for (Product product : products) {
       try {
-        String text = product.getName() + " " + product.getCategory() + " " + product.getDescription();
+        String text =
+            product.getName() + " " + product.getCategory() + " " + product.getDescription();
         List<Float> vector = openAiClient.embed(text);
 
-        Map<String, Object> metadata = Map.of(
-            "productId", product.getId(),
-            "name", product.getName(),
-            "category", product.getCategory(),
-            "description", product.getDescription()
-        );
+        Map<String, Object> metadata =
+            Map.of(
+                "productId", product.getId(),
+                "name", product.getName(),
+                "category", product.getCategory(),
+                "description", product.getDescription());
 
         pineconeClient.upsert(product.getId(), vector, metadata);
         successCount++;

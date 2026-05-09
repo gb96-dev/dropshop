@@ -28,7 +28,7 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       ssl:
-        enabled: ${REDIS_USE_SSL:false}
+        enabled: ${REDIS_USE_SSL:true}
       timeout: 60000ms
       lettuce:
         pool:
@@ -73,9 +73,6 @@ dropshop:
   drops:
     view-count-ttl-seconds: 600
 
-recommendation:
-  enabled: false
-
 management:
   endpoints:
     web:
@@ -92,3 +89,13 @@ logging:
 
 server:
   port: 8080
+
+openai:
+  api-key: "dummy"
+  embedding-model: "text-embedding-3-small"
+  chat-model: "gpt-4o-mini"
+
+pinecone:
+  api-key: "dummy"
+  host: "https://dummy.pinecone.io"
+  index-name: "dropshop-products"
