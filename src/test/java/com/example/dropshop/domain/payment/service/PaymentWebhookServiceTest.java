@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -18,6 +19,7 @@ import com.example.dropshop.common.lock.RedisLockService;
 import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
+import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.exception.OrderException;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.payment.client.PortOneClient;
@@ -69,11 +71,9 @@ class PaymentWebhookServiceTest {
 
   @Mock private PaymentOutboxPublisher paymentOutboxPublisher;
 
-  @Mock
-  private SellerDashboardRefreshService sellerDashboardRefreshService;
+  @Mock private SellerDashboardRefreshService sellerDashboardRefreshService;
 
-  @InjectMocks
-  private PaymentWebhookService paymentWebhookService;
+  @InjectMocks private PaymentWebhookService paymentWebhookService;
 
   private Order order;
   private Payment payment;
@@ -129,6 +129,31 @@ class PaymentWebhookServiceTest {
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
     verify(sellerDashboardRefreshService, times(1)).refreshForOrder(order);
+    verify(paymentOutboxPublisher, times(1)).save(any(PaymentStatusChangedEvent.class));
+  }
+
+  @Test
+  @DisplayName("대시보드 갱신이 실패해도 웹훅 결제 확정은 유지된다")
+  void handleWebhook_dashboardRefreshFailure_doesNotRollbackConfirmation() {
+    given(paymentRepository.findByMerchantPaymentId("payment-test-123"))
+        .willReturn(Optional.of(payment));
+    given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
+    given(orderFacadeService.payOrderByPayment(order))
+        .willAnswer(
+            invocation -> {
+              order.pay();
+              return order;
+            });
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(portOnePayment("PAID", "tx-webhook", "79000"));
+    doThrow(new RuntimeException("dashboard refresh failed"))
+        .when(sellerDashboardRefreshService)
+        .refreshForOrder(order);
+
+    Payment result = paymentWebhookService.handleWebhook("payment-test-123");
+
+    assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
     verify(paymentOutboxPublisher, times(1)).save(any(PaymentStatusChangedEvent.class));
   }
 

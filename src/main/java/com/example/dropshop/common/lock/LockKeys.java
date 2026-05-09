@@ -2,9 +2,7 @@ package com.example.dropshop.common.lock;
 
 import java.time.LocalDate;
 
-/**
- * 분산 락 키 생성 유틸리티.
- */
+/** 분산 락 키 생성 유틸리티. */
 public final class LockKeys {
 
   private LockKeys() {}

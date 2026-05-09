@@ -5,9 +5,7 @@ import com.example.dropshop.domain.order.enums.OrderStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 판매자 대시보드 주문 내역 응답.
- */
+/** 판매자 대시보드 주문 내역 응답. */
 public record SellerDashboardOrderItemResponse(
     Long orderId,
     String orderNumber,
@@ -18,8 +16,7 @@ public record SellerDashboardOrderItemResponse(
     int quantity,
     BigDecimal salesAmount,
     OrderStatus orderStatus,
-    LocalDateTime orderedAt
-) {
+    LocalDateTime orderedAt) {
 
   public static SellerDashboardOrderItemResponse from(SellerDashboardOrderItemView view) {
     return new SellerDashboardOrderItemResponse(
@@ -32,7 +29,6 @@ public record SellerDashboardOrderItemResponse(
         view.quantity(),
         view.salesAmount(),
         view.orderStatus(),
-        view.orderedAt()
-    );
+        view.orderedAt());
   }
 }

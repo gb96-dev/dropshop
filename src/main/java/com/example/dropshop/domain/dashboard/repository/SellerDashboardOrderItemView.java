@@ -4,9 +4,7 @@ import com.example.dropshop.domain.order.enums.OrderStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 판매자 주문 내역 조회 뷰.
- */
+/** 판매자 주문 내역 조회 뷰. */
 public record SellerDashboardOrderItemView(
     Long orderId,
     String orderNumber,
@@ -17,6 +15,4 @@ public record SellerDashboardOrderItemView(
     int quantity,
     BigDecimal salesAmount,
     OrderStatus orderStatus,
-    LocalDateTime orderedAt
-) {
-}
+    LocalDateTime orderedAt) {}

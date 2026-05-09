@@ -57,16 +57,16 @@ public class LocalSellerTestDataInitializer {
       PaymentRepository paymentRepository,
       SellerDashboardRefreshService sellerDashboardRefreshService,
       PasswordEncoder passwordEncoder) {
-    return args -> initialize(
-        userRepository,
-        sellerRepository,
-        productRepository,
-        dropsRepository,
-        orderRepository,
-        paymentRepository,
-        sellerDashboardRefreshService,
-        passwordEncoder
-    );
+    return args ->
+        initialize(
+            userRepository,
+            sellerRepository,
+            productRepository,
+            dropsRepository,
+            orderRepository,
+            paymentRepository,
+            sellerDashboardRefreshService,
+            passwordEncoder);
   }
 
   public void initialize(
@@ -125,8 +125,7 @@ public class LocalSellerTestDataInitializer {
         paymentRepository,
         sellerDashboardRefreshService,
         passwordEncoder,
-        sellerUser
-    );
+        sellerUser);
   }
 
   private void prepareDashboardSeedData(
@@ -137,50 +136,43 @@ public class LocalSellerTestDataInitializer {
       PaymentRepository paymentRepository,
       SellerDashboardRefreshService sellerDashboardRefreshService,
       PasswordEncoder passwordEncoder,
-      User sellerUser
-  ) {
-    Product product = Product.create(
-        sellerUser.getId(),
-        DASHBOARD_PRODUCT_NAME,
-        "CLOTHING",
-        new BigDecimal("129000"),
-        0,
-        20,
-        "https://dummy-image-dashboard",
-        "대시보드 확인용 샘플 상품입니다.",
-        "면 100%, FREE",
-        "기본 배송 안내",
-        "기본 환불 정책"
-    );
+      User sellerUser) {
+    Product product =
+        Product.create(
+            sellerUser.getId(),
+            DASHBOARD_PRODUCT_NAME,
+            "CLOTHING",
+            new BigDecimal("129000"),
+            0,
+            20,
+            "https://dummy-image-dashboard",
+            "대시보드 확인용 샘플 상품입니다.",
+            "면 100%, FREE",
+            "기본 배송 안내",
+            "기본 환불 정책");
     product.updateStatusByDrop(ProductStatus.READY);
     Product savedProduct = productRepository.save(product);
 
-    Drops drop = Drops.create(
-        savedProduct,
-        LocalDateTime.now().minusDays(1),
-        LocalDateTime.now().plusDays(7),
-        20L,
-        1L,
-        false
-    );
+    Drops drop =
+        Drops.create(
+            savedProduct,
+            LocalDateTime.now().minusDays(1),
+            LocalDateTime.now().plusDays(7),
+            20L,
+            1L,
+            false);
     drop.activate();
     Drops savedDrop = dropsRepository.save(drop);
 
-    User buyerOne = ensureBuyerUser(
-        userRepository,
-        passwordEncoder,
-        DASHBOARD_BUYER_ONE_EMAIL,
-        "대시보드구매자1"
-    );
-    User buyerTwo = ensureBuyerUser(
-        userRepository,
-        passwordEncoder,
-        DASHBOARD_BUYER_TWO_EMAIL,
-        "대시보드구매자2"
-    );
+    User buyerOne =
+        ensureBuyerUser(userRepository, passwordEncoder, DASHBOARD_BUYER_ONE_EMAIL, "대시보드구매자1");
+    User buyerTwo =
+        ensureBuyerUser(userRepository, passwordEncoder, DASHBOARD_BUYER_TWO_EMAIL, "대시보드구매자2");
 
-    Order firstOrder = createPaidOrder(orderRepository, paymentRepository, buyerOne, savedDrop, savedProduct);
-    Order secondOrder = createPaidOrder(orderRepository, paymentRepository, buyerTwo, savedDrop, savedProduct);
+    Order firstOrder =
+        createPaidOrder(orderRepository, paymentRepository, buyerOne, savedDrop, savedProduct);
+    Order secondOrder =
+        createPaidOrder(orderRepository, paymentRepository, buyerTwo, savedDrop, savedProduct);
 
     sellerDashboardRefreshService.refreshForOrder(firstOrder);
     sellerDashboardRefreshService.refreshForOrder(secondOrder);
@@ -191,19 +183,21 @@ public class LocalSellerTestDataInitializer {
         savedProduct.getId(),
         savedDrop.getId(),
         buyerOne.getEmail(),
-        buyerTwo.getEmail()
-    );
+        buyerTwo.getEmail());
   }
 
   private User ensureBuyerUser(
       UserRepository userRepository,
       PasswordEncoder passwordEncoder,
       String email,
-      String nickname
-  ) {
-    return userRepository.findByEmail(email).orElseGet(() -> userRepository.save(
-        User.signup(email, passwordEncoder.encode(DASHBOARD_BUYER_PASSWORD), nickname)
-    ));
+      String nickname) {
+    return userRepository
+        .findByEmail(email)
+        .orElseGet(
+            () ->
+                userRepository.save(
+                    User.signup(
+                        email, passwordEncoder.encode(DASHBOARD_BUYER_PASSWORD), nickname)));
   }
 
   private Order createPaidOrder(
@@ -211,8 +205,7 @@ public class LocalSellerTestDataInitializer {
       PaymentRepository paymentRepository,
       User buyer,
       Drops drop,
-      Product product
-  ) {
+      Product product) {
     Order order = Order.create(buyer.getId(), drop.getId());
     order.addOrderItem(
         OrderItem.create(
@@ -221,18 +214,16 @@ public class LocalSellerTestDataInitializer {
             product.getPrice(),
             product.getSalePrice(),
             product.getDiscountAmount(),
-            product.getThumbnailUrl()
-        )
-    );
+            product.getThumbnailUrl()));
     order.pay();
     Order savedOrder = orderRepository.saveAndFlush(order);
 
-    Payment payment = Payment.prepare(
-        savedOrder.getId(),
-        "dashboard-seed-" + savedOrder.getId(),
-        PaymentMethod.CARD,
-        savedOrder.getTotalAmount()
-    );
+    Payment payment =
+        Payment.prepare(
+            savedOrder.getId(),
+            "dashboard-seed-" + savedOrder.getId(),
+            PaymentMethod.CARD,
+            savedOrder.getTotalAmount());
     payment.complete("dashboard-tx-" + savedOrder.getId());
     paymentRepository.saveAndFlush(payment);
 

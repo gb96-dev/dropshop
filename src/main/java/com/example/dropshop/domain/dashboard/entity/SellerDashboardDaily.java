@@ -16,22 +16,18 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 판매자 일별 대시보드 집계 엔티티.
- */
+/** 판매자 일별 대시보드 집계 엔티티. */
 @Entity
 @Table(
     name = "seller_dashboard_daily",
     uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_seller_dashboard_daily_seller_date",
-            columnNames = {"seller_id", "stat_date"}
-        )
+      @UniqueConstraint(
+          name = "uk_seller_dashboard_daily_seller_date",
+          columnNames = {"seller_id", "stat_date"})
     },
     indexes = {
-        @Index(name = "idx_seller_dashboard_daily_seller_date", columnList = "seller_id, stat_date")
-    }
-)
+      @Index(name = "idx_seller_dashboard_daily_seller_date", columnList = "seller_id, stat_date")
+    })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SellerDashboardDaily extends BaseEntity {
@@ -58,8 +54,7 @@ public class SellerDashboardDaily extends BaseEntity {
   @Column(name = "buyer_count", nullable = false)
   private long buyerCount;
 
-  @Version
-  private Long version;
+  @Version private Long version;
 
   public static SellerDashboardDaily create(
       Long sellerId,
@@ -67,8 +62,7 @@ public class SellerDashboardDaily extends BaseEntity {
       long paidOrderCount,
       long salesQuantity,
       BigDecimal salesAmount,
-      long buyerCount
-  ) {
+      long buyerCount) {
     SellerDashboardDaily daily = new SellerDashboardDaily();
     daily.sellerId = sellerId;
     daily.statDate = statDate;
@@ -77,11 +71,7 @@ public class SellerDashboardDaily extends BaseEntity {
   }
 
   public void replaceMetrics(
-      long paidOrderCount,
-      long salesQuantity,
-      BigDecimal salesAmount,
-      long buyerCount
-  ) {
+      long paidOrderCount, long salesQuantity, BigDecimal salesAmount, long buyerCount) {
     this.paidOrderCount = paidOrderCount;
     this.salesQuantity = salesQuantity;
     this.salesAmount = salesAmount;

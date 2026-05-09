@@ -18,10 +18,12 @@ import com.example.dropshop.domain.payment.exception.PaymentException;
 import com.example.dropshop.domain.payment.outbox.PaymentOutboxPublisher;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /** PortOne 웹훅 동기화를 처리한다. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentWebhookService {
@@ -83,7 +85,7 @@ public class PaymentWebhookService {
       paymentVerificationService.validateOrderNotExpired(order);
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
-      sellerDashboardRefreshService.refreshForOrder(order);
+      refreshDashboardSafely(order, payment.getId());
       publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK", order.getUserId());
       return;
     }
@@ -117,5 +119,17 @@ public class PaymentWebhookService {
       Payment payment, OrderStatus orderStatus, String source, Long buyerUserId) {
     paymentOutboxPublisher.save(
         new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
+  }
+
+  private void refreshDashboardSafely(Order order, Long paymentId) {
+    try {
+      sellerDashboardRefreshService.refreshForOrder(order);
+    } catch (RuntimeException e) {
+      log.warn(
+          "Seller dashboard refresh skipped after payment webhook. paymentId={}, orderId={}",
+          paymentId,
+          order.getId(),
+          e);
+    }
   }
 }

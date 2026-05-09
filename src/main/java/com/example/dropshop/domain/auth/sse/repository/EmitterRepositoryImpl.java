@@ -6,9 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-/**
- * Emitter 리포지토리 구현체.
- */
+/** Emitter 리포지토리 구현체. */
 @Repository
 public class EmitterRepositoryImpl implements EmitterRepository {
 
@@ -62,8 +60,7 @@ public class EmitterRepositoryImpl implements EmitterRepository {
           if (key.startsWith(userId)) {
             emitters.remove(key);
           }
-        }
-    );
+        });
   }
 
   @Override
@@ -73,7 +70,6 @@ public class EmitterRepositoryImpl implements EmitterRepository {
           if (key.startsWith(userId)) {
             eventCache.remove(key);
           }
-        }
-    );
+        });
   }
 }

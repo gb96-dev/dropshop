@@ -39,6 +39,7 @@ public class QueueService {
 
   /**
    * 대기열 direct, queue 결정 메소드.
+   *
    * @param dropId 드랍 아이디.
    * @param userEmail 유저 이메일.
    */

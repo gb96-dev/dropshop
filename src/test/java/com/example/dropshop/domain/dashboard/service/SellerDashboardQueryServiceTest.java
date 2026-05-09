@@ -27,14 +27,11 @@ import org.springframework.data.domain.PageRequest;
 @ExtendWith(MockitoExtension.class)
 class SellerDashboardQueryServiceTest {
 
-  @Mock
-  private SellerDashboardDailyRepository sellerDashboardDailyRepository;
+  @Mock private SellerDashboardDailyRepository sellerDashboardDailyRepository;
 
-  @Mock
-  private SellerDashboardMetricsRepository sellerDashboardMetricsRepository;
+  @Mock private SellerDashboardMetricsRepository sellerDashboardMetricsRepository;
 
-  @InjectMocks
-  private SellerDashboardQueryService sellerDashboardQueryService;
+  @InjectMocks private SellerDashboardQueryService sellerDashboardQueryService;
 
   @Test
   @DisplayName("대시보드 요약은 일별 테이블과 distinct buyer 수를 합쳐 반환한다")
@@ -43,14 +40,14 @@ class SellerDashboardQueryServiceTest {
     LocalDate to = LocalDate.of(2026, 5, 7);
 
     given(sellerDashboardDailyRepository.findAllBySellerIdAndStatDateBetween(1L, from, to))
-        .willReturn(List.of(
-            SellerDashboardDaily.create(1L, from, 2L, 3L, new BigDecimal("158000"), 2L),
-            SellerDashboardDaily.create(1L, from.plusDays(1), 1L, 1L, new BigDecimal("79000"), 1L)
-        ));
+        .willReturn(
+            List.of(
+                SellerDashboardDaily.create(1L, from, 2L, 3L, new BigDecimal("158000"), 2L),
+                SellerDashboardDaily.create(
+                    1L, from.plusDays(1), 1L, 1L, new BigDecimal("79000"), 1L)));
     given(sellerDashboardMetricsRepository.countDistinctBuyers(1L, from, to)).willReturn(2L);
 
-    SellerDashboardSummaryResponse result =
-        sellerDashboardQueryService.getSummary(1L, from, to);
+    SellerDashboardSummaryResponse result = sellerDashboardQueryService.getSummary(1L, from, to);
 
     assertThat(result.paidOrderCount()).isEqualTo(3L);
     assertThat(result.salesQuantity()).isEqualTo(4L);
@@ -62,37 +59,29 @@ class SellerDashboardQueryServiceTest {
   @DisplayName("판매자 주문 내역은 응답 DTO 페이지로 변환된다")
   void getOrderItems_success() {
     PageRequest pageable = PageRequest.of(0, 20);
-    Page<SellerDashboardOrderItemView> source = new PageImpl<>(
-        List.of(new SellerDashboardOrderItemView(
-            1L,
-            "ORDER-123",
-            10L,
-            100L,
-            "테스트 상품",
-            "https://dummy-image",
-            1,
-            new BigDecimal("79000"),
-            OrderStatus.PAID,
-            LocalDateTime.of(2026, 5, 7, 10, 0)
-        )),
-        pageable,
-        1
-    );
-    given(sellerDashboardMetricsRepository.findSellerOrderItems(
-        1L,
-        OrderStatus.PAID,
-        null,
-        null,
-        pageable
-    )).willReturn(source);
+    Page<SellerDashboardOrderItemView> source =
+        new PageImpl<>(
+            List.of(
+                new SellerDashboardOrderItemView(
+                    1L,
+                    "ORDER-123",
+                    10L,
+                    100L,
+                    "테스트 상품",
+                    "https://dummy-image",
+                    1,
+                    new BigDecimal("79000"),
+                    OrderStatus.PAID,
+                    LocalDateTime.of(2026, 5, 7, 10, 0))),
+            pageable,
+            1);
+    given(
+            sellerDashboardMetricsRepository.findSellerOrderItems(
+                1L, OrderStatus.PAID, null, null, pageable))
+        .willReturn(source);
 
-    Page<SellerDashboardOrderItemResponse> result = sellerDashboardQueryService.getOrderItems(
-        1L,
-        OrderStatus.PAID,
-        null,
-        null,
-        pageable
-    );
+    Page<SellerDashboardOrderItemResponse> result =
+        sellerDashboardQueryService.getOrderItems(1L, OrderStatus.PAID, null, null, pageable);
 
     assertThat(result.getTotalElements()).isEqualTo(1L);
     assertThat(result.getContent().get(0).productName()).isEqualTo("테스트 상품");

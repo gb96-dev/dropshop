@@ -15,11 +15,13 @@ import com.example.dropshop.domain.refund.exception.RefundException;
 import com.example.dropshop.domain.refund.repository.RefundRepository;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 환불 완료 트랜잭션 분리 처리 서비스. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RefundCompletionWorker {
@@ -89,7 +91,7 @@ public class RefundCompletionWorker {
     Order order = orderFacadeService.findOrderForPaymentWebhook(orderId);
     if (order.getStatus() == OrderStatus.PAID) {
       orderFacadeService.refundOrderByRefund(order);
-      sellerDashboardRefreshService.refreshForOrder(order);
+      refreshDashboardSafely(order, refundId);
     } else if (order.getStatus() != OrderStatus.REFUNDED) {
       throw new RefundException(ErrorCode.REFUND_ORDER_INVALID_STATUS);
     }
@@ -140,4 +142,16 @@ public class RefundCompletionWorker {
       String portOnePaymentId,
       BigDecimal refundAmount,
       String refundReason) {}
+
+  private void refreshDashboardSafely(Order order, Long refundId) {
+    try {
+      sellerDashboardRefreshService.refreshForOrder(order);
+    } catch (RuntimeException e) {
+      log.warn(
+          "Seller dashboard refresh skipped after refund completion. refundId={}, orderId={}",
+          refundId,
+          order.getId(),
+          e);
+    }
+  }
 }

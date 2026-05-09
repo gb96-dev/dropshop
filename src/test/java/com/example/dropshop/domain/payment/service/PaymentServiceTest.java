@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -13,10 +14,10 @@ import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
-import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
+import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
 import com.example.dropshop.domain.payment.client.PortOneClient;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
@@ -54,12 +55,12 @@ class PaymentServiceTest {
 
   @Mock private TransactionTemplate transactionTemplate;
 
-  @Spy private PaymentVerificationService paymentVerificationService = new PaymentVerificationService();
+  @Spy
+  private PaymentVerificationService paymentVerificationService = new PaymentVerificationService();
 
   @Mock private PaymentOutboxPublisher paymentOutboxPublisher;
 
-  @Mock
-  private SellerDashboardRefreshService sellerDashboardRefreshService;
+  @Mock private SellerDashboardRefreshService sellerDashboardRefreshService;
 
   @InjectMocks private PaymentService paymentService;
 
@@ -174,6 +175,30 @@ class PaymentServiceTest {
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
     verify(sellerDashboardRefreshService, times(1)).refreshForOrder(order);
+    verify(paymentOutboxPublisher, times(1)).save(any());
+  }
+
+  @Test
+  @DisplayName("대시보드 갱신이 실패해도 결제 확정은 유지된다")
+  void confirmPayment_dashboardRefreshFailure_doesNotRollbackConfirmation() {
+    given(paymentRepository.findById(1L)).willReturn(Optional.of(payment));
+    given(orderFacadeService.findOrderForPayment(1L, "test@test.com")).willReturn(order);
+    given(orderFacadeService.payOrderByPayment(order))
+        .willAnswer(
+            invocation -> {
+              order.pay();
+              return order;
+            });
+    given(portOneClient.getPayment("payment-test-123"))
+        .willReturn(portOnePayment("PAID", "tx-123", "79000"));
+    doThrow(new RuntimeException("dashboard refresh failed"))
+        .when(sellerDashboardRefreshService)
+        .refreshForOrder(order);
+
+    Payment result = paymentService.confirmPayment(1L, "test@test.com", "payment-test-123");
+
+    assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
     verify(paymentOutboxPublisher, times(1)).save(any());
   }
 

@@ -185,13 +185,12 @@ public class ProductCommandService {
     productRepository.delete(product);
   }
 
-  /**
-   * 판매자 상품 이미지를 추가한다.
-   */
-  @Caching(evict = {
-      @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
-      @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#productId")
-  })
+  /** 판매자 상품 이미지를 추가한다. */
+  @Caching(
+      evict = {
+        @CacheEvict(value = CacheNames.PRODUCT_LIST, allEntries = true),
+        @CacheEvict(value = CacheNames.PRODUCT_DETAIL, key = "#productId")
+      })
   @Transactional
   public ProductImageResponse createSellerProductImage(
       Long productId,

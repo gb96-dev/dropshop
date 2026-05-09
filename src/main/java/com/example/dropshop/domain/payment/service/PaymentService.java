@@ -20,10 +20,12 @@ import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import java.math.BigDecimal;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /** 결제 생성, 검증, 확정 로직을 처리하는 도메인 서비스. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -179,7 +181,7 @@ public class PaymentService {
     if (paymentVerificationService.isPaidStatus(portOnePayment.status())) {
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
-      sellerDashboardRefreshService.refreshForOrder(order);
+      refreshDashboardSafely(order, payment.getId(), "CONFIRM_API");
       publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API", order.getUserId());
       return;
     }
@@ -212,5 +214,18 @@ public class PaymentService {
       Payment payment, OrderStatus orderStatus, String source, Long buyerUserId) {
     paymentOutboxPublisher.save(
         new PaymentStatusChangedEvent(payment, orderStatus, source, buyerUserId));
+  }
+
+  private void refreshDashboardSafely(Order order, Long paymentId, String source) {
+    try {
+      sellerDashboardRefreshService.refreshForOrder(order);
+    } catch (RuntimeException e) {
+      log.warn(
+          "Seller dashboard refresh skipped after payment update. paymentId={}, orderId={}, source={}",
+          paymentId,
+          order.getId(),
+          source,
+          e);
+    }
   }
 }

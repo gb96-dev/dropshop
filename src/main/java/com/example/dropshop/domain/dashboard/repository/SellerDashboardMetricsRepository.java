@@ -21,9 +21,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-/**
- * 판매자 대시보드 조회/집계 전용 레포지토리.
- */
+/** 판매자 대시보드 조회/집계 전용 레포지토리. */
 @Repository
 @RequiredArgsConstructor
 public class SellerDashboardMetricsRepository {
@@ -36,33 +34,26 @@ public class SellerDashboardMetricsRepository {
 
     NumberExpression<Long> paidOrderCountExpr = order.id.countDistinct();
     NumberTemplate<Long> quantitySum =
-        com.querydsl.core.types.dsl.Expressions.numberTemplate(Long.class, "SUM({0})", orderItem.quantity);
+        com.querydsl.core.types.dsl.Expressions.numberTemplate(
+            Long.class, "SUM({0})", orderItem.quantity);
     NumberTemplate<BigDecimal> salesAmountSum =
         com.querydsl.core.types.dsl.Expressions.numberTemplate(
-            BigDecimal.class,
-            "SUM({0} * {1})",
-            orderItem.salePriceSnapshot,
-            orderItem.quantity
-        );
+            BigDecimal.class, "SUM({0} * {1})", orderItem.salePriceSnapshot, orderItem.quantity);
     NumberExpression<Long> buyerCountExpr = order.userId.countDistinct();
 
-    Tuple tuple = queryFactory
-        .select(
-            paidOrderCountExpr,
-            quantitySum,
-            salesAmountSum,
-            buyerCountExpr
-        )
-        .from(orderItem)
-        .join(orderItem.order, order)
-        .join(product).on(orderItem.productId.eq(product.id))
-        .where(
-            product.sellerId.eq(sellerId),
-            order.status.eq(OrderStatus.PAID),
-            order.createdAt.goe(from),
-            order.createdAt.lt(to)
-        )
-        .fetchOne();
+    Tuple tuple =
+        queryFactory
+            .select(paidOrderCountExpr, quantitySum, salesAmountSum, buyerCountExpr)
+            .from(orderItem)
+            .join(orderItem.order, order)
+            .join(product)
+            .on(orderItem.productId.eq(product.id))
+            .where(
+                product.sellerId.eq(sellerId),
+                order.status.eq(OrderStatus.PAID),
+                order.createdAt.goe(from),
+                order.createdAt.lt(to))
+            .fetchOne();
 
     if (tuple == null || tuple.get(paidOrderCountExpr) == null) {
       return SellerDashboardDailyAggregate.empty();
@@ -77,39 +68,33 @@ public class SellerDashboardMetricsRepository {
         paidOrderCount == null ? 0L : paidOrderCount,
         salesQuantity == null ? 0L : salesQuantity,
         salesAmount == null ? BigDecimal.ZERO : salesAmount,
-        buyerCount == null ? 0L : buyerCount
-    );
+        buyerCount == null ? 0L : buyerCount);
   }
 
   public long countDistinctBuyers(Long sellerId, LocalDate from, LocalDate to) {
     LocalDateTime start = from.atStartOfDay();
     LocalDateTime end = to.plusDays(1).atStartOfDay();
 
-    Long buyerCount = queryFactory
-        .select(order.userId.countDistinct())
-        .from(orderItem)
-        .join(orderItem.order, order)
-        .join(product).on(orderItem.productId.eq(product.id))
-        .where(
-            product.sellerId.eq(sellerId),
-            order.status.eq(OrderStatus.PAID),
-            order.createdAt.goe(start),
-            order.createdAt.lt(end)
-        )
-        .fetchOne();
+    Long buyerCount =
+        queryFactory
+            .select(order.userId.countDistinct())
+            .from(orderItem)
+            .join(orderItem.order, order)
+            .join(product)
+            .on(orderItem.productId.eq(product.id))
+            .where(
+                product.sellerId.eq(sellerId),
+                order.status.eq(OrderStatus.PAID),
+                order.createdAt.goe(start),
+                order.createdAt.lt(end))
+            .fetchOne();
 
     return buyerCount == null ? 0L : buyerCount;
   }
 
   public Page<SellerDashboardOrderItemView> findSellerOrderItems(
-      Long sellerId,
-      OrderStatus status,
-      LocalDate from,
-      LocalDate to,
-      Pageable pageable
-  ) {
-    BooleanBuilder predicate = new BooleanBuilder()
-        .and(product.sellerId.eq(sellerId));
+      Long sellerId, OrderStatus status, LocalDate from, LocalDate to, Pageable pageable) {
+    BooleanBuilder predicate = new BooleanBuilder().and(product.sellerId.eq(sellerId));
 
     if (status != null) {
       predicate.and(order.status.eq(status));
@@ -121,39 +106,43 @@ public class SellerDashboardMetricsRepository {
       predicate.and(order.createdAt.lt(to.plusDays(1).atStartOfDay()));
     }
 
-    NumberExpression<BigDecimal> salesAmount = orderItem.salePriceSnapshot
-        .multiply(orderItem.quantity);
+    NumberExpression<BigDecimal> salesAmount =
+        orderItem.salePriceSnapshot.multiply(orderItem.quantity);
 
-    var content = queryFactory
-        .select(Projections.constructor(
-            SellerDashboardOrderItemView.class,
-            order.id,
-            order.orderNumber,
-            order.userId,
-            product.id,
-            product.name,
-            orderItem.thumbnailUrlSnapshot,
-            orderItem.quantity,
-            salesAmount,
-            order.status,
-            order.createdAt
-        ))
-        .from(orderItem)
-        .join(orderItem.order, order)
-        .join(product).on(orderItem.productId.eq(product.id))
-        .where(predicate)
-        .orderBy(resolveOrder(pageable))
-        .offset(pageable.getOffset())
-        .limit(pageable.getPageSize())
-        .fetch();
+    var content =
+        queryFactory
+            .select(
+                Projections.constructor(
+                    SellerDashboardOrderItemView.class,
+                    order.id,
+                    order.orderNumber,
+                    order.userId,
+                    product.id,
+                    product.name,
+                    orderItem.thumbnailUrlSnapshot,
+                    orderItem.quantity,
+                    salesAmount,
+                    order.status,
+                    order.createdAt))
+            .from(orderItem)
+            .join(orderItem.order, order)
+            .join(product)
+            .on(orderItem.productId.eq(product.id))
+            .where(predicate)
+            .orderBy(resolveOrder(pageable))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
-    Long total = queryFactory
-        .select(orderItem.id.count())
-        .from(orderItem)
-        .join(orderItem.order, order)
-        .join(product).on(orderItem.productId.eq(product.id))
-        .where(predicate)
-        .fetchOne();
+    Long total =
+        queryFactory
+            .select(orderItem.id.count())
+            .from(orderItem)
+            .join(orderItem.order, order)
+            .join(product)
+            .on(orderItem.productId.eq(product.id))
+            .where(predicate)
+            .fetchOne();
 
     return new PageImpl<>(content, pageable, total == null ? 0L : total);
   }
