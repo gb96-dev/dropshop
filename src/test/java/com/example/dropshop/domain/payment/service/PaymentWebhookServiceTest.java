@@ -16,6 +16,7 @@ import com.example.dropshop.common.config.PortOneProperties;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
+import com.example.dropshop.domain.auth.sse.service.SseEmitterService;
 import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
@@ -73,6 +74,8 @@ class PaymentWebhookServiceTest {
 
   @Mock private SellerDashboardRefreshService sellerDashboardRefreshService;
 
+  @Mock private SseEmitterService sseEmitterService;
+
   @InjectMocks private PaymentWebhookService paymentWebhookService;
 
   private Order order;
@@ -129,6 +132,7 @@ class PaymentWebhookServiceTest {
     verify(orderFacadeService, times(1)).payOrderByPayment(order);
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
     verify(sellerDashboardRefreshService, times(1)).refreshForOrder(order);
+    verify(sseEmitterService, times(1)).sendPaymentSuccessNotification(eq(order), anyString());
     verify(paymentOutboxPublisher, times(1)).save(any(PaymentStatusChangedEvent.class));
   }
 
@@ -154,6 +158,7 @@ class PaymentWebhookServiceTest {
 
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+    verify(sseEmitterService, times(1)).sendPaymentSuccessNotification(eq(order), anyString());
     verify(paymentOutboxPublisher, times(1)).save(any(PaymentStatusChangedEvent.class));
   }
 
@@ -171,6 +176,9 @@ class PaymentWebhookServiceTest {
     verify(orderFacadeService, never()).payOrderByPayment(any(Order.class));
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
     verify(sellerDashboardRefreshService, never()).refreshForOrder(any(Order.class));
+    verify(sseEmitterService, never())
+        .sendPaymentSuccessNotification(any(Order.class), anyString());
+    verify(sseEmitterService, never()).sendPaymentFailNotification(any(Order.class), anyString());
     verify(paymentOutboxPublisher, never()).save(any());
   }
 
@@ -188,6 +196,7 @@ class PaymentWebhookServiceTest {
     assertThat(result.getStatus()).isEqualTo(PaymentStatus.FAILED);
     verify(orderFacadeService, never()).cancelOrderByPaymentFailure(any(Order.class));
     verify(sellerDashboardRefreshService, never()).refreshForOrder(any(Order.class));
+    verify(sseEmitterService, times(1)).sendPaymentFailNotification(eq(order), anyString());
     verify(paymentOutboxPublisher, times(1)).save(any());
   }
 

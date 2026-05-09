@@ -4,6 +4,7 @@ import com.example.dropshop.common.config.PortOneProperties;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
+import com.example.dropshop.domain.auth.sse.service.SseEmitterService;
 import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
@@ -20,6 +21,8 @@ import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /** PortOne 웹훅 동기화를 처리한다. */
@@ -37,6 +40,7 @@ public class PaymentWebhookService {
   private final PaymentVerificationService paymentVerificationService;
   private final PaymentOutboxPublisher paymentOutboxPublisher;
   private final SellerDashboardRefreshService sellerDashboardRefreshService;
+  private final SseEmitterService sseEmitterService;
 
   /**
    * PortOne 결제 식별자로 웹훅 동기화 처리.
@@ -86,12 +90,20 @@ public class PaymentWebhookService {
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
       refreshDashboardSafely(order, payment.getId());
+      registerAfterCommit(
+          () ->
+              sseEmitterService.sendPaymentSuccessNotification(
+                  order, "결제가 완료되었습니다. 주문번호: " + order.getOrderNumber()));
       publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK", order.getUserId());
       return;
     }
 
     if (paymentVerificationService.isFailureStatus(portOnePayment.status())) {
       payment.fail();
+      registerAfterCommit(
+          () ->
+              sseEmitterService.sendPaymentFailNotification(
+                  order, "결제에 실패했습니다. 주문번호: " + order.getOrderNumber()));
       publishPaymentStatusChanged(payment, order.getStatus(), "WEBHOOK", order.getUserId());
       return;
     }
@@ -131,5 +143,20 @@ public class PaymentWebhookService {
           order.getId(),
           e);
     }
+  }
+
+  private void registerAfterCommit(Runnable action) {
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(
+          new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+              action.run();
+            }
+          });
+      return;
+    }
+
+    action.run();
   }
 }

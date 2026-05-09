@@ -3,6 +3,7 @@ package com.example.dropshop.domain.payment.service;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
+import com.example.dropshop.domain.auth.sse.service.SseEmitterService;
 import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
@@ -22,6 +23,8 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /** 결제 생성, 검증, 확정 로직을 처리하는 도메인 서비스. */
@@ -38,6 +41,7 @@ public class PaymentService {
   private final PaymentVerificationService paymentVerificationService;
   private final PaymentOutboxPublisher paymentOutboxPublisher;
   private final SellerDashboardRefreshService sellerDashboardRefreshService;
+  private final SseEmitterService sseEmitterService;
 
   /**
    * 결제 확정 결과.
@@ -182,6 +186,10 @@ public class PaymentService {
       payment.complete(portOnePayment.transactionId());
       orderFacadeService.payOrderByPayment(order);
       refreshDashboardSafely(order, payment.getId(), "CONFIRM_API");
+      registerAfterCommit(
+          () ->
+              sseEmitterService.sendPaymentSuccessNotification(
+                  order, "결제가 완료되었습니다. 주문번호: " + order.getOrderNumber()));
       publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API", order.getUserId());
       return;
     }
@@ -191,6 +199,10 @@ public class PaymentService {
       if (order.getStatus() == OrderStatus.PENDING) {
         orderFacadeService.cancelOrderByPaymentFailure(order);
       }
+      registerAfterCommit(
+          () ->
+              sseEmitterService.sendPaymentFailNotification(
+                  order, "결제에 실패했습니다. 주문번호: " + order.getOrderNumber()));
       publishPaymentStatusChanged(payment, order.getStatus(), "CONFIRM_API", order.getUserId());
       return;
     }
@@ -227,5 +239,20 @@ public class PaymentService {
           source,
           e);
     }
+  }
+
+  private void registerAfterCommit(Runnable action) {
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(
+          new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+              action.run();
+            }
+          });
+      return;
+    }
+
+    action.run();
   }
 }
