@@ -11,12 +11,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @EmbeddedKafka(
     partitions = 1,
     topics = {"test-topic"})
@@ -26,8 +27,6 @@ class ProductPolicyServiceIntegrationTest {
   @Autowired private ProductPolicyService policyService;
 
   @Autowired private ProductPolicyRepository policyRepository;
-
-  @MockitoBean private StringRedisTemplate stringRedisTemplate;
 
   @MockitoBean private TokenBlacklistService tokenBlacklistService;
 
