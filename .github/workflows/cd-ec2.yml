@@ -114,6 +114,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
+          command_timeout: 20m
           envs: APP_NAME,DEPLOY_DIR,MIN_DISK_MB,GHCR_USERNAME,GHCR_TOKEN
           script: |
             set -euo pipefail
@@ -196,6 +197,9 @@ jobs:
             fi
 
             docker compose --env-file .env -f docker-compose.yml ps
-            docker image prune -f
+
+            rm -rf "/tmp/${APP_NAME}"
+
+            docker image prune -af --filter "until=24h"
 
 
