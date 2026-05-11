@@ -7,6 +7,7 @@ spring:
 
   jpa:
     hibernate:
+      # 초기 배포 시 테이블 생성을 위해 update 사용. 테이블 생성 확인 후 validate로 변경할 것.
       ddl-auto: update
     show-sql: false
     properties:
@@ -21,4 +22,4 @@ spring:
 logging:
   level:
     org.hibernate.SQL: WARN
-    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.hibernate.orm.jdbc.bind: WARN
