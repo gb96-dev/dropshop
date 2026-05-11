@@ -5,10 +5,6 @@ on:
     branches: ["dev"]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
-
 concurrency:
   group: cd-ec2-main
   cancel-in-progress: false
@@ -22,10 +18,11 @@ jobs:
   build-and-push:
     name: build-and-push-image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     outputs:
-      image_repo: ${{ steps.image-repo.outputs.image_repo }}
-      image_tag: ${{ steps.image-tag.outputs.image_tag }}
       full_image: ${{ steps.image-tag.outputs.full_image }}
 
     steps:
@@ -52,7 +49,6 @@ jobs:
       - name: Resolve image tag
         id: image-tag
         run: |
-          echo "image_tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
           echo "full_image=${{ steps.image-repo.outputs.image_repo }}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Login to GHCR
@@ -82,6 +78,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     environment: production
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -104,6 +102,10 @@ jobs:
           source: "docker-compose.prod.yml,.env,scripts/ec2-preflight.sh"
           target: "/tmp/${{ env.APP_NAME }}"
 
+      - name: Cleanup sensitive files on runner
+        if: always()
+        run: rm -f .env
+
       - name: Deploy Docker Compose on EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -118,7 +120,7 @@ jobs:
           envs: APP_NAME,DEPLOY_DIR,MIN_DISK_MB,GHCR_USERNAME,GHCR_TOKEN
           script: |
             set -euo pipefail
-            trap 'echo "[deploy] failed at line $LINENO" >&2' ERR
+            trap 'echo "[deploy] failed at line $LINENO" >&2; rm -rf "/tmp/${APP_NAME}"' ERR
             set -x
             sudo mkdir -p "${DEPLOY_DIR}"
             sudo mv "/tmp/${APP_NAME}/docker-compose.prod.yml" "${DEPLOY_DIR}/docker-compose.yml"
@@ -191,7 +193,7 @@ jobs:
             done
 
             if [ "${health_status}" -eq 0 ]; then
-              echo "Health check failed after 240s."
+              echo "Health check failed after 300s."
               rollback
               exit 1
             fi
