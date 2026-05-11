@@ -195,6 +195,51 @@ public class SseEmitterService {
    * @param message 전송할 메시지.
    */
   public void sendOrderAddNotification(Order order, String message) {
+    sendOrderNotification(order, NotificationType.ORDER_ADD, message);
+  }
+
+  /**
+   * 주문 취소 알림 전송 메서드.
+   *
+   * @param order 주문 엔티티.
+   * @param message 전송할 메시지.
+   */
+  public void sendOrderCancelledNotification(Order order, String message) {
+    sendOrderNotification(order, NotificationType.ORDER_CANCELLED, message);
+  }
+
+  /**
+   * 주문 환불 알림 전송 메서드.
+   *
+   * @param order 주문 엔티티.
+   * @param message 전송할 메시지.
+   */
+  public void sendOrderRefundedNotification(Order order, String message) {
+    sendOrderNotification(order, NotificationType.ORDER_REFUNDED, message);
+  }
+
+  /**
+   * 결제 성공 알림 전송 메서드.
+   *
+   * @param order 주문 엔티티.
+   * @param message 전송할 메시지.
+   */
+  public void sendPaymentSuccessNotification(Order order, String message) {
+    sendOrderNotification(order, NotificationType.PURCHASE_SUCCESS, message);
+  }
+
+  /**
+   * 결제 실패 알림 전송 메서드.
+   *
+   * @param order 주문 엔티티.
+   * @param message 전송할 메시지.
+   */
+  public void sendPaymentFailNotification(Order order, String message) {
+    sendOrderNotification(order, NotificationType.PURCHASE_FAIL, message);
+  }
+
+  private void sendOrderNotification(
+      Order order, NotificationType notificationType, String message) {
     User user =
         userFacadeService
             .findById(order.getUserId())
@@ -205,7 +250,7 @@ public class SseEmitterService {
             .findByDropId(order.getDropId())
             .orElseThrow(() -> new ServiceException(ErrorCode.DROP_NOT_FOUND));
 
-    send(user, NotificationType.ORDER_ADD, message, drops.getProduct().getId());
+    send(user, notificationType, message, drops.getProduct().getId());
   }
 
   /**

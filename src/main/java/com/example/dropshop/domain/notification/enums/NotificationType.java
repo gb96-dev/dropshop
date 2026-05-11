@@ -12,6 +12,8 @@ public enum NotificationType {
   PURCHASE_SUCCESS("구매 성공"),
   PURCHASE_FAIL("구매 실패"),
   ORDER_ADD("주문 추가"),
+  ORDER_CANCELLED("주문 취소"),
+  ORDER_REFUNDED("주문 환불"),
   STOCK_EMPTY("재고 빔"),
   REVIEW_ADD("리뷰 추가");
 

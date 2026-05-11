@@ -3,11 +3,13 @@ package com.example.dropshop.domain.refund.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
@@ -37,6 +39,8 @@ class RefundCompletionWorkerTest {
   @Mock private PaymentRepository paymentRepository;
 
   @Mock private OrderFacadeService orderFacadeService;
+
+  @Mock private SellerDashboardRefreshService sellerDashboardRefreshService;
 
   @InjectMocks private RefundCompletionWorker refundCompletionWorker;
 
@@ -118,6 +122,30 @@ class RefundCompletionWorkerTest {
     assertThat(result.getStatus()).isEqualTo(RefundStatus.COMPLETED);
     assertThat(order.getStatus().name()).isEqualTo("REFUNDED");
     verify(orderFacadeService, times(1)).refundOrderByRefund(order);
+    verify(sellerDashboardRefreshService, times(1)).refreshForOrder(order);
+  }
+
+  @Test
+  @DisplayName("대시보드 갱신이 실패해도 환불 완료는 유지된다")
+  void finalizeRefundCompletion_dashboardRefreshFailure_doesNotRollbackCompletion() {
+    refund.startProcessing();
+
+    given(refundRepository.findById(1L)).willReturn(Optional.of(refund));
+    given(orderFacadeService.findOrderForPaymentWebhook(1L)).willReturn(order);
+    given(orderFacadeService.refundOrderByRefund(order))
+        .willAnswer(
+            invocation -> {
+              order.refund();
+              return order;
+            });
+    doThrow(new RuntimeException("dashboard refresh failed"))
+        .when(sellerDashboardRefreshService)
+        .refreshForOrder(order);
+
+    Refund result = refundCompletionWorker.finalizeRefundCompletion(1L, 1L);
+
+    assertThat(result.getStatus()).isEqualTo(RefundStatus.COMPLETED);
+    assertThat(order.getStatus().name()).isEqualTo("REFUNDED");
   }
 
   @Test
@@ -142,5 +170,6 @@ class RefundCompletionWorkerTest {
 
     assertThat(result.getStatus()).isEqualTo(RefundStatus.COMPLETED);
     verify(orderFacadeService, never()).refundOrderByRefund(order);
+    verify(sellerDashboardRefreshService, never()).refreshForOrder(order);
   }
 }

@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
+import com.example.dropshop.domain.auth.sse.service.SseEmitterService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
@@ -50,6 +51,8 @@ class OrderServiceTest {
   @Mock private TransactionTemplate transactionTemplate;
 
   @Mock private PopularProductRedisService popularProductRedisService;
+
+  @Mock private SseEmitterService sseEmitterService;
 
   @InjectMocks private OrderService orderService;
 
@@ -123,6 +126,7 @@ class OrderServiceTest {
     assertThat(order.getOrderItems()).hasSize(1);
 
     verify(orderRepository, times(1)).save(any(Order.class));
+    verify(sseEmitterService, times(1)).sendOrderAddNotification(eq(order), anyString());
   }
 
   @Test
@@ -258,6 +262,7 @@ class OrderServiceTest {
               assertThat(((StockRestoreEvent) event).getQuantity()).isEqualTo(1);
             });
     verify(redisLockService).executeWithLock(eq(LockKeys.order(1L)), any());
+    verify(sseEmitterService, times(1)).sendOrderCancelledNotification(eq(order), anyString());
   }
 
   @Test
@@ -312,6 +317,7 @@ class OrderServiceTest {
               assertThat(event).isInstanceOf(StockRestoreEvent.class);
               assertThat(((StockRestoreEvent) event).getQuantity()).isEqualTo(1);
             });
+    verify(sseEmitterService, times(1)).sendOrderRefundedNotification(eq(order), anyString());
   }
 
   @Test

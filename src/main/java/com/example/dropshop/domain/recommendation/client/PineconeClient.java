@@ -4,12 +4,14 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 /** Pinecone 벡터 DB 클라이언트. - upsert: 상품 벡터 저장 - query: 유사 벡터 검색 */
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "recommendation", name = "enabled", havingValue = "true")
 public class PineconeClient {
 
   private final RestClient restClient;

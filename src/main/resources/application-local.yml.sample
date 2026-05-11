@@ -55,3 +55,16 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
+recommendation:
+  enabled: false
+
+# recommendation.enabled=true 로 켜는 경우 아래 값도 함께 채워주세요.
+openai:
+  api-key: YOUR_OPENAI_API_KEY
+  embedding-model: text-embedding-3-small
+  chat-model: gpt-4o-mini
+
+pinecone:
+  api-key: YOUR_PINECONE_API_KEY
+  host: https://YOUR_INDEX-YOUR_PROJECT.svc.YOUR_REGION.pinecone.io
+

@@ -1,12 +1,14 @@
 package com.example.dropshop.domain.recommendation.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 /** OpenAI / Pinecone RestClient 설정. */
 @Configuration
+@ConditionalOnProperty(prefix = "recommendation", name = "enabled", havingValue = "true")
 public class RecommendationConfig {
 
   @Value("${openai.api-key}")
