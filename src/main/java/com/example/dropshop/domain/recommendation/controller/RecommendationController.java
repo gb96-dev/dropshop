@@ -6,6 +6,7 @@ import com.example.dropshop.domain.recommendation.service.EmbeddingBatchService;
 import com.example.dropshop.domain.recommendation.service.RecommendationService;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/recommendations")
+@ConditionalOnProperty(prefix = "recommendation", name = "enabled", havingValue = "true")
 public class RecommendationController {
 
   private final RecommendationService recommendationService;

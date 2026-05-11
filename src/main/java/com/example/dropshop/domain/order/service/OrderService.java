@@ -3,6 +3,7 @@ package com.example.dropshop.domain.order.service;
 import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.common.lock.LockKeys;
 import com.example.dropshop.common.lock.RedisLockService;
+import com.example.dropshop.domain.auth.sse.service.SseEmitterService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.entity.OrderItem;
 import com.example.dropshop.domain.order.enums.OrderStatus;
@@ -20,6 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /** 주문 서비스. */
@@ -38,6 +41,7 @@ public class OrderService {
   private final RedisLockService redisLockService;
   private final TransactionTemplate transactionTemplate;
   private final PopularProductRedisService popularProductRedisService;
+  private final SseEmitterService sseEmitterService;
 
   /** 주문 생성. */
   @Transactional
@@ -66,7 +70,12 @@ public class OrderService {
             thumbnailUrlSnapshot);
     order.addOrderItem(orderItem);
 
-    return orderRepository.save(order);
+    Order savedOrder = orderRepository.save(order);
+    registerAfterCommit(
+        () ->
+            sseEmitterService.sendOrderAddNotification(
+                savedOrder, "주문이 생성되었습니다. 주문번호: " + savedOrder.getOrderNumber()));
+    return savedOrder;
   }
 
   /** 단건 조회. */
@@ -128,6 +137,10 @@ public class OrderService {
     order.refund();
     publishOrderStatusChanged(order, SOURCE_REFUND_COMPLETED);
     restoreDropStock(order, SOURCE_REFUND_COMPLETED);
+    registerAfterCommit(
+        () ->
+            sseEmitterService.sendOrderRefundedNotification(
+                order, "주문 환불이 완료되었습니다. 주문번호: " + order.getOrderNumber()));
     return order;
   }
 
@@ -141,6 +154,10 @@ public class OrderService {
     order.cancel();
     publishOrderStatusChanged(order, source);
     restoreDropStock(order, source);
+    registerAfterCommit(
+        () ->
+            sseEmitterService.sendOrderCancelledNotification(
+                order, buildCancelMessage(order, source)));
     return order;
   }
 
@@ -193,5 +210,30 @@ public class OrderService {
 
   private void publishOrderStatusChanged(Order order, String source) {
     eventPublisher.publishEvent(new OrderStatusChangedEvent(order, source));
+  }
+
+  private String buildCancelMessage(Order order, String source) {
+    if (SOURCE_PAYMENT_FAILURE.equals(source)) {
+      return "결제 실패로 주문이 취소되었습니다. 주문번호: " + order.getOrderNumber();
+    }
+    if (SOURCE_EXPIRED_SCHEDULER.equals(source)) {
+      return "주문 보류 시간이 만료되어 주문이 취소되었습니다. 주문번호: " + order.getOrderNumber();
+    }
+    return "주문이 취소되었습니다. 주문번호: " + order.getOrderNumber();
+  }
+
+  private void registerAfterCommit(Runnable action) {
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(
+          new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+              action.run();
+            }
+          });
+      return;
+    }
+
+    action.run();
   }
 }

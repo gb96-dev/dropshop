@@ -5,12 +5,14 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 /** OpenAI API 클라이언트. - 텍스트 임베딩 (text-embedding-3-small) - 챗 완성 (gpt-4o-mini) */
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "recommendation", name = "enabled", havingValue = "true")
 public class OpenAiClient {
 
   private final RestClient restClient;

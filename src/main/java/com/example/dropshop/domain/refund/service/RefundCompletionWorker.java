@@ -1,6 +1,7 @@
 package com.example.dropshop.domain.refund.service;
 
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.dashboard.service.SellerDashboardRefreshService;
 import com.example.dropshop.domain.order.entity.Order;
 import com.example.dropshop.domain.order.enums.OrderStatus;
 import com.example.dropshop.domain.order.facade.OrderFacadeService;
@@ -14,11 +15,13 @@ import com.example.dropshop.domain.refund.exception.RefundException;
 import com.example.dropshop.domain.refund.repository.RefundRepository;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 환불 완료 트랜잭션 분리 처리 서비스. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RefundCompletionWorker {
@@ -26,6 +29,7 @@ public class RefundCompletionWorker {
   private final RefundRepository refundRepository;
   private final PaymentRepository paymentRepository;
   private final OrderFacadeService orderFacadeService;
+  private final SellerDashboardRefreshService sellerDashboardRefreshService;
 
   /**
    * 외부 PG 환불 호출 전 내부 환불을 처리 중 상태로 전이한다.
@@ -87,6 +91,7 @@ public class RefundCompletionWorker {
     Order order = orderFacadeService.findOrderForPaymentWebhook(orderId);
     if (order.getStatus() == OrderStatus.PAID) {
       orderFacadeService.refundOrderByRefund(order);
+      refreshDashboardSafely(order, refundId);
     } else if (order.getStatus() != OrderStatus.REFUNDED) {
       throw new RefundException(ErrorCode.REFUND_ORDER_INVALID_STATUS);
     }
@@ -137,4 +142,16 @@ public class RefundCompletionWorker {
       String portOnePaymentId,
       BigDecimal refundAmount,
       String refundReason) {}
+
+  private void refreshDashboardSafely(Order order, Long refundId) {
+    try {
+      sellerDashboardRefreshService.refreshForOrder(order);
+    } catch (RuntimeException e) {
+      log.warn(
+          "Seller dashboard refresh skipped after refund completion. refundId={}, orderId={}",
+          refundId,
+          order.getId(),
+          e);
+    }
+  }
 }

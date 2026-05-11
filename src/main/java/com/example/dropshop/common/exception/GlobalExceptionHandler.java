@@ -3,6 +3,8 @@ package com.example.dropshop.common.exception;
 import com.example.dropshop.common.dto.ApiResponse;
 import com.example.dropshop.common.dto.ExceptionResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 /** 전역 예외 처리를 하기 위한 GlobalExceptionHandler. */
 @Slf4j
@@ -26,6 +29,22 @@ public class GlobalExceptionHandler {
         fieldError == null
             ? ErrorCode.VALIDATION_ERROR.getMessage()
             : fieldError.getDefaultMessage();
+
+    ErrorResponse body = new ErrorResponse(ErrorCode.VALIDATION_ERROR.name(), message);
+    return ResponseEntity.status(ErrorCode.VALIDATION_ERROR.getStatus())
+        .body(ApiResponse.fail(ErrorCode.VALIDATION_ERROR.getStatus(), body));
+  }
+
+  /** RequestParam/PathVariable 등의 메서드 레벨 검증 실패를 처리한다. */
+  @ExceptionHandler({ConstraintViolationException.class, HandlerMethodValidationException.class})
+  public ResponseEntity<ApiResponse<ErrorResponse>> handleMethodValidationException(Exception ex) {
+    String message =
+        ex instanceof ConstraintViolationException violationException
+            ? violationException.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .findFirst()
+                .orElse(ErrorCode.VALIDATION_ERROR.getMessage())
+            : ErrorCode.VALIDATION_ERROR.getMessage();
 
     ErrorResponse body = new ErrorResponse(ErrorCode.VALIDATION_ERROR.name(), message);
     return ResponseEntity.status(ErrorCode.VALIDATION_ERROR.getStatus())

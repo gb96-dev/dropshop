@@ -7,11 +7,13 @@ import com.example.dropshop.domain.recommendation.client.PineconeClient;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 /** DB에 있는 상품을 일괄 임베딩하여 Pinecone에 저장하는 배치 서비스. */
 @Slf4j
 @Service
+@ConditionalOnProperty(prefix = "recommendation", name = "enabled", havingValue = "true")
 public class EmbeddingBatchService {
 
   private final ProductRepository productRepository;
