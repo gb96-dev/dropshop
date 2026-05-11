@@ -85,7 +85,7 @@ management:
 logging:
   level:
     org.hibernate.SQL: INFO
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.orm.jdbc.bind: TRACE
 
 server:
   port: 8080
