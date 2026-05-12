@@ -4,6 +4,9 @@ import com.example.dropshop.domain.product.common.dto.ProductPolicyResponse;
 import com.example.dropshop.domain.product.common.dto.ProductPolicyUpdateRequest;
 import com.example.dropshop.domain.product.common.enums.ProductPolicyType;
 import com.example.dropshop.domain.product.common.service.ProductPolicyService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +25,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/admin/product-policies")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Product Policy", description = "관리자 상품 정책 API")
+@SecurityRequirement(name = "bearerAuth")
 public class ProductPolicyController {
 
   private final ProductPolicyService policyService;
 
   /** 배송 정책을 조회한다. GET /api/admin/product-policies/delivery */
   @GetMapping("/delivery")
+  @Operation(summary = "배송 정책 조회", description = "관리자가 현재 배송 정책 내용을 조회합니다.")
   public ResponseEntity<ProductPolicyResponse> getDeliveryPolicy() {
     log.info("배송 정책 조회 요청");
     String content = policyService.getDeliveryInfo();
@@ -38,6 +44,7 @@ public class ProductPolicyController {
 
   /** 환불 정책을 조회한다. GET /api/admin/product-policies/refund */
   @GetMapping("/refund")
+  @Operation(summary = "환불 정책 조회", description = "관리자가 현재 환불 정책 내용을 조회합니다.")
   public ResponseEntity<ProductPolicyResponse> getRefundPolicy() {
     log.info("환불 정책 조회 요청");
     String content = policyService.getRefundPolicy();
@@ -48,6 +55,7 @@ public class ProductPolicyController {
 
   /** 배송 정책을 수정한다. PUT /api/admin/product-policies/delivery */
   @PutMapping("/delivery")
+  @Operation(summary = "배송 정책 수정", description = "관리자가 배송 정책 내용을 수정합니다.")
   public ResponseEntity<ProductPolicyResponse> updateDeliveryPolicy(
       @Valid @RequestBody ProductPolicyUpdateRequest request) {
     log.info("배송 정책 수정 요청");
@@ -57,6 +65,7 @@ public class ProductPolicyController {
 
   /** 환불 정책을 수정한다. PUT /api/admin/product-policies/refund */
   @PutMapping("/refund")
+  @Operation(summary = "환불 정책 수정", description = "관리자가 환불 정책 내용을 수정합니다.")
   public ResponseEntity<ProductPolicyResponse> updateRefundPolicy(
       @Valid @RequestBody ProductPolicyUpdateRequest request) {
     log.info("환불 정책 수정 요청");
@@ -69,6 +78,7 @@ public class ProductPolicyController {
    * REFUND 아닌 값)일 경우 400 Bad Request 반환
    */
   @GetMapping("/{policyType}")
+  @Operation(summary = "정책 유형별 조회", description = "정책 유형 문자열로 배송 또는 환불 정책을 조회합니다.")
   public ResponseEntity<ProductPolicyResponse> getPolicyByType(@PathVariable String policyType) {
     log.info("정책 조회 요청 (type={})", policyType);
     try {

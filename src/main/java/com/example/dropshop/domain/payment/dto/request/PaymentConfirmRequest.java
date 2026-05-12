@@ -1,5 +1,6 @@
 package com.example.dropshop.domain.payment.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 
@@ -7,5 +8,7 @@ import lombok.Getter;
 @Getter
 public class PaymentConfirmRequest {
 
-  @NotBlank private String portOnePaymentId;
+  @NotBlank
+  @Schema(description = "PortOne 결제 식별자", example = "payment-test-001")
+  private String portOnePaymentId;
 }

@@ -38,6 +38,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/users/signup")
                     .permitAll()
+                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                    .permitAll()
                     // 관리자 전용 경로
                     .requestMatchers("/api/admin/**")
                     .hasRole("ADMIN")

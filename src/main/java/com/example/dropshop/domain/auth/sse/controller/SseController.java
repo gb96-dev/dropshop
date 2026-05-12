@@ -1,6 +1,9 @@
 package com.example.dropshop.domain.auth.sse.controller;
 
 import com.example.dropshop.domain.auth.sse.service.SseEmitterService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.MediaType;
@@ -30,6 +33,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RestController
 @RequestMapping("/api/sse")
 @RequiredArgsConstructor
+@Tag(name = "SSE", description = "실시간 서버 전송 이벤트 API")
+@SecurityRequirement(name = "bearerAuth")
 public class SseController {
 
   private final SseEmitterService sseEmitterService;
@@ -42,6 +47,7 @@ public class SseController {
    * @return SseEmitter (text/event-stream)
    */
   @GetMapping(value = "/connect", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+  @Operation(summary = "SSE 연결", description = "로그인한 사용자의 실시간 이벤트 스트림 연결을 생성합니다.")
   public ResponseEntity<SseEmitter> subscribe(
       @AuthenticationPrincipal String userEmail,
       @RequestHeader(value = "Last-Event-ID", required = false, defaultValue = "")

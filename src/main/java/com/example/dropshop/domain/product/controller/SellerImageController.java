@@ -6,6 +6,9 @@ import com.example.dropshop.common.security.SellerAuthResolver;
 import com.example.dropshop.domain.product.dto.request.PresignedUrlIssueRequest;
 import com.example.dropshop.domain.product.dto.response.PresignedUrlIssueResponse;
 import com.example.dropshop.domain.product.service.ProductImageUploadService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/sellers/images")
+@Tag(name = "Seller Image", description = "판매자 이미지 업로드 API")
+@SecurityRequirement(name = "bearerAuth")
 public class SellerImageController {
 
   private final ProductImageUploadService productImageUploadService;
@@ -27,6 +32,9 @@ public class SellerImageController {
 
   /** S3 Presigned URL을 발급한다. */
   @PostMapping("/presigned-url")
+  @Operation(
+      summary = "Presigned URL 발급",
+      description = "판매자 이미지 업로드를 위한 S3 Presigned URL을 발급합니다.")
   public ResponseEntity<ApiResponse<PresignedUrlIssueResponse>> issuePresignedUrl(
       @AuthenticationPrincipal String email, @Valid @RequestBody PresignedUrlIssueRequest request) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
