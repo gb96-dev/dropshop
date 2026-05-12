@@ -32,9 +32,7 @@ public class SellerImageController {
 
   /** S3 Presigned URL을 발급한다. */
   @PostMapping("/presigned-url")
-  @Operation(
-      summary = "Presigned URL 발급",
-      description = "판매자 이미지 업로드를 위한 S3 Presigned URL을 발급합니다.")
+  @Operation(summary = "Presigned URL 발급", description = "판매자 이미지 업로드를 위한 S3 Presigned URL을 발급합니다.")
   public ResponseEntity<ApiResponse<PresignedUrlIssueResponse>> issuePresignedUrl(
       @AuthenticationPrincipal String email, @Valid @RequestBody PresignedUrlIssueRequest request) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);

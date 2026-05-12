@@ -35,8 +35,7 @@ public class QueueController {
   @PostMapping
   @Operation(summary = "대기열 진입 여부 판단", description = "드랍 기준으로 사용자의 대기열 진입 여부를 판단합니다.")
   public ResponseEntity<ApiResponse<ThreadHoldResponse>> decideQueue(
-      @Parameter(description = "대기열 진입을 시도할 드랍 ID", example = "1")
-          @RequestParam(name = "dropId")
+      @Parameter(description = "대기열 진입을 시도할 드랍 ID", example = "1") @RequestParam(name = "dropId")
           Long dropId,
       @AuthenticationPrincipal String userEmail) {
     ThreadHoldResponse response = queueService.decideQueue(dropId, userEmail);

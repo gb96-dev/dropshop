@@ -37,11 +37,9 @@ public class DropsQueryController {
   @GetMapping
   @Operation(summary = "공개 드랍 목록 조회", description = "공개 가능한 드랍 목록을 상태별로 조회합니다.")
   public ResponseEntity<ApiResponse<ApiResponse.PageResponse<DropListItemResponse>>> getPublicDrops(
-      @Parameter(description = "드랍 상태 필터", example = "ACTIVE")
-          @RequestParam(required = false)
+      @Parameter(description = "드랍 상태 필터", example = "ACTIVE") @RequestParam(required = false)
           DropsStatus status,
-      @Parameter(description = "페이지 번호", example = "0") @RequestParam(defaultValue = "0")
-          int page,
+      @Parameter(description = "페이지 번호", example = "0") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "페이지 크기", example = "20") @RequestParam(defaultValue = "20")
           int size) {
     PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));

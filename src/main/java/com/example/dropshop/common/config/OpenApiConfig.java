@@ -58,10 +58,7 @@ public class OpenApiConfig {
 
   @Bean
   public GroupedOpenApi adminApi() {
-    return GroupedOpenApi.builder()
-        .group("admin")
-        .pathsToMatch("/api/admin/**")
-        .build();
+    return GroupedOpenApi.builder().group("admin").pathsToMatch("/api/admin/**").build();
   }
 
   @Bean
@@ -90,9 +87,6 @@ public class OpenApiConfig {
 
   @Bean
   public GroupedOpenApi allApi() {
-    return GroupedOpenApi.builder()
-        .group("all")
-        .pathsToMatch("/api/**")
-        .build();
+    return GroupedOpenApi.builder().group("all").pathsToMatch("/api/**").build();
   }
 }
