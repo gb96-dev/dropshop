@@ -7,6 +7,9 @@ import com.example.dropshop.domain.statistics.dto.response.CategorySalesResponse
 import com.example.dropshop.domain.statistics.dto.response.PopularProductResponse;
 import com.example.dropshop.domain.statistics.dto.response.SalesTrendResponse;
 import com.example.dropshop.domain.statistics.service.StatisticsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/sellers/me/statistics")
+@Tag(name = "Seller Statistics", description = "판매자 통계 API")
+@SecurityRequirement(name = "bearerAuth")
 public class SellerStatisticsController {
 
   private final StatisticsService statisticsService;
@@ -29,6 +34,7 @@ public class SellerStatisticsController {
 
   /** 날짜별 판매 추이 조회. GET /api/sellers/me/statistics/trend?from=...&to=... */
   @GetMapping("/trend")
+  @Operation(summary = "판매 추이 조회", description = "로그인한 판매자의 기간별 판매 추이를 조회합니다.")
   public ResponseEntity<ApiResponse<List<SalesTrendResponse>>> getSalesTrend(
       @AuthenticationPrincipal String email,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
@@ -43,6 +49,9 @@ public class SellerStatisticsController {
 
   /** 카테고리별 판매 조회. GET /api/sellers/me/statistics/categories?from=...&to=... */
   @GetMapping("/categories")
+  @Operation(
+      summary = "카테고리별 판매 조회",
+      description = "로그인한 판매자의 기간별 카테고리 매출을 조회합니다.")
   public ResponseEntity<ApiResponse<List<CategorySalesResponse>>> getCategorySales(
       @AuthenticationPrincipal String email,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
@@ -57,6 +66,9 @@ public class SellerStatisticsController {
 
   /** 인기 상품 조회 (판매량 기준). GET /api/sellers/me/statistics/popular-products?from=...&to=...&limit=10 */
   @GetMapping("/popular-products")
+  @Operation(
+      summary = "인기 상품 조회",
+      description = "로그인한 판매자의 기간별 인기 상품을 판매량 기준으로 조회합니다.")
   public ResponseEntity<ApiResponse<List<PopularProductResponse>>> getPopularProducts(
       @AuthenticationPrincipal String email,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

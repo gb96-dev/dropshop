@@ -5,12 +5,14 @@ import com.example.dropshop.domain.drops.dto.response.DropListItemResponse;
 import com.example.dropshop.domain.drops.dto.response.DropResponse;
 import com.example.dropshop.domain.drops.enums.DropsStatus;
 import com.example.dropshop.domain.drops.service.DropsQueryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,22 +28,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/drops")
+@Tag(name = "Drop Query", description = "공개 드랍 조회 API")
 public class DropsQueryController {
 
   private final DropsQueryService dropsQueryService;
 
   /** 공개 드롭 목록 조회. - SCHEDULED(예정), ACTIVE(진행), FINISHED(종료) 상태 드롭 조회 - 페이징 지원 - 기본 정렬: 생성일시 역순 */
   @GetMapping
+  @Operation(summary = "공개 드랍 목록 조회", description = "공개 가능한 드랍 목록을 상태별로 조회합니다.")
   public ResponseEntity<ApiResponse<ApiResponse.PageResponse<DropListItemResponse>>> getPublicDrops(
-      @RequestParam(required = false) DropsStatus status,
-      @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-          Pageable pageable) {
+      @Parameter(description = "드랍 상태 필터", example = "ACTIVE")
+          @RequestParam(required = false)
+          DropsStatus status,
+      @Parameter(description = "페이지 번호", example = "0") @RequestParam(defaultValue = "0")
+          int page,
+      @Parameter(description = "페이지 크기", example = "20") @RequestParam(defaultValue = "20")
+          int size) {
+    PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
     Page<DropListItemResponse> response = dropsQueryService.findPublicDrops(status, pageable);
     return ResponseEntity.ok(ApiResponse.ok(response));
   }
 
   /** 드롭 상세 조회. - 공개 상태 드롭만 조회 가능 - 선착순 여부(useQueue) 포함 - 현재 잔여 재고 표시 */
   @GetMapping("/{dropId}")
+  @Operation(summary = "공개 드랍 상세 조회", description = "드랍 ID로 공개 드랍 상세 정보를 조회합니다.")
   public ResponseEntity<ApiResponse<DropResponse>> getDropDetail(
       @AuthenticationPrincipal String userEmail,
       @PathVariable Long dropId,

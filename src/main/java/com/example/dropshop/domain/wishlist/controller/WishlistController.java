@@ -4,6 +4,9 @@ import com.example.dropshop.common.dto.ApiResponse;
 import com.example.dropshop.domain.wishlist.dto.request.WishlistRequest;
 import com.example.dropshop.domain.wishlist.dto.response.WishlistResponse;
 import com.example.dropshop.domain.wishlist.facade.WishlistsFacadeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/wishlists")
+@Tag(name = "Wishlist", description = "찜 API")
+@SecurityRequirement(name = "bearerAuth")
 public class WishlistController {
 
   private final WishlistsFacadeService wishlistsFacadeService;
@@ -32,6 +37,7 @@ public class WishlistController {
    * @return 리턴.
    */
   @PostMapping
+  @Operation(summary = "찜 등록", description = "상품을 내 찜 목록에 추가합니다.")
   public ResponseEntity<ApiResponse<WishlistResponse>> create(
       @AuthenticationPrincipal String userEmail, @RequestBody WishlistRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -45,6 +51,7 @@ public class WishlistController {
    * @return 리턴.
    */
   @DeleteMapping
+  @Operation(summary = "찜 해제", description = "상품을 내 찜 목록에서 제거합니다.")
   public ResponseEntity<ApiResponse<WishlistResponse>> cancel(
       @AuthenticationPrincipal String userEmail, @RequestBody WishlistRequest request) {
     wishlistsFacadeService.cancel(userEmail, request);
@@ -59,6 +66,7 @@ public class WishlistController {
    * @return 리턴.
    */
   @GetMapping
+  @Operation(summary = "최근 찜 목록 조회", description = "로그인한 사용자의 최근 찜 목록을 조회합니다.")
   public ResponseEntity<ApiResponse<List<WishlistResponse>>> getRecent(
       @AuthenticationPrincipal String userEmail, @RequestParam(defaultValue = "10") int size) {
     return ResponseEntity.status(HttpStatus.OK)

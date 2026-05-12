@@ -5,6 +5,9 @@ import com.example.dropshop.domain.statistics.dto.response.CategorySalesResponse
 import com.example.dropshop.domain.statistics.dto.response.PopularProductResponse;
 import com.example.dropshop.domain.statistics.dto.response.SalesTrendResponse;
 import com.example.dropshop.domain.statistics.service.StatisticsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +22,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/statistics")
+@Tag(name = "Admin Statistics", description = "관리자 통계 API")
+@SecurityRequirement(name = "bearerAuth")
 public class AdminStatisticsController {
 
   private final StatisticsService statisticsService;
 
   /** 전체 날짜별 판매 추이 조회. GET /api/admin/statistics/trend?from=...&to=... */
   @GetMapping("/trend")
+  @Operation(summary = "전체 판매 추이 조회", description = "전체 서비스의 기간별 판매 추이를 조회합니다.")
   public ResponseEntity<ApiResponse<List<SalesTrendResponse>>> getSalesTrend(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
           LocalDateTime from,
@@ -36,6 +42,7 @@ public class AdminStatisticsController {
 
   /** 전체 카테고리별 판매 조회. GET /api/admin/statistics/categories?from=...&to=... */
   @GetMapping("/categories")
+  @Operation(summary = "전체 카테고리 판매 조회", description = "전체 서비스의 카테고리별 매출을 조회합니다.")
   public ResponseEntity<ApiResponse<List<CategorySalesResponse>>> getCategorySales(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
           LocalDateTime from,
@@ -47,6 +54,7 @@ public class AdminStatisticsController {
 
   /** 전체 인기 상품 조회 (판매량 기준). GET /api/admin/statistics/popular-products?from=...&to=...&limit=10 */
   @GetMapping("/popular-products")
+  @Operation(summary = "전체 인기 상품 조회", description = "전체 서비스의 인기 상품을 판매량 기준으로 조회합니다.")
   public ResponseEntity<ApiResponse<List<PopularProductResponse>>> getPopularProducts(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
           LocalDateTime from,
