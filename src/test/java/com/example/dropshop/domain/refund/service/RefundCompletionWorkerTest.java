@@ -18,7 +18,7 @@ import com.example.dropshop.domain.payment.enums.PaymentMethod;
 import com.example.dropshop.domain.payment.exception.PaymentException;
 import com.example.dropshop.domain.payment.repository.PaymentRepository;
 import com.example.dropshop.domain.refund.entity.Refund;
-import com.example.dropshop.domain.refund.entity.RefundStatus;
+import com.example.dropshop.domain.refund.enums.RefundStatus;
 import com.example.dropshop.domain.refund.repository.RefundRepository;
 import java.math.BigDecimal;
 import java.util.Optional;

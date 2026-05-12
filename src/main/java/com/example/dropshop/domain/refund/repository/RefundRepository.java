@@ -1,7 +1,7 @@
 package com.example.dropshop.domain.refund.repository;
 
 import com.example.dropshop.domain.refund.entity.Refund;
-import com.example.dropshop.domain.refund.entity.RefundStatus;
+import com.example.dropshop.domain.refund.enums.RefundStatus;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;

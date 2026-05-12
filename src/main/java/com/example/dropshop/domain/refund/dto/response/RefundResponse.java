@@ -1,7 +1,7 @@
 package com.example.dropshop.domain.refund.dto.response;
 
 import com.example.dropshop.domain.refund.entity.Refund;
-import com.example.dropshop.domain.refund.entity.RefundStatus;
+import com.example.dropshop.domain.refund.enums.RefundStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
