@@ -42,7 +42,9 @@ public class UserSignupEventListener {
   }
 
   private static String maskEmail(String email) {
-    if (email == null || !email.contains("@")) return "***";
+    if (email == null || !email.contains("@")) {
+      return "***";
+    }
     String[] parts = email.split("@", 2);
     String local = parts[0];
     return (local.length() <= 2 ? local.charAt(0) + "**" : local.substring(0, 2) + "**")

@@ -49,9 +49,7 @@ public class SellerStatisticsController {
 
   /** 카테고리별 판매 조회. GET /api/sellers/me/statistics/categories?from=...&to=... */
   @GetMapping("/categories")
-  @Operation(
-      summary = "카테고리별 판매 조회",
-      description = "로그인한 판매자의 기간별 카테고리 매출을 조회합니다.")
+  @Operation(summary = "카테고리별 판매 조회", description = "로그인한 판매자의 기간별 카테고리 매출을 조회합니다.")
   public ResponseEntity<ApiResponse<List<CategorySalesResponse>>> getCategorySales(
       @AuthenticationPrincipal String email,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
@@ -66,9 +64,7 @@ public class SellerStatisticsController {
 
   /** 인기 상품 조회 (판매량 기준). GET /api/sellers/me/statistics/popular-products?from=...&to=...&limit=10 */
   @GetMapping("/popular-products")
-  @Operation(
-      summary = "인기 상품 조회",
-      description = "로그인한 판매자의 기간별 인기 상품을 판매량 기준으로 조회합니다.")
+  @Operation(summary = "인기 상품 조회", description = "로그인한 판매자의 기간별 인기 상품을 판매량 기준으로 조회합니다.")
   public ResponseEntity<ApiResponse<List<PopularProductResponse>>> getPopularProducts(
       @AuthenticationPrincipal String email,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

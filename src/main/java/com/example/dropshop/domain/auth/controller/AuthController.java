@@ -41,9 +41,7 @@ public class AuthController {
   }
 
   @PostMapping("/refresh")
-  @Operation(
-      summary = "액세스 토큰 재발급",
-      description = "리프레시 토큰 쿠키를 사용해 새 액세스 토큰을 발급합니다.")
+  @Operation(summary = "액세스 토큰 재발급", description = "리프레시 토큰 쿠키를 사용해 새 액세스 토큰을 발급합니다.")
   public ApiResponse<String> refresh(
       @CookieValue(name = "refreshToken", required = false)
           String refreshToken // required = false 추가
@@ -56,9 +54,7 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  @Operation(
-      summary = "로그아웃",
-      description = "액세스 토큰을 블랙리스트에 등록하고 리프레시 토큰 쿠키를 제거합니다.")
+  @Operation(summary = "로그아웃", description = "액세스 토큰을 블랙리스트에 등록하고 리프레시 토큰 쿠키를 제거합니다.")
   @SecurityRequirement(name = "bearerAuth")
   public ApiResponse<Void> logout(
       @RequestHeader(value = "Authorization", required = false) String authHeader,

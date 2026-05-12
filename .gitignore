@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Logs ###
+*.log
+
 application.yml
 secret.yml
 **/src/main/generated

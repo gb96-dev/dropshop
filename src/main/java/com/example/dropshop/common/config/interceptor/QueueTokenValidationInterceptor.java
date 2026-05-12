@@ -92,9 +92,7 @@ public class QueueTokenValidationInterceptor implements HandlerInterceptor {
     }
 
     Object principal = authentication.getPrincipal();
-    if (!(principal instanceof String email)
-        || email.isBlank()
-        || ANONYMOUS_USER.equals(email)) {
+    if (!(principal instanceof String email) || email.isBlank() || ANONYMOUS_USER.equals(email)) {
       return null;
     }
 

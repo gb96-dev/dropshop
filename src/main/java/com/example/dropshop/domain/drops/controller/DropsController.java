@@ -104,8 +104,7 @@ public class DropsController {
   @Operation(summary = "내 드랍 목록 조회", description = "로그인한 판매자의 드랍 목록을 페이징으로 조회합니다.")
   public ResponseEntity<ApiResponse<ApiResponse.PageResponse<DropListItemResponse>>> getMyDrops(
       @AuthenticationPrincipal String email,
-      @Parameter(description = "페이지 번호", example = "0") @RequestParam(defaultValue = "0")
-          int page,
+      @Parameter(description = "페이지 번호", example = "0") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "페이지 크기", example = "20") @RequestParam(defaultValue = "20")
           int size) {
     SellerAuthContext sellerAuth = sellerAuthResolver.resolve(email);
