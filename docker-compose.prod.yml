@@ -8,9 +8,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - kafka-1
-      - kafka-2
-      - kafka-3
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      kafka-3:
+        condition: service_healthy
     networks:
       - dropshop-net
 
@@ -30,6 +33,13 @@ services:
       - KAFKA_CLUSTER_ID=dropshop-kraft-cluster-2026
       - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=3
+      - KAFKA_HEAP_OPTS=-Xmx256m -Xms256m
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     volumes:
       - kafka_1_data:/var/lib/kafka/data
     networks:
@@ -53,6 +63,13 @@ services:
       - KAFKA_CLUSTER_ID=dropshop-kraft-cluster-2026
       - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=3
+      - KAFKA_HEAP_OPTS=-Xmx256m -Xms256m
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     volumes:
       - kafka_2_data:/var/lib/kafka/data
     networks:
@@ -76,6 +93,13 @@ services:
       - KAFKA_CLUSTER_ID=dropshop-kraft-cluster-2026
       - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=3
+      - KAFKA_HEAP_OPTS=-Xmx256m -Xms256m
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     volumes:
       - kafka_3_data:/var/lib/kafka/data
     networks:
