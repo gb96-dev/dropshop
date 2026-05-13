@@ -99,8 +99,7 @@ jobs:
             --group-id "${SG_ID}" \
             --protocol tcp \
             --port 22 \
-            --cidr "${RUNNER_IP}/32" \
-            --tag-specifications "ResourceType=security-group-rule,Tags=[{Key=CreatedBy,Value=github-actions},{Key=RunId,Value=${{ github.run_id }}}]"
+            --cidr "${RUNNER_IP}/32"
 
       - name: Prepare production env file
         run: |
