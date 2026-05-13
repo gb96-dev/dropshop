@@ -1,5 +1,44 @@
 # Dropshop
 
+<div align="center">
+
+# Dropshop
+
+### 한정판 드랍 판매를 위한 고트래픽 대응 커머스 백엔드 플랫폼
+
+<p align="center">
+  <a href="https://github.com/3JOTEAM/dropshop/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/3JOTEAM/dropshop?style=for-the-badge" alt="contributors" />
+  </a>
+  <a href="https://github.com/3JOTEAM/dropshop/commits/main">
+    <img src="https://img.shields.io/github/last-commit/3JOTEAM/dropshop?style=for-the-badge" alt="last commit" />
+  </a>
+  <a href="https://github.com/3JOTEAM/dropshop/network/members">
+    <img src="https://img.shields.io/github/forks/3JOTEAM/dropshop?style=for-the-badge" alt="forks" />
+  </a>
+  <a href="https://github.com/3JOTEAM/dropshop/stargazers">
+    <img src="https://img.shields.io/github/stars/3JOTEAM/dropshop?style=for-the-badge" alt="stars" />
+  </a>
+  <a href="https://github.com/3JOTEAM/dropshop/issues">
+    <img src="https://img.shields.io/github/issues/3JOTEAM/dropshop?style=for-the-badge" alt="issues" />
+  </a>
+  <a href="https://github.com/3JOTEAM/dropshop/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/3JOTEAM/dropshop?style=for-the-badge" alt="license" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="http://54.116.47.216:8080/swagger-ui/index.html"><strong>Swagger</strong></a>
+  ·
+  <a href="https://www.figma.com/community/file/1623244235916509008"><strong>Wireframe</strong></a>
+  ·
+  <a href="https://github.com/3JOTEAM/dropshop/issues"><strong>Report Bug</strong></a>
+  ·
+  <a href="https://github.com/3JOTEAM/dropshop/issues"><strong>Request Feature</strong></a>
+</p>
+
+</div>
+
 ## 📖 목차
 1. [프로젝트 소개](#-프로젝트-소개)
 2. [팀소개](#팀소개)
@@ -22,12 +61,12 @@ Dropshop은 드롭 기반 커머스 서비스를 위한 백엔드 프로젝트�
 
 ## 팀소개
 
-| 역할 | 이름 |
-| --- | --- |
-| 팀장 | 강동혁 |
-| 팀원 | 김규범 |
-| 팀원 | 김재진 |
-| 팀원 | 이재환 |
+| 역할 | 이름 | GitHub |
+| --- | --- | --- |
+| 팀장 | 강동혁 | [youzting](https://github.com/youzting) |
+| 팀원 | 김규범 | [gb96-dev](https://github.com/gb96-dev) |
+| 팀원 | 김재진 | [JJK3187](https://github.com/JJK3187) |
+| 팀원 | 이재환 | [0xc0de1dea](https://github.com/0xc0de1dea?tab=repositories) |
 
 ## 프로젝트 계기
 
