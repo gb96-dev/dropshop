@@ -33,7 +33,6 @@ public class OrderFacadeService {
    */
   @Transactional
   public OrderCreateResponse createOrder(String email, OrderCreateRequest request) {
-    // TODO: QueueService 대기열 토큰 검증
     Long userId = getUserIdByEmail(email);
     Drops drops =
         dropsFacadeService.reserveStockForOrder(request.getDropId(), request.getProductId(), 1);
