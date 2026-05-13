@@ -2,6 +2,7 @@ package com.example.dropshop.domain.refund.entity;
 
 import com.example.dropshop.common.entity.BaseEntity;
 import com.example.dropshop.common.exception.ErrorCode;
+import com.example.dropshop.domain.refund.enums.RefundStatus;
 import com.example.dropshop.domain.refund.exception.RefundException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
