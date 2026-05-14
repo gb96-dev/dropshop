@@ -29,7 +29,7 @@ public class PaymentPortOneRequestResponse {
     this.channelKey = channelKey;
     this.merchantPaymentId = payment.getMerchantPaymentId();
     this.orderName = orderName;
-    this.currency = "KRW";
+    this.currency = "CURRENCY_KRW";
     this.payMethod = payment.getPaymentMethod().name();
     this.paymentMethod = payment.getPaymentMethod();
     this.amount = payment.getAmount();

@@ -13,15 +13,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.kafka.KafkaException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /** 대기열 스케쥴러. */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class QueueScheduler {
@@ -46,12 +43,9 @@ public class QueueScheduler {
     for (String threadHoldResponseStr : threadHoldResponses) {
       ThreadHoldResponse threadHoldResponse = deserialize(threadHoldResponseStr);
 
-      try {
-        kafkaTemplate.send(TOPIC_READY_QUEUE_TOKEN, threadHoldResponse);
-        stringRedisTemplate.opsForZSet().remove(KEY_DELAY_QUEUE_TOKEN, threadHoldResponseStr);
-      } catch (KafkaException e) {
-        log.warn("[QueueScheduler] Kafka 전송 실패 (Kafka 미실행 상태?): {}", e.getMessage());
-      }
+      kafkaTemplate.send(TOPIC_READY_QUEUE_TOKEN, threadHoldResponse);
+
+      stringRedisTemplate.opsForZSet().remove(KEY_DELAY_QUEUE_TOKEN, threadHoldResponseStr);
     }
   }
 
