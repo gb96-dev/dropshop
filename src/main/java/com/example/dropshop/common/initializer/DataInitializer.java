@@ -1,7 +1,7 @@
  package com.example.dropshop.common.initializer;
 
- import com.example.dropshop.domain.notification.drops.entity.Drops;
- import com.example.dropshop.domain.notification.drops.repository.DropsRepository;
+ import com.example.dropshop.domain.drops.entity.Drops;
+ import com.example.dropshop.domain.drops.repository.DropsRepository;
  import com.example.dropshop.domain.product.entity.Product;
  import com.example.dropshop.domain.product.repository.ProductRepository;
  import com.example.dropshop.domain.queue.repository.QueueRepository;

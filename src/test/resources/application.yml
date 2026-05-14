@@ -36,6 +36,9 @@ portone:
   store-id: test-store
   channel-key: test-channel
   redirect-url: http://localhost:8080/payments/redirect
+  retry-max-attempts: 1
+  retry-initial-delay-millis: 1
+  retry-backoff-multiplier: 1.0
 
 cloud:
   aws:

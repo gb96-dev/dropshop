@@ -41,10 +41,13 @@ spring:
 # PortOne 설정
 portone:
   api-base-url: ${PORTONE_API_BASE_URL:https://api.portone.io}
-  api-secret: ${PORTONE_API_SECRET:dummy_secret}
-  store-id: "store-a23d4f87-e7ef-4db0-9278-907b1dcd28ac"
-  channel-key: "channel-key-3e716c4e-acba-451f-bc74-8fa144806102"
-  redirect-url: ${PORTONE_REDIRECT_URL:http://localhost:8080/redirect.html}
+  api-secret: "dummy_secret"
+  store-id: "store-dummy"
+  channel-key: "channel-dummy"
+  redirect-url: ${PORTONE_REDIRECT_URL:http://localhost:8080/payments/redirect}
+  retry-max-attempts: ${PORTONE_RETRY_MAX_ATTEMPTS:3}
+  retry-initial-delay-millis: ${PORTONE_RETRY_INITIAL_DELAY_MILLIS:300}
+  retry-backoff-multiplier: ${PORTONE_RETRY_BACKOFF_MULTIPLIER:2.0}
 
 # AWS 설정
 cloud:

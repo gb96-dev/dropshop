@@ -1,7 +1,7 @@
 package com.example.dropshop.domain.order.facade;
 
-import com.example.dropshop.domain.notification.drops.entity.Drops;
-import com.example.dropshop.domain.notification.drops.service.DropsFacadeService;
+import com.example.dropshop.domain.drops.entity.Drops;
+import com.example.dropshop.domain.drops.service.DropsFacadeService;
 import com.example.dropshop.domain.order.dto.request.OrderCreateRequest;
 import com.example.dropshop.domain.order.dto.response.OrderCreateResponse;
 import com.example.dropshop.domain.order.dto.response.OrderDetailResponse;
@@ -33,7 +33,6 @@ public class OrderFacadeService {
    */
   @Transactional
   public OrderCreateResponse createOrder(String email, OrderCreateRequest request) {
-    // TODO: QueueService 대기열 토큰 검증
     Long userId = getUserIdByEmail(email);
     Drops drops =
         dropsFacadeService.reserveStockForOrder(request.getDropId(), request.getProductId(), 1);
