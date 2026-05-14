@@ -13,7 +13,10 @@ public record PortOneProperties(
     String webhookSecret,
     @NotBlank(message = "PortOne storeId는 필수입니다.") String storeId,
     @NotBlank(message = "PortOne channelKey는 필수입니다.") String channelKey,
-    @NotBlank(message = "PortOne redirectUrl은 필수입니다.") String redirectUrl) {
+    @NotBlank(message = "PortOne redirectUrl은 필수입니다.") String redirectUrl,
+    Integer retryMaxAttempts,
+    Long retryInitialDelayMillis,
+    Double retryBackoffMultiplier) {
 
   /**
    * PortOne API 기본 URL을 반환한다.
@@ -37,5 +40,29 @@ public record PortOneProperties(
       return apiSecret;
     }
     return webhookSecret;
+  }
+
+  /** PortOne API 재시도 최대 횟수를 반환한다. */
+  public int resolvedRetryMaxAttempts() {
+    if (retryMaxAttempts == null || retryMaxAttempts < 1) {
+      return 3;
+    }
+    return retryMaxAttempts;
+  }
+
+  /** PortOne API 재시도 최초 대기 시간을 반환한다. */
+  public long resolvedRetryInitialDelayMillis() {
+    if (retryInitialDelayMillis == null || retryInitialDelayMillis < 0L) {
+      return 300L;
+    }
+    return retryInitialDelayMillis;
+  }
+
+  /** PortOne API 재시도 백오프 배수를 반환한다. */
+  public double resolvedRetryBackoffMultiplier() {
+    if (retryBackoffMultiplier == null || retryBackoffMultiplier < 1.0d) {
+      return 2.0d;
+    }
+    return retryBackoffMultiplier;
   }
 }

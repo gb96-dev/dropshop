@@ -5,14 +5,19 @@ import com.example.dropshop.common.exception.ErrorCode;
 import com.example.dropshop.domain.payment.dto.response.PortOnePaymentResponse;
 import com.example.dropshop.domain.payment.exception.PaymentException;
 import java.math.BigDecimal;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 /** PortOne REST API와 통신하는 클라이언트다. */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PortOneClient {
@@ -27,15 +32,15 @@ public class PortOneClient {
    * @throws PaymentException API Secret이 없거나 외부 API 호출에 실패한 경우
    */
   public PortOnePaymentResponse getPayment(String paymentId) {
-    try {
-      return restClient()
-          .get()
-          .uri("/payments/{paymentId}", paymentId)
-          .retrieve()
-          .body(PortOnePaymentResponse.class);
-    } catch (RestClientException e) {
-      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR, e.getMessage());
-    }
+    return executeWithRetry(
+        "PortOne 결제 조회",
+        paymentId,
+        () ->
+            restClient()
+                .get()
+                .uri("/payments/{paymentId}", paymentId)
+                .retrieve()
+                .body(PortOnePaymentResponse.class));
   }
 
   /**
@@ -47,16 +52,20 @@ public class PortOneClient {
    * @throws PaymentException 외부 API 호출에 실패한 경우
    */
   public void cancelPayment(String paymentId, BigDecimal amount, String reason) {
-    try {
-      restClient()
-          .post()
-          .uri("/payments/{paymentId}/cancel", paymentId)
-          .body(new CancelPaymentBody(portOneProperties.storeId(), toPortOneAmount(amount), reason))
-          .retrieve()
-          .toBodilessEntity();
-    } catch (RestClientException e) {
-      throw new PaymentException(ErrorCode.PAYMENT_PORTONE_API_ERROR, e.getMessage());
-    }
+    executeWithRetry(
+        "PortOne 환불 취소",
+        paymentId,
+        () -> {
+          restClient()
+              .post()
+              .uri("/payments/{paymentId}/cancel", paymentId)
+              .body(
+                  new CancelPaymentBody(
+                      portOneProperties.storeId(), toPortOneAmount(amount), reason))
+              .retrieve()
+              .toBodilessEntity();
+          return null;
+        });
   }
 
   private Long toPortOneAmount(BigDecimal amount) {
@@ -73,6 +82,69 @@ public class PortOneClient {
         .defaultHeader(HttpHeaders.AUTHORIZATION, "PortOne " + portOneProperties.apiSecret())
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .build();
+  }
+
+  private <T> T executeWithRetry(String operation, String paymentId, Supplier<T> action) {
+    int maxAttempts = portOneProperties.resolvedRetryMaxAttempts();
+    long delayMillis = portOneProperties.resolvedRetryInitialDelayMillis();
+    double backoffMultiplier = portOneProperties.resolvedRetryBackoffMultiplier();
+    RestClientException lastException = null;
+
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return action.get();
+      } catch (RestClientException e) {
+        lastException = e;
+
+        if (!shouldRetry(e) || attempt == maxAttempts) {
+          break;
+        }
+
+        log.warn(
+            "[PortOne] {} 실패 - paymentId: {}, attempt: {}/{}, {}ms 후 재시도, cause: {}",
+            operation,
+            paymentId,
+            attempt,
+            maxAttempts,
+            delayMillis,
+            e.getMessage());
+
+        sleep(delayMillis);
+        delayMillis = nextDelay(delayMillis, backoffMultiplier);
+      }
+    }
+
+    throw new PaymentException(
+        ErrorCode.PAYMENT_PORTONE_API_ERROR,
+        operation + " 실패 (" + maxAttempts + "회 시도): " + lastException.getMessage());
+  }
+
+  private boolean shouldRetry(RestClientException exception) {
+    if (exception instanceof ResourceAccessException) {
+      return true;
+    }
+
+    if (exception instanceof RestClientResponseException responseException) {
+      return responseException.getStatusCode().is5xxServerError()
+          || responseException.getStatusCode().value() == 429;
+    }
+
+    return false;
+  }
+
+  private long nextDelay(long currentDelayMillis, double multiplier) {
+    long nextDelay = (long) Math.ceil(currentDelayMillis * multiplier);
+    return Math.max(nextDelay, currentDelayMillis);
+  }
+
+  private void sleep(long delayMillis) {
+    try {
+      Thread.sleep(delayMillis);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new PaymentException(
+          ErrorCode.PAYMENT_PORTONE_API_ERROR, "PortOne 재시도 대기 중 인터럽트가 발생했습니다.");
+    }
   }
 
   private record CancelPaymentBody(String storeId, Long amount, String reason) {}

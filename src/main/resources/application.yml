@@ -45,6 +45,9 @@ portone:
   store-id: "store-dummy"
   channel-key: "channel-dummy"
   redirect-url: ${PORTONE_REDIRECT_URL:http://localhost:8080/payments/redirect}
+  retry-max-attempts: ${PORTONE_RETRY_MAX_ATTEMPTS:3}
+  retry-initial-delay-millis: ${PORTONE_RETRY_INITIAL_DELAY_MILLIS:300}
+  retry-backoff-multiplier: ${PORTONE_RETRY_BACKOFF_MULTIPLIER:2.0}
 
 # AWS 설정
 cloud:
