@@ -88,25 +88,34 @@ class PortOneClientTest {
   }
 
   @Test
-  @DisplayName("PortOne 환불 취소는 429 응답 시 재시도 후 성공한다")
-  void cancelPayment_retriesOn429AndSucceeds() throws IOException {
+  @DisplayName("PortOne 환불 취소는 429 응답 시 재시도하지 않는다")
+  void cancelPayment_doesNotRetryOn429() throws IOException {
     AtomicInteger requestCount = new AtomicInteger();
     startServer(
         exchange -> {
-          int attempt = requestCount.incrementAndGet();
-          if (attempt < 3) {
-            writeResponse(exchange, 429, "{\"message\":\"too many requests\"}");
-            return;
-          }
-
-          writeResponse(exchange, 200, "");
+          requestCount.incrementAndGet();
+          writeResponse(exchange, 429, "{\"message\":\"too many requests\"}");
         });
 
     PortOneClient client = createClient();
 
-    client.cancelPayment("payment-123", new BigDecimal("79000"), "테스트 환불");
+    assertThatThrownBy(() -> client.cancelPayment("payment-123", new BigDecimal("79000"), "테스트 환불"))
+        .isInstanceOf(PaymentException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.PAYMENT_PORTONE_API_ERROR);
+    assertThat(requestCount.get()).isEqualTo(1);
+  }
 
-    assertThat(requestCount.get()).isEqualTo(3);
+  @Test
+  @DisplayName("PortOne 결제 조회는 재시도 불가 예외에서 실제 시도 횟수를 메시지에 담는다")
+  void getPayment_reportsActualAttemptCount() throws IOException {
+    startServer(exchange -> writeResponse(exchange, 400, "{\"message\":\"bad request\"}"));
+
+    PortOneClient client = createClient();
+
+    assertThatThrownBy(() -> client.getPayment("payment-123"))
+        .isInstanceOf(PaymentException.class)
+        .hasMessageContaining("1회 시도");
   }
 
   private PortOneClient createClient() {

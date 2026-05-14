@@ -52,7 +52,7 @@ public class PortOneClient {
    * @throws PaymentException 외부 API 호출에 실패한 경우
    */
   public void cancelPayment(String paymentId, BigDecimal amount, String reason) {
-    executeWithRetry(
+    executeOnce(
         "PortOne 환불 취소",
         paymentId,
         () -> {
@@ -89,8 +89,10 @@ public class PortOneClient {
     long delayMillis = portOneProperties.resolvedRetryInitialDelayMillis();
     double backoffMultiplier = portOneProperties.resolvedRetryBackoffMultiplier();
     RestClientException lastException = null;
+    int attempts = 0;
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      attempts = attempt;
       try {
         return action.get();
       } catch (RestClientException e) {
@@ -116,7 +118,17 @@ public class PortOneClient {
 
     throw new PaymentException(
         ErrorCode.PAYMENT_PORTONE_API_ERROR,
-        operation + " 실패 (" + maxAttempts + "회 시도): " + lastException.getMessage());
+        operation + " 실패 (" + attempts + "회 시도): " + lastException.getMessage());
+  }
+
+  private <T> T executeOnce(String operation, String paymentId, Supplier<T> action) {
+    try {
+      return action.get();
+    } catch (RestClientException e) {
+      log.warn("[PortOne] {} 실패 - paymentId: {}, cause: {}", operation, paymentId, e.getMessage());
+      throw new PaymentException(
+          ErrorCode.PAYMENT_PORTONE_API_ERROR, operation + " 실패: " + e.getMessage());
+    }
   }
 
   private boolean shouldRetry(RestClientException exception) {
