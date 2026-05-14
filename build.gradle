@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.0.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'checkstyle'
+    id 'com.diffplug.spotless' version '7.0.2'
 }
 
 group = 'com.example'
@@ -19,18 +21,95 @@ repositories {
 }
 
 dependencies {
+    // --- BOM ---
+    implementation platform('software.amazon.awssdk:bom:2.31.13')
+
+    // --- Spring Boot ---
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
+
+    // --- JPA / DB ---
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-    compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // --- QueryDSL ---
+    implementation 'io.github.openfeign.querydsl:querydsl-jpa:7.1'
+    annotationProcessor 'io.github.openfeign.querydsl:querydsl-apt:7.1:jakarta'
+    annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+    annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+
+    // --- Flyway (DB 마이그레이션) ---
+    implementation 'org.flywaydb:flyway-core'
+    runtimeOnly 'org.flywaydb:flyway-mysql'
+
+    // --- Redis / Cache ---
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    // --- Kafka ---
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // --- JWT ---
+    implementation "io.jsonwebtoken:jjwt-api:0.12.5"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:0.12.5"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.12.5"
+
+    // --- AWS S3 ---
+    implementation 'software.amazon.awssdk:s3'
+    implementation 'software.amazon.awssdk:auth'
+    implementation 'software.amazon.awssdk:regions'
+
+    // --- ShedLock (분산 스케줄러 락) ---
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:5.16.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.16.0'
+
+    // --- Jackson ---
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // --- Lombok ---
+    compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+
+    // --- Test ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
     testCompileOnly 'org.projectlombok:lombok'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+checkstyle {
+    toolVersion = '10.17.0'
+    config = resources.text.fromFile("config/checkstyle/google_checks.xml")
+}
+
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+        googleJavaFormat('1.23.0')
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('spotlessCheck')
+}
+
+tasks.withType(Checkstyle).configureEach {
+    ignoreFailures = true
+    maxWarnings = 0
+}
+

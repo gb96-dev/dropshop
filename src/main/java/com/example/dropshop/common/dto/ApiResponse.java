@@ -1,11 +1,15 @@
 package com.example.dropshop.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 
+/** 공통 API 응답. */
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -37,5 +41,69 @@ public class ApiResponse<T> {
 
   public static <T> ApiResponse<T> fail(HttpStatus status, T data) {
     return new ApiResponse<>(false, status.value(), data);
+  }
+
+  public static <T> ApiResponse<PageResponse<T>> ok(Page<T> page) {
+    return new ApiResponse<>(true, 200, PageResponse.of(page));
+  }
+
+  /** 페이지 응답. */
+  @Getter
+  @AllArgsConstructor(access = AccessLevel.PRIVATE)
+  public static class PageResponse<T> {
+
+    private final List<T> content;
+    private final PageInfo pageInfo;
+
+    public static <T> PageResponse<T> of(Page<T> page) {
+      return new PageResponse<>(page.getContent(), PageInfo.of(page));
+    }
+  }
+
+  /** 페이지 정보. */
+  @JsonPropertyOrder({"page", "size", "totalElements", "totalPages", "isFirst", "isLast"})
+  @AllArgsConstructor(access = AccessLevel.PRIVATE)
+  public static class PageInfo {
+
+    private final int page;
+    private final int size;
+    private final long totalElements;
+    private final int totalPages;
+    private final boolean first;
+    private final boolean last;
+
+    public static PageInfo of(Page<?> page) {
+      return new PageInfo(
+          page.getNumber(),
+          page.getSize(),
+          page.getTotalElements(),
+          page.getTotalPages(),
+          page.isFirst(),
+          page.isLast());
+    }
+
+    public int getPage() {
+      return page;
+    }
+
+    public int getSize() {
+      return size;
+    }
+
+    public long getTotalElements() {
+      return totalElements;
+    }
+
+    public int getTotalPages() {
+      return totalPages;
+    }
+
+    public boolean getIsFirst() {
+      return first;
+    }
+
+    public boolean getIsLast() {
+      return last;
+    }
   }
 }

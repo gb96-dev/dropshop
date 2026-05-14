@@ -35,3 +35,35 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Logs ###
+*.log
+
+application.yml
+secret.yml
+**/src/main/generated
+
+# 로컬 환경에서 shedlock 테이블 자동 생성용 (Flyway 마이그레이션이 안 돌 때 임시 우회)
+src/main/resources/schema.sql
+
+# application.yml
+application.yml
+application-local.yml
+# Local / secret yaml files
+/secret.yml
+/application-local.yml
+/src/main/resources/secret.yml
+/src/main/resources/application-local.yml
+
+# Keep shared sample/example files tracked
+!application.yml.sample
+!secret.yml.example
+!src/main/resources/application.yml
+!src/main/resources/*.sample.yml
+!src/test/resources/application.yml
+
+# Local PortOne frontend test pages
+/src/main/java/com/example/dropshop/common/config/TestDataInitializer.java
+/src/main/java/com/example/dropshop/domain/payment/controller/PaymentTestPageController.java
+/src/main/resources/static/payments/test.html
+/src/main/resources/static/payments/redirect.html
