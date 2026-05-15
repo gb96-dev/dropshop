@@ -1,11 +1,11 @@
 package com.example.dropshop.dev;
 
 import com.example.dropshop.common.dto.ApiResponse;
-import com.example.dropshop.domain.notification.drops.entity.Drops;
-import com.example.dropshop.domain.notification.drops.enums.DropsStatus;
-import com.example.dropshop.domain.notification.drops.repository.DropsRepository;
-import com.example.dropshop.domain.notification.drops.service.DropsStockPreemptionService;
-import com.example.dropshop.domain.notification.drops.service.DropsStatusTransitionWorker;
+import com.example.dropshop.domain.drops.entity.Drops;
+import com.example.dropshop.domain.drops.enums.DropsStatus;
+import com.example.dropshop.domain.drops.repository.DropsRepository;
+import com.example.dropshop.domain.drops.service.DropsStockPreemptionService;
+import com.example.dropshop.domain.drops.service.DropsStatusTransitionWorker;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
