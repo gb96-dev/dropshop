@@ -60,6 +60,10 @@ public class User extends BaseEntity {
     this.password = encodedPassword;
   }
 
+  public void changeEmail(String newEmail) {
+    this.email = newEmail;
+  }
+
   public void promoteToSeller() {
     this.role = UserRole.SELLER;
   }
