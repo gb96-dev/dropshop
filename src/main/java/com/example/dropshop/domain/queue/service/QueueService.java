@@ -105,7 +105,10 @@ public class QueueService {
 
       // 3-2. 기존 큐의 상태가 READY/ENTERED라면 구매 상태 반환
 
-      QueueToken queueToken = queueTokenRepository.findByQueueId(queue.getId()).get();
+      QueueToken queueToken =
+          queueTokenRepository
+              .findByQueueId(queue.getId())
+              .orElseThrow(() -> new ServiceException(ErrorCode.QUEUE_TOKEN_NOT_FOUND));
 
       int expiresInSeconds =
           (int)

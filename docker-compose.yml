@@ -142,11 +142,45 @@ services:
     networks:
       - kafka-net
 
+  # --------------------------
+  # Prometheus
+  # --------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - kafka-net
+
+  # --------------------------
+  # Grafana
+  # --------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - kafka-net
+
 volumes:
   kafka1_data:
   kafka2_data:
   kafka3_data:
   redis_data:
+  grafana_data:
 
 networks:
   kafka-net:

@@ -12,27 +12,26 @@ import com.example.dropshop.domain.queue.repository.QueueRepository;
 import com.example.dropshop.domain.queue.repository.QueueTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
 
 /**
- * 준비(READY) 상태 대기열 토큰의 만료 처리 리스너.
+ * READY 상태 대기열 토큰 만료 처리 리스너.
  *
- * <p>구매 시간 내 미사용 토큰에 대해 Kafka 메시지를 수신하여 Queue 상태를 EXPIRED로 전이한다.
- *
- * @deprecated 클래스명이 동작(expire)을 반영하지 못함. {@link QueueTokenExpiryListener}로 대체 예정.
+ * <p>{@code ready-queue-token} 토픽을 구독하며, 구매 시간 내 미사용된 토큰에 대해 Queue 상태를 EXPIRED로 전이한다.
+ * {@link ReadyQueueTokenListener}를 대체한다.
  */
-@Deprecated
+@Component
 @RequiredArgsConstructor
-public class ReadyQueueTokenListener {
+public class QueueTokenExpiryListener {
 
   private final QueueTokenRepository queueTokenRepository;
-
   private final QueueRepository queueRepository;
 
   @KafkaListener(
       topics = TOPIC_READY_QUEUE_TOKEN,
       groupId = READY_QUEUE_GROUP_NAME,
       containerFactory = "readyThreadHoldKafkaListenerContainerFactory")
-  public void consume(ThreadHoldResponse threadHoldResponse) {
+  public void expireQueueToken(ThreadHoldResponse threadHoldResponse) {
     QueueToken token =
         queueTokenRepository
             .findByQueueId(threadHoldResponse.getQueueId())

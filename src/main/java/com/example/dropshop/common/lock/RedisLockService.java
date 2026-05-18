@@ -5,6 +5,7 @@ import com.example.dropshop.common.exception.ServiceException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
  * <p>락 키별로 단일 작업만 실행되도록 보장하며, 락 획득 실패 시 일정 시간 동안 재시도한다. 락 해제는 저장된 토큰을 검증한 뒤 수행해, 만료된 락이 다른 요청에 의해
  * 다시 획득된 경우에도 이전 요청이 잘못된 락을 제거하지 않도록 보호한다.
  */
+@Slf4j
 @Service
 public class RedisLockService {
 
@@ -109,9 +111,17 @@ public class RedisLockService {
     return false;
   }
 
+  /**
+   * Redis 장애 시 락 획득 불가 → REDIS_UNAVAILABLE(503)으로 즉시 실패 처리. 장애 상황에서 락 없이 임계 구역에 진입하는 것을 방지한다.
+   */
   private boolean acquire(String key, String token, Duration leaseTimeout) {
-    Boolean locked = stringRedisTemplate.opsForValue().setIfAbsent(key, token, leaseTimeout);
-    return Boolean.TRUE.equals(locked);
+    try {
+      Boolean locked = stringRedisTemplate.opsForValue().setIfAbsent(key, token, leaseTimeout);
+      return Boolean.TRUE.equals(locked);
+    } catch (Exception e) {
+      log.error("[RedisLock] Redis 장애로 분산 락 획득 불가 - key: {}, cause: {}", key, e.getMessage());
+      throw new ServiceException(ErrorCode.REDIS_UNAVAILABLE);
+    }
   }
 
   /**

@@ -112,7 +112,10 @@ public enum ErrorCode {
 
   /** Wishlist. */
   EXISTS_BY_USER_AND_DROP(HttpStatus.CONFLICT, "이미 찜한 상품입니다."),
-  DROP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 드랍은 존재하지 않습니다.");
+  DROP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 드랍은 존재하지 않습니다."),
+
+  /** Infrastructure. */
+  REDIS_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "현재 서비스를 일시적으로 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.");
 
   private final HttpStatus status;
   private final String message;
